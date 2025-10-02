@@ -33,14 +33,7 @@ enum PathResolver {
         let fileURL = URL(fileURLWithPath: filePathStr)
         let directory = fileURL.deletingLastPathComponent()
         
-        // Check if we're in a test target
-        if filePathStr.contains("/Tests/") {
-            return directory.appendingPathComponent("__Snapshots__")
-        }
-        
-        // Fallback to temporary directory
-        return URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("SwiftSnapshots")
+      return directory.appendingPathComponent("__Snapshots__")
     }
     
     /// Resolve the full file path for a snapshot
