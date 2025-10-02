@@ -46,6 +46,7 @@ public struct FormatProfile {
 
   public enum IndentStyle {
     case space
+    case tab
   }
 
   public enum EndOfLine {

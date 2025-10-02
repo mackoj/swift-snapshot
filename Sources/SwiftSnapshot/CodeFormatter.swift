@@ -140,9 +140,12 @@ enum CodeFormatter {
       switch configSource {
       case .swiftFormat(let url):
         // Load directly from .swift-format file
-        return try SwiftFormat.Configuration(contentsOf: url)
+        if FileManager.default.fileExists(atPath: url.path) {
+          return try SwiftFormat.Configuration(contentsOf: url)
+        }
+        return try SwiftFormat.Configuration()
 
-      case .editorconfig(_):
+      case .editorconfig:
         // Load from .editorconfig and convert to SwiftFormat.Configuration
         let formatProfile = try FormatConfigLoader.loadProfile(from: configSource)
         return configurationFromProfile(formatProfile)
@@ -160,7 +163,12 @@ enum CodeFormatter {
     var configuration = SwiftFormat.Configuration()
 
     // Set indentation
-    configuration.indentation = .spaces(profile.indentSize)
+    switch profile.indentStyle {
+    case .space:
+      configuration.indentation = .spaces(profile.indentSize)
+    case .tab:
+      configuration.indentation = .tabs(profile.indentSize)
+    }
 
     // Set line length (reasonable default)
     configuration.lineLength = 100
