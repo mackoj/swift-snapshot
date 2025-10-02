@@ -40,15 +40,18 @@ Or add it via Xcode: **File → Add Packages** and enter the repository URL.
 ```swift
 import SwiftSnapshot
 
+// Using macros (recommended)
+@SwiftSnapshot
 struct User {
     let id: Int
     let name: String
 }
 
 let user = User(id: 42, name: "Alice")
+let url = try user.exportSnapshot(variableName: "testUser")
 
-// Generate and export Swift code
-let url = try SwiftSnapshotRuntime.export(
+// OR using runtime API directly
+let urlDirect = try SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser"
 )
@@ -103,14 +106,17 @@ These fixtures:
 - **String Escaping**: Proper handling of special characters, unicode, and emoji
 - **Thread-Safe**: Concurrent exports supported
 
-### 🚧 Planned (Macro Layer)
+### ✅ Macro Layer (New!)
 
-The macro layer is planned for future development and will provide:
+The macro layer provides compile-time code generation for enhanced control:
 
-- **Type-Level Annotation**: `@SwiftSnapshot` for compile-time metadata
+- **Type-Level Annotation**: `@SwiftSnapshot` for compile-time metadata generation
 - **Property Attributes**: `@SnapshotIgnore`, `@SnapshotRename`, `@SnapshotRedact`
-- **Optimized Generation**: Skip reflection for annotated types
-- **Enhanced Enum Support**: Full associated value labels
+- **Optimized Generation**: Skip reflection for macro-annotated types
+- **Enhanced Enum Support**: Full associated value labels with compile-time generation
+- **Redaction Modes**: Mask, hash, or remove sensitive properties
+- **Folder Organization**: Specify output directories per type
+- **Context Documentation**: Add documentation comments to generated code
 
 ---
 
@@ -212,6 +218,70 @@ final class UserServiceTests: XCTestCase {
 }
 ```
 
+### Using Macros for Enhanced Control
+
+```swift
+import SwiftSnapshot
+
+// Basic macro usage
+@SwiftSnapshot
+struct Product {
+    let id: String
+    let name: String
+    let price: Double
+}
+
+// Macro with property attributes
+@SwiftSnapshot(folder: "Fixtures/Users", context: "Standard user fixture")
+struct User {
+    let id: String
+    
+    @SnapshotRename("displayName")
+    let name: String
+    
+    @SnapshotRedact(mask: "***")
+    let apiKey: String
+    
+    @SnapshotIgnore
+    let transientCache: [String: Any]
+}
+
+// Export using macro-generated method
+let user = User(id: "123", name: "Alice", apiKey: "secret", cache: [:])
+let url = try user.exportSnapshot(variableName: "testUser")
+
+// Enum with associated values
+@SwiftSnapshot
+enum Result {
+    case success(value: Int)
+    case failure(error: String)
+}
+
+let result = Result.success(value: 42)
+let resultUrl = try result.exportSnapshot()
+```
+
+### Redaction Modes
+
+```swift
+@SwiftSnapshot
+struct SecureData {
+    let id: String
+    
+    // Mask with custom string
+    @SnapshotRedact(mask: "REDACTED")
+    let apiKey: String
+    
+    // Generate hash placeholder
+    @SnapshotRedact(hash: true)
+    let password: String
+    
+    // Remove from output entirely
+    @SnapshotRedact(remove: true)
+    let sessionToken: String
+}
+```
+
 ### Custom Output Directory
 
 ```swift
@@ -232,6 +302,91 @@ let url = try SwiftSnapshotRuntime.export(
 )
 // Creates: User+AdminFixtures.swift
 ```
+
+---
+
+## Macro Reference
+
+### @SwiftSnapshot
+
+Marks a type for snapshot fixture export with compile-time code generation.
+
+**Parameters:**
+- `folder: String?` - Optional output directory hint (e.g., `"Fixtures/Users"`)
+- `context: String?` - Optional documentation context added as comments
+
+**Generated Members:**
+- `static let __swiftSnapshot_folder: String?` - Stores folder parameter
+- `static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata]` - Property metadata array
+- `static func __swiftSnapshot_makeExpr(from:) -> String` - Expression builder
+- `func exportSnapshot(...)` - Convenience export method
+
+**Example:**
+```swift
+@SwiftSnapshot(folder: "Fixtures/Products", context: "Standard product fixture")
+struct Product {
+    let id: String
+    let name: String
+}
+```
+
+### @SnapshotIgnore
+
+Excludes a property from snapshot generation. The property will not appear in the generated initializer or metadata.
+
+**Example:**
+```swift
+@SwiftSnapshot
+struct User {
+    let id: String
+    @SnapshotIgnore
+    let transientCache: [String: Any]  // Excluded from snapshot
+}
+```
+
+### @SnapshotRename
+
+Renames a property in the generated initializer expression.
+
+**Parameters:**
+- Unlabeled `String` - The new name to use
+
+**Example:**
+```swift
+@SwiftSnapshot
+struct User {
+    @SnapshotRename("displayName")
+    let name: String  // Generated as displayName in snapshot
+}
+```
+
+### @SnapshotRedact
+
+Redacts sensitive property values in generated snapshots. Three modes available (mutually exclusive):
+
+**Parameters:**
+- `mask: String?` - Replace value with literal string (default: `"•••"`)
+- `hash: Bool` - Replace with deterministic hash placeholder
+- `remove: Bool` - Omit property from initializer entirely
+
+**Examples:**
+```swift
+@SwiftSnapshot
+struct SecureData {
+    @SnapshotRedact(mask: "SECRET")
+    let apiKey: String  // Generated as: apiKey: "SECRET"
+    
+    @SnapshotRedact(hash: true)
+    let password: String  // Generated as: password: "<hashed>"
+    
+    @SnapshotRedact(remove: true)
+    let sessionToken: String  // Omitted from output
+}
+```
+
+**Diagnostics:**
+- Error if multiple redaction modes specified
+- Error if `remove` mode would create invalid initializer
 
 ---
 
