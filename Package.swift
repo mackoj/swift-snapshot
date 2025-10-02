@@ -10,7 +10,7 @@ let package = Package(
     .library(
       name: "SwiftSnapshot",
       targets: ["SwiftSnapshot"]
-    ),
+    )
   ],
   dependencies: [
     .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"603.0.0"),
