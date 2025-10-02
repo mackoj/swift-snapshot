@@ -2,8 +2,7 @@ import Foundation
 import SwiftSyntax
 import SwiftParser
 import SwiftFormat
-
-// this need to be reworked
+import SwiftSyntaxBuilder
 
 /// Formats Swift code according to a FormatProfile
 enum CodeFormatter {
@@ -16,69 +15,101 @@ enum CodeFormatter {
         context: String?,
         profile: FormatProfile
     ) -> String {
-        var lines: [String] = []
+        // Build the complete syntax tree
+        let sourceFile = buildSourceFile(
+            typeName: typeName,
+            variableName: variableName,
+            expression: expression,
+            header: header,
+            context: context
+        )
         
-        // Add header if present
+        // Convert to string for formatting
+        let sourceCode = sourceFile.formatted().description
+        
+        // Apply SwiftFormat
+        let formatted = applySwiftFormat(to: sourceCode, sourceFile: sourceFile, profile: profile)
+        
+        return formatted
+    }
+    
+    /// Build a complete SourceFileSyntax tree
+    private static func buildSourceFile(
+        typeName: String,
+        variableName: String,
+        expression: ExprSyntax,
+        header: String?,
+        context: String?
+    ) -> SourceFileSyntax {
+        var statements: [CodeBlockItemSyntax] = []
+        
+        // Add header as leading trivia if present
+        var leadingTrivia: Trivia = []
         if let header = header {
-            lines.append(header)
-            if !header.hasSuffix("\n") {
-                lines.append("")
+            // Add header comments
+            for line in header.split(separator: "\n", omittingEmptySubsequences: false) {
+                leadingTrivia += .lineComment("// \(line)") + .newlines(1)
             }
+            leadingTrivia += .newlines(1)
         }
         
         // Add context documentation if present
         if let context = context {
-            let contextLines = formatContext(context)
-            lines.append(contentsOf: contextLines)
+            for line in context.split(separator: "\n", omittingEmptySubsequences: false) {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.isEmpty {
+                    leadingTrivia += .docLineComment("///") + .newlines(1)
+                } else {
+                    leadingTrivia += .docLineComment("/// \(trimmed)") + .newlines(1)
+                }
+            }
         }
         
-        // Add import
-        lines.append("import Foundation")
-        lines.append("")
+        // Create import declaration
+        let importDecl = ImportDeclSyntax(
+            leadingTrivia: leadingTrivia,
+            path: [ImportPathComponentSyntax(name: .identifier("Foundation"))]
+        )
+        statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(importDecl))))
         
-        // Add extension with static variable
-        lines.append("extension \(typeName) {")
+        // Create the static variable declaration
+        let variableDecl = VariableDeclSyntax(
+            modifiers: [DeclModifierSyntax(name: .keyword(.static))],
+            bindingSpecifier: .keyword(.let),
+            bindings: PatternBindingListSyntax([
+                PatternBindingSyntax(
+                    pattern: IdentifierPatternSyntax(identifier: .identifier(variableName)),
+                    typeAnnotation: TypeAnnotationSyntax(
+                        type: IdentifierTypeSyntax(name: .identifier(typeName))
+                    ),
+                    initializer: InitializerClauseSyntax(value: expression)
+                )
+            ])
+        )
         
-        // Format the expression - try to make it multi-line if it's complex
-        let exprString = "\(expression)"
-        let formattedExpr = formatExpression(exprString, typeName: typeName, profile: profile)
+        // Create extension declaration
+        let extensionDecl = ExtensionDeclSyntax(
+            extendedType: IdentifierTypeSyntax(name: .identifier(typeName)),
+            memberBlock: MemberBlockSyntax(
+                members: MemberBlockItemListSyntax([
+                    MemberBlockItemSyntax(decl: variableDecl)
+                ])
+            )
+        )
+        statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(extensionDecl))))
         
-        lines.append("\(profile.indent(level: 1))static let \(variableName): \(typeName) = \(formattedExpr)")
-        lines.append("}")
-        
-        // Join lines
-        var result = lines.joined(separator: profile.endOfLine.string)
-        
-        // For now, keep the existing formatting to maintain test compatibility
-      result = applySwiftFormat(to: result, profile: profile)
-        
-//        // Trim trailing whitespace if requested
-//        if profile.trimTrailingWhitespace {
-//            result = result.split(separator: "\n", omittingEmptySubsequences: false)
-//                .map { $0.trimmingCharacters(in: .whitespaces) }
-//                .joined(separator: profile.endOfLine.string)
-//        }
-//        
-//        // Add final newline if requested
-//        if profile.insertFinalNewline && !result.hasSuffix("\n") {
-//            result += profile.endOfLine.string
-//        }
-        
-        return result
+        return SourceFileSyntax(statements: CodeBlockItemListSyntax(statements))
     }
     
     /// Apply swift-format to code
-    private static func applySwiftFormat(to code: String, profile: FormatProfile) -> String {
-        // Create swift-format configuration
-        var configuration = SwiftFormat.Configuration()
-      
-//        configuration.indentation = .spaces(profile.indentSize)
-//        configuration.lineLength = 120
-//        configuration.maximumBlankLines = 1
-        
+    private static func applySwiftFormat(
+        to code: String,
+        sourceFile: SourceFileSyntax,
+        profile: FormatProfile
+    ) -> String {
         do {
-            // Parse the code into a syntax tree using SwiftParser
-            let sourceFile = Parser.parse(source: code)
+            // Load configuration from file or use defaults
+            let configuration = try loadSwiftFormatConfiguration(profile: profile)
             
             // Format the syntax tree
             let formatter = SwiftFormat.SwiftFormatter(configuration: configuration)
@@ -103,46 +134,39 @@ enum CodeFormatter {
         }
     }
     
-    /// Format context as documentation comments
-    private static func formatContext(_ context: String) -> [String] {
-        let lines = context.split(separator: "\n", omittingEmptySubsequences: false)
-        return lines.map { line in
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty {
-                return "///"
-            } else {
-                return "/// \(trimmed)"
+    /// Load SwiftFormat configuration from file or create from profile
+    private static func loadSwiftFormatConfiguration(profile: FormatProfile) throws -> SwiftFormat.Configuration {
+        // Check if a format config source is configured
+        if let configSource = SwiftSnapshotConfig.getFormatConfigSource() {
+            switch configSource {
+            case .swiftFormat(let url):
+                // Load directly from .swift-format file
+                return try SwiftFormat.Configuration(contentsOf: url)
+                
+            case .editorconfig(_):
+                // Load from .editorconfig and convert to SwiftFormat.Configuration
+                let formatProfile = try FormatConfigLoader.loadProfile(from: configSource)
+                return configurationFromProfile(formatProfile)
             }
         }
+        
+        // No config file specified, use the profile settings
+        return configurationFromProfile(profile)
     }
     
-    /// Format an expression with appropriate line breaks and indentation
-    private static func formatExpression(_ expr: String, typeName: String, profile: FormatProfile) -> String {
-        // If the expression is short, keep it on one line
-        if expr.count < 80 && !expr.contains("\n") {
-            return expr
-        }
+    /// Convert FormatProfile to SwiftFormat.Configuration
+    private static func configurationFromProfile(_ profile: FormatProfile) -> SwiftFormat.Configuration {
+        var configuration = SwiftFormat.Configuration()
         
-        // Try to format multi-line initializers nicely
-        if expr.contains("(") && expr.contains(")") {
-            return formatInitializerExpression(expr, typeName: typeName, profile: profile)
-        }
+        // Set indentation
+        configuration.indentation = .spaces(profile.indentSize)
         
-        return expr
-    }
-    
-    /// Format initializer expressions with arguments on separate lines
-    private static func formatInitializerExpression(_ expr: String, typeName: String, profile: FormatProfile) -> String {
-        // Parse basic structure: TypeName(arg1: val1, arg2: val2)
-        // This is a simple heuristic - for complex cases we'd need full parsing
+        // Set line length (reasonable default)
+        configuration.lineLength = 120
         
-        // Check if it looks like an initializer
-        guard expr.contains("(") && expr.contains(")") else {
-            return expr
-        }
+        // Set maximum blank lines
+        configuration.maximumBlankLines = 1
         
-        // For now, return as-is
-        // In a production implementation, we'd use SwiftSyntax to properly parse and format
-        return expr
+        return configuration
     }
 }

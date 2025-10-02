@@ -79,11 +79,11 @@ final class SwiftSnapshotTests: XCTestCase {
             variableName: "testArray"
         )
         
-        XCTAssertTrue(code.contains("extension [Int]"))
-        XCTAssertTrue(code.contains("testArray"))
+        XCTAssertTrue(code.contains("extension [Int]") || code.contains("extension Array<Int>"), "Missing array extension")
+        XCTAssertTrue(code.contains("testArray"), "Missing 'testArray'")
         // Should contain the numbers
-        XCTAssertTrue(code.contains("1"))
-        XCTAssertTrue(code.contains("5"))
+        XCTAssertTrue(code.contains("1"), "Missing '1'")
+        XCTAssertTrue(code.contains("5"), "Missing '5'")
     }
     
     func testEmptyArrayGeneration() throws {
@@ -103,10 +103,14 @@ final class SwiftSnapshotTests: XCTestCase {
             variableName: "testDict"
         )
         
-        XCTAssertTrue(code.contains("extension [String: String]"))
+        print("=== Dictionary Generation Output ===")
+        print(code)
+        print("=== End ===")
+        
+        XCTAssertTrue(code.contains("extension [String: String]") || code.contains("extension Dictionary<String, String>"), "Missing dictionary extension")
         // Keys should be present
-        XCTAssertTrue(code.contains("key1"))
-        XCTAssertTrue(code.contains("key2"))
+        XCTAssertTrue(code.contains("key1"), "Missing 'key1'")
+        XCTAssertTrue(code.contains("key2"), "Missing 'key2'")
     }
     
     // MARK: - Optional Tests
