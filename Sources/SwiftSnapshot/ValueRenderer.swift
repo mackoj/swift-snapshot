@@ -175,7 +175,10 @@ enum ValueRenderer {
         for (index, element) in array.enumerated() {
             let elementContext = context.appending(path: "[\(index)]")
             let expr = try render(element, context: elementContext)
-            elements.append(ArrayElementSyntax(expression: expr))
+            elements.append(ArrayElementSyntax(
+                expression: expr,
+                trailingComma: index < array.count - 1 ? .commaToken() : nil
+            ))
         }
         
         return ExprSyntax(ArrayExprSyntax(elements: ArrayElementListSyntax(elements)))
@@ -197,13 +200,14 @@ enum ValueRenderer {
         }
         
         var elements: [DictionaryElementSyntax] = []
-        for pair in pairs {
+        for (index, pair) in pairs.enumerated() {
             let keyContext = context.appending(path: "[\(pair.key)]")
             let keyExpr = try render(pair.key, context: keyContext)
             let valueExpr = try render(pair.value, context: keyContext)
             elements.append(DictionaryElementSyntax(
                 key: keyExpr,
-                value: valueExpr
+                value: valueExpr,
+                trailingComma: index < pairs.count - 1 ? .commaToken() : nil
             ))
         }
         
