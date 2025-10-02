@@ -8,8 +8,6 @@ SwiftSnapshot turns your in‑memory objects into compilable Swift code you can 
 [![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Status**: ✅ Core runtime library implemented and tested (34 tests passing)
-
 ---
 
 ## Installation
@@ -310,8 +308,6 @@ SwiftSnapshotConfig.setRenderOptions(options)
 1. `outputBasePath` parameter (highest priority)
 2. `SwiftSnapshotConfig.setGlobalRoot()`
 3. `SWIFT_SNAPSHOT_ROOT` environment variable
-4. Default: `__Snapshots__` adjacent to test file (if in `/Tests/`)
-5. Fallback: Temporary directory
 
 ---
 

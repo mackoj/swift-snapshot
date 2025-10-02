@@ -17,6 +17,8 @@ Out of Scope: Multi-format outputs, separate IR model, cross-platform support.
 | Minimal Public Surface | Expose only `@SwiftSnapshot` & a minimal attribute set initially |
 | Runtime Synergy | Enable runtime to skip reflection for macro-instrumented types |
 
+Use https://github.com/pointfreeco/swift-macro-testing for macro testing when possible.
+
 ---
 
 ## 2. Macros & Attributes
