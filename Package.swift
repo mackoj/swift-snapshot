@@ -15,7 +15,6 @@ let package = Package(
   dependencies: [
     .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"603.0.0"),
     .package(url: "https://github.com/swiftlang/swift-format", from: "600.0.0"),
-    .package(url: "https://github.com/apple/swift-testing", from: "0.10.0"),
     .package(url: "https://github.com/pointfreeco/swift-issue-reporting", from: "1.0.0"),
   ],
   targets: [
@@ -31,10 +30,7 @@ let package = Package(
     ),
     .testTarget(
       name: "SwiftSnapshotTests",
-      dependencies: [
-        "SwiftSnapshot",
-        .product(name: "Testing", package: "swift-testing"),
-      ]
+      dependencies: ["SwiftSnapshot"]
     ),
   ]
 )
