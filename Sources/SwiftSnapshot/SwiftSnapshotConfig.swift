@@ -1,10 +1,19 @@
 import Foundation
 
+/// Source for format configuration
+public enum FormatConfigSource {
+    /// Use .editorconfig file
+    case editorconfig(URL)
+    /// Use .swift-format file
+    case swiftFormat(URL)
+}
+
 /// Global configuration for SwiftSnapshot
 public enum SwiftSnapshotConfig {
     private static var globalRoot: URL?
     private static var globalHeader: String?
     private static var formatProfile: FormatProfile = FormatProfile()
+    private static var formatConfigSource: FormatConfigSource?
     private static var renderOpts: RenderOptions = RenderOptions()
     private static let lock = NSLock()
     
@@ -62,5 +71,19 @@ public enum SwiftSnapshotConfig {
         lock.lock()
         defer { lock.unlock() }
         return renderOpts
+    }
+    
+    /// Set the format configuration source (either .editorconfig or .swift-format)
+    public static func setFormatConfigSource(_ source: FormatConfigSource?) {
+        lock.lock()
+        defer { lock.unlock() }
+        formatConfigSource = source
+    }
+    
+    /// Get the current format configuration source
+    public static func getFormatConfigSource() -> FormatConfigSource? {
+        lock.lock()
+        defer { lock.unlock() }
+        return formatConfigSource
     }
 }

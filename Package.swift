@@ -14,6 +14,8 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"603.0.0"),
+    .package(url: "https://github.com/swiftlang/swift-format", from: "600.0.0"),
+    .package(url: "https://github.com/apple/swift-testing", from: "0.10.0"),
     .package(url: "https://github.com/pointfreeco/swift-issue-reporting", from: "1.0.0"),
   ],
   targets: [
@@ -22,12 +24,17 @@ let package = Package(
       dependencies: [
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+        .product(name: "SwiftParser", package: "swift-syntax"),
+        .product(name: "SwiftFormat", package: "swift-format"),
         .product(name: "IssueReporting", package: "swift-issue-reporting"),
       ]
     ),
     .testTarget(
       name: "SwiftSnapshotTests",
-      dependencies: ["SwiftSnapshot"]
+      dependencies: [
+        "SwiftSnapshot",
+        .product(name: "Testing", package: "swift-testing"),
+      ]
     ),
   ]
 )
