@@ -81,11 +81,11 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
           let defaultVarName = "\(raw: typeName.prefix(1).lowercased() + typeName.dropFirst())"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? \(literal: arguments.context ?? "")
-          
+      
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -268,7 +268,7 @@ extension SwiftSnapshotMacro {
   }
   
   static func generatePropertiesArray(properties: [PropertyInfo]) -> DeclSyntax {
-    let propertyElements = properties.map { prop -> String in
+    let propertyElements = properties.enumerated().map { index, prop -> String in
       let renamedStr = prop.renamedTo.map { "\"\($0)\"" } ?? "nil"
       let redactionStr = prop.redaction.map { redaction -> String in
         switch redaction.mode {
@@ -281,8 +281,9 @@ extension SwiftSnapshotMacro {
         }
       } ?? "nil"
       
-      return ".init(original: \"\(prop.name)\", renamed: \(renamedStr), redaction: \(redactionStr), ignored: \(prop.isIgnored))"
-    }.joined(separator: ",\n    ")
+      let indent = index == 0 ? "" : "    "
+      return "\(indent).init(original: \"\(prop.name)\", renamed: \(renamedStr), redaction: \(redactionStr), ignored: \(prop.isIgnored))"
+    }.joined(separator: ",\n")
     
     return """
     internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -309,24 +310,28 @@ extension SwiftSnapshotMacro {
     // Build initializer arguments for non-ignored, non-removed properties
     let activeProperties = properties.filter { !$0.isIgnored && $0.redaction?.mode != .remove }
     
-    let arguments = activeProperties.map { prop -> String in
+    // Build the arguments string
+    var argumentParts: [String] = []
+    for prop in activeProperties {
       let label = prop.renamedTo ?? prop.name
       
       if let redaction = prop.redaction {
         switch redaction.mode {
         case .mask(let maskValue):
-          return "\(label): \"\(maskValue)\""
+          // Generate masked literal - need to escape quotes in the mask value
+          argumentParts.append("\(label): \\\"\(maskValue)\\\"")
         case .hash:
-          // Generate a placeholder hash for now
-          return "\(label): \"<hashed>\""
+          argumentParts.append("\(label): \\\"<hashed>\\\"")
         case .remove:
           fatalError("Should not reach here - removed properties are filtered")
         }
       } else {
-        // Reference the actual property value
-        return "\(label): \\(instance.\(prop.name))"
+        // Reference the actual property value via interpolation
+        argumentParts.append("\(label): \\(instance.\(prop.name))")
       }
-    }.joined(separator: ", ")
+    }
+    
+    let arguments = argumentParts.joined(separator: ", ")
     
     return """
     internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {

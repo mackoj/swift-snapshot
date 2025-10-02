@@ -6,6 +6,7 @@ import XCTest
 final class SwiftSnapshotMacrosTests: XCTestCase {
   override func invokeTest() {
     withMacroTesting(
+      // isRecording: true,  // Enable to record new snapshots
       macros: [
         "SwiftSnapshot": SwiftSnapshotMacro.self,
         "SnapshotIgnore": SnapshotIgnoreMacro.self,

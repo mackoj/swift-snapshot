@@ -69,6 +69,8 @@ let package = Package(
       name: "SwiftSnapshotMacrosTests",
       dependencies: [
         "SwiftSnapshotMacrosPlugin",
+        "SwiftSnapshotMacros",
+        "SwiftSnapshot",
         .product(name: "MacroTesting", package: "swift-macro-testing"),
       ]
     ),
