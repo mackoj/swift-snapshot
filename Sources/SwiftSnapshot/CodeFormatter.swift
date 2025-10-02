@@ -3,6 +3,8 @@ import SwiftSyntax
 import SwiftParser
 import SwiftFormat
 
+// this need to be reworked
+
 /// Formats Swift code according to a FormatProfile
 enum CodeFormatter {
     /// Format a complete Swift file with header, context, and extension
@@ -47,21 +49,20 @@ enum CodeFormatter {
         // Join lines
         var result = lines.joined(separator: profile.endOfLine.string)
         
-        // TODO: Optionally apply swift-format if enabled via configuration
         // For now, keep the existing formatting to maintain test compatibility
-        // result = applySwiftFormat(to: result, profile: profile)
+      result = applySwiftFormat(to: result, profile: profile)
         
-        // Trim trailing whitespace if requested
-        if profile.trimTrailingWhitespace {
-            result = result.split(separator: "\n", omittingEmptySubsequences: false)
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .joined(separator: profile.endOfLine.string)
-        }
-        
-        // Add final newline if requested
-        if profile.insertFinalNewline && !result.hasSuffix("\n") {
-            result += profile.endOfLine.string
-        }
+//        // Trim trailing whitespace if requested
+//        if profile.trimTrailingWhitespace {
+//            result = result.split(separator: "\n", omittingEmptySubsequences: false)
+//                .map { $0.trimmingCharacters(in: .whitespaces) }
+//                .joined(separator: profile.endOfLine.string)
+//        }
+//        
+//        // Add final newline if requested
+//        if profile.insertFinalNewline && !result.hasSuffix("\n") {
+//            result += profile.endOfLine.string
+//        }
         
         return result
     }
@@ -70,9 +71,10 @@ enum CodeFormatter {
     private static func applySwiftFormat(to code: String, profile: FormatProfile) -> String {
         // Create swift-format configuration
         var configuration = SwiftFormat.Configuration()
-        configuration.indentation = .spaces(profile.indentSize)
-        configuration.lineLength = 120
-        configuration.maximumBlankLines = 1
+      
+//        configuration.indentation = .spaces(profile.indentSize)
+//        configuration.lineLength = 120
+//        configuration.maximumBlankLines = 1
         
         do {
             // Parse the code into a syntax tree using SwiftParser
