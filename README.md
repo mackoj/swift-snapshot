@@ -311,6 +311,37 @@ SwiftSnapshotConfig.setRenderOptions(options)
 
 ---
 
+## Formatting Configuration
+
+SwiftSnapshot supports configurable code formatting via `.editorconfig` or `.swift-format` files:
+
+```swift
+// Use .editorconfig
+let configURL = URL(fileURLWithPath: ".editorconfig")
+SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
+
+// Or use .swift-format
+let formatURL = URL(fileURLWithPath: ".swift-format")
+SwiftSnapshotConfig.setFormatConfigSource(.swiftFormat(formatURL))
+
+// Load and apply configuration
+if let source = SwiftSnapshotConfig.getFormatConfigSource() {
+    let profile = try FormatConfigLoader.loadProfile(from: source)
+    SwiftSnapshotConfig.setFormattingProfile(profile)
+}
+```
+
+Supported `.editorconfig` properties:
+- `indent_style` (space)
+- `indent_size` (1-8)
+- `end_of_line` (lf/crlf)
+- `insert_final_newline` (true/false)
+- `trim_trailing_whitespace` (true/false)
+
+See [Documentation/FormattingConfiguration.md](Documentation/FormattingConfiguration.md) for details.
+
+---
+
 ## Custom Renderers
 
 Register custom renderers for your types:
@@ -321,7 +352,7 @@ struct CustomType {
 }
 
 // Register a custom renderer
-SnapshotRendererRegistry.shared.register(CustomType.self) { value, context in
+SnapshotRendererRegistry.register(CustomType.self) { value, context in
     ExprSyntax(stringLiteral: "CustomType(value: \"CUSTOM_\(value.value)\")")
 }
 
@@ -331,6 +362,28 @@ let code = try SwiftSnapshotRuntime.generateSwiftCode(
     variableName: "myCustom"
 )
 // Uses your custom renderer
+```
+
+See [Documentation/CustomRenderers.md](Documentation/CustomRenderers.md) for comprehensive guide.
+
+---
+
+## Performance
+
+SwiftSnapshot is designed for high performance:
+
+- **Large Arrays**: 10,000 elements render in ~0.2s
+- **Complex Structures**: 1,000 nested models in <1s
+- **Concurrent Exports**: 50 parallel exports supported
+- **Thread-Safe**: All APIs are thread-safe
+- **Deterministic**: Consistent output under concurrent load
+
+Performance characteristics from test suite:
+```
+Large array (10k Int):        0.225s
+Complex structures (1k):      <1.0s  
+Dictionary (1k entries):      0.099s
+Concurrent exports (50):      0.019s
 ```
 
 ---

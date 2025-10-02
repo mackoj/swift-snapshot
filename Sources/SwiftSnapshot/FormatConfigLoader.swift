@@ -1,9 +1,38 @@
 import Foundation
 
-/// Loads format configuration from .editorconfig or .swift-format files
+/// Loads format configuration from .editorconfig or .swift-format files.
+///
+/// Provides utilities to parse formatting configuration from standard config files
+/// and search for them in directory hierarchies.
+///
+/// Supports:
+/// - `.editorconfig` with standard formatting properties
+/// - `.swift-format` JSON configuration files
+///
+/// Example:
+/// ```swift
+/// // Load from .editorconfig
+/// let configURL = URL(fileURLWithPath: ".editorconfig")
+/// let profile = try FormatConfigLoader.loadProfile(from: .editorconfig(configURL))
+///
+/// // Or search for config file
+/// if let found = FormatConfigLoader.findConfigFile(
+///     startingFrom: URL(fileURLWithPath: "."),
+///     named: ".editorconfig"
+/// ) {
+///     let profile = try FormatConfigLoader.loadProfile(from: .editorconfig(found))
+/// }
+/// ```
 enum FormatConfigLoader {
     
-    /// Load format profile from configuration source
+    /// Load format profile from configuration source.
+    ///
+    /// Parses the specified configuration file and returns a `FormatProfile`
+    /// with the extracted formatting settings.
+    ///
+    /// - Parameter source: The format configuration source, or `nil` for defaults
+    /// - Returns: A `FormatProfile` configured from the file, or defaults if `nil`
+    /// - Throws: `SwiftSnapshotError.formatting` if the file cannot be parsed
     static func loadProfile(from source: FormatConfigSource?) throws -> FormatProfile {
         guard let source = source else {
             return FormatProfile()
@@ -137,7 +166,26 @@ enum FormatConfigLoader {
         )
     }
     
-    /// Search for configuration file in directory hierarchy
+    /// Search for configuration file in directory hierarchy.
+    ///
+    /// Walks up the directory tree (up to 10 levels) looking for the specified file.
+    /// Useful for finding project-level configuration files.
+    ///
+    /// - Parameters:
+    ///   - directory: Starting directory for the search
+    ///   - fileName: Name of the configuration file to find
+    /// - Returns: URL of the found file, or `nil` if not found
+    ///
+    /// Example:
+    /// ```swift
+    /// let projectRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    /// if let config = FormatConfigLoader.findConfigFile(
+    ///     startingFrom: projectRoot,
+    ///     named: ".editorconfig"
+    /// ) {
+    ///     print("Found config at: \(config.path)")
+    /// }
+    /// ```
     static func findConfigFile(startingFrom directory: URL, named fileName: String) -> URL? {
         var currentDir = directory
         
