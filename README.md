@@ -1,7 +1,65 @@
 # SwiftSnapshot 📋
 
-Generate type-safe, human‑readable Swift source fixtures directly from live runtime values.  
+**Generate type-safe, human‑readable Swift source fixtures directly from live runtime values.**
+
 SwiftSnapshot turns your in‑memory objects into compilable Swift code you can commit, diff, and reuse anywhere—tests, previews, documentation, diagnostics—without bespoke serializers.
+
+[![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
+[![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+**Status**: ✅ Core runtime library implemented and tested (34 tests passing)
+
+---
+
+## Installation
+
+### Swift Package Manager
+
+Add SwiftSnapshot to your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.1.0")
+]
+```
+
+Then add it to your target:
+
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: ["SwiftSnapshot"]
+)
+```
+
+Or add it via Xcode: **File → Add Packages** and enter the repository URL.
+
+---
+
+## Quick Start
+
+```swift
+import SwiftSnapshot
+
+struct User {
+    let id: Int
+    let name: String
+}
+
+let user = User(id: 42, name: "Alice")
+
+// Generate and export Swift code
+let url = try SwiftSnapshotRuntime.export(
+    instance: user,
+    variableName: "testUser"
+)
+
+// Generated file contains:
+// extension User {
+//   static let testUser: User = User(id: 42, name: "Alice")
+// }
+```
 
 ---
 
@@ -22,20 +80,49 @@ extension User {
 ```
 
 These fixtures:
-- Compile (type safety)
-- Diff cleanly (great review ergonomics)
-- Are instantly reusable (no decoding step)
-- Evolve with refactors (compiler guides updates)
+- ✅ **Compile** (type safety)
+- ✅ **Diff cleanly** (great review ergonomics)
+- ✅ **Instantly reusable** (no decoding step)
+- ✅ **Evolve with refactors** (compiler guides updates)
 
 ---
 
-## Runtime‑First Usage (Primary API)
+## Features
 
-The primary, most explicit integration path is the runtime API. The macro is optional sugar described later.
+### ✅ Currently Implemented
 
-### 1. Define Your Type
+- **Runtime API**: Generate Swift fixtures from any value at runtime
+- **Primitive Types**: String, Int, Double, Float, Bool, Character
+- **Foundation Types**: Date, UUID, URL, Data, Decimal
+- **Collections**: Array, Dictionary, Set (with deterministic ordering)
+- **Optional Values**: Automatic nil handling
+- **Custom Types**: Structs, classes, and enums via reflection
+- **Nested Structures**: Recursive rendering of complex types
+- **Custom Renderers**: Extensible registry for custom type handling
+- **Configuration**: Global settings for output paths, headers, formatting
+- **Headers & Context**: Add documentation and custom headers to generated files
+- **File Management**: Smart path resolution, overwrite protection
+- **String Escaping**: Proper handling of special characters, unicode, and emoji
+- **Thread-Safe**: Concurrent exports supported
+
+### 🚧 Planned (Macro Layer)
+
+The macro layer is planned for future development and will provide:
+
+- **Type-Level Annotation**: `@SwiftSnapshot` for compile-time metadata
+- **Property Attributes**: `@SnapshotIgnore`, `@SnapshotRename`, `@SnapshotRedact`
+- **Optimized Generation**: Skip reflection for annotated types
+- **Enhanced Enum Support**: Full associated value labels
+
+---
+
+## Usage Examples
+
+### Basic Export
 
 ```swift
+import SwiftSnapshot
+
 enum Role {
     case admin
     case manager
@@ -49,70 +136,267 @@ struct User {
     var isActive: Bool
     var tags: [String]
 }
-```
 
-### 2. Capture a Snapshot at Runtime
-
-```swift
-import SwiftSnapshot
-
-let user = User(id: 42, name: "Alice", role: .admin, isActive: true, tags: ["admin", "beta"])
+let user = User(
+    id: 42, 
+    name: "Alice", 
+    role: .admin, 
+    isActive: true, 
+    tags: ["admin", "beta"]
+)
 
 let url = try SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUserCreation",
-    testName: #function // optional convenience for test contexts
+    testName: #function
 )
 
 print("Snapshot written to: \(url.path)")
-```
 
-### 3. Use the Generated Fixture
-
-```swift
-// Anywhere in your codebase
+// Use the generated fixture
 let reference = User.testUserCreation
 XCTAssertTrue(reference.isActive)
 ```
 
----
-
-## Optional Macro Layer (Sugar)
-
-If you prefer a per‑type convenience method and contextual documentation, annotate the model:
+### With Headers and Context
 
 ```swift
-import SwiftSnapshot
+let url = try SwiftSnapshotRuntime.export(
+    instance: product,
+    variableName: "sampleProduct",
+    header: """
+    // Test Fixtures
+    // Generated: \(Date())
+    """,
+    context: """
+    Standard product fixture used across pricing tests.
+    Represents a typical e-commerce product.
+    """
+)
+```
 
-@SwiftSnapshot(context: """
-Standard product fixture used across pricing tests.
-Represents typical e-commerce product with complete metadata.
-""")
-struct Product {
-    let id: String
-    let name: String
-    let price: Double
-    let categories: [String]
-    let isAvailable: Bool
+Generated output:
+```swift
+// Test Fixtures
+// Generated: 2024-01-15...
+
+/// Standard product fixture used across pricing tests.
+/// Represents a typical e-commerce product.
+import Foundation
+
+extension Product {
+    static let sampleProduct: Product = Product(...)
 }
 ```
 
-Then:
+### XCTest Integration
 
 ```swift
-let product = Product(
-    id: "prod-123",
-    name: "Wireless Headphones",
-    price: 199.99,
-    categories: ["Electronics", "Audio"],
-    isAvailable: true
-)
-
-try product.exportSnapshot(testName: #function)
-// Generates extension Product { static let testProductPricing: Product = ... }
+final class UserServiceTests: XCTestCase {
+    func testUserCreation() throws {
+        let user = User(
+            id: 1, 
+            name: "Test User", 
+            email: "test@example.com"
+        )
+        
+        // Export for use in other tests
+        let url = try SwiftSnapshotRuntime.export(
+            instance: user,
+            variableName: "testUserCreation",
+            testName: #function
+        )
+        
+        // Use the fixture
+        XCTAssertEqual(User.testUserCreation.id, 1)
+        XCTAssertEqual(User.testUserCreation.name, "Test User")
+    }
+}
 ```
 
-Use either pathway. The macro simply synthesizes the convenience `exportSnapshot(...)` forwarding into the runtime engine.
+### Custom Output Directory
+
+```swift
+let url = try SwiftSnapshotRuntime.export(
+    instance: user,
+    variableName: "testUser",
+    outputBasePath: "/path/to/fixtures"
+)
+```
+
+### Custom File Name
+
+```swift
+let url = try SwiftSnapshotRuntime.export(
+    instance: user,
+    variableName: "adminUser",
+    fileName: "User+AdminFixtures"
+)
+// Creates: User+AdminFixtures.swift
+```
+
+---
+
+## Supported Types
+
+### Built-In Rendering
+
+- **Primitives**: `String`, `Int`, `Double`, `Float`, `Bool`, `Character`
+- **Foundation**: `Date`, `UUID`, `URL`, `Decimal`, `Data`
+- **Collections**: `Array`, `Dictionary`, `Set`
+- **Optionals**: `T?` (automatic nil handling)
+- **Custom Types**: Any struct, class, or enum via reflection
+
+### Example Output
+
+```swift
+// String escaping
+"Hello\nWorld" → "Hello\\nWorld"
+
+// Date
+Date(timeIntervalSince1970: 1234567890.0)
+
+// UUID
+UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
+
+// URL
+URL(string: "https://example.com")!
+
+// Data (small)
+Data([0x01, 0x02, 0x03])
+
+// Data (large)
+Data(base64Encoded: "...")!
+
+// Dictionary (sorted keys)
+["key1": "value1", "key2": "value2"]
+
+// Set (deterministic order)
+Set(["ios", "swift", "testing"])
+```
+
+---
+
+## Configuration
+
+### Global Settings
+
+```swift
+// Set global output directory
+SwiftSnapshotConfig.setGlobalRoot(
+    URL(fileURLWithPath: "/path/to/fixtures")
+)
+
+// Set global header for all exports
+SwiftSnapshotConfig.setGlobalHeader("""
+// Project Test Fixtures
+// Auto-generated - Do not edit manually
+""")
+
+// Configure formatting
+var profile = FormatProfile()
+profile.indentSize = 2
+SwiftSnapshotConfig.setFormattingProfile(profile)
+
+// Configure rendering options
+var options = RenderOptions()
+options.sortDictionaryKeys = true
+options.setDeterminism = true
+SwiftSnapshotConfig.setRenderOptions(options)
+```
+
+### Directory Resolution Priority
+
+1. `outputBasePath` parameter (highest priority)
+2. `SwiftSnapshotConfig.setGlobalRoot()`
+3. `SWIFT_SNAPSHOT_ROOT` environment variable
+4. Default: `__Snapshots__` adjacent to test file (if in `/Tests/`)
+5. Fallback: Temporary directory
+
+---
+
+## Custom Renderers
+
+Register custom renderers for your types:
+
+```swift
+struct CustomType {
+    let value: String
+}
+
+// Register a custom renderer
+SnapshotRendererRegistry.shared.register(CustomType.self) { value, context in
+    ExprSyntax(stringLiteral: "CustomType(value: \"CUSTOM_\(value.value)\")")
+}
+
+let custom = CustomType(value: "test")
+let code = try SwiftSnapshotRuntime.generateSwiftCode(
+    instance: custom, 
+    variableName: "myCustom"
+)
+// Uses your custom renderer
+```
+
+---
+
+## API Reference
+
+### SwiftSnapshotRuntime
+
+```swift
+public enum SwiftSnapshotRuntime {
+    /// Export a value as a Swift source file
+    @discardableResult
+    public static func export<T>(
+        instance: T,
+        variableName: String,
+        fileName: String? = nil,
+        outputBasePath: String? = nil,
+        allowOverwrite: Bool = true,
+        header: String? = nil,
+        context: String? = nil,
+        testName: String? = nil,
+        line: UInt = #line,
+        fileID: StaticString = #fileID,
+        filePath: StaticString = #filePath
+    ) throws -> URL
+
+    /// Generate Swift code without writing to disk
+    public static func generateSwiftCode<T>(
+        instance: T,
+        variableName: String,
+        header: String? = nil,
+        context: String? = nil
+    ) throws -> String
+}
+```
+
+**Parameters:**
+- `variableName`: Identifier for the generated static property
+- `fileName`: Optional custom file name (`.swift` added automatically)
+- `outputBasePath`: Override output directory for this export
+- `allowOverwrite`: Whether to replace existing files (default: `true`)
+- `header`: Custom header text (overrides global header)
+- `context`: Documentation comment for the generated property
+- `testName`: Optional test name for grouping (uses `#function`)
+- `fileID`/`filePath`/`line`: Source location for directory inference
+
+**Returns:** URL to the created `.swift` file
+
+### SwiftSnapshotConfig
+
+```swift
+public enum SwiftSnapshotConfig {
+    public static func setGlobalRoot(_ url: URL?)
+    public static func getGlobalRoot() -> URL?
+    public static func setGlobalHeader(_ header: String?)
+    public static func getGlobalHeader() -> String?
+    public static func setFormattingProfile(_ profile: FormatProfile)
+    public static func formattingProfile() -> FormatProfile
+    public static func setRenderOptions(_ options: RenderOptions)
+    public static func renderOptions() -> RenderOptions
+}
+```
 
 ---
 
@@ -125,7 +409,7 @@ Fixtures are plain Swift—review, search, and reason about them like any other 
 Line‑level semantic diffs. No sprawling JSON updates or binary churn.
 
 ### ♻️ Multi‑Context Reuse
-Previews, tests, scripts, debugging hooks, documentation samples—no decoding layer.
+Use in previews, tests, scripts, debugging hooks, documentation samples—no decoding layer.
 
 ### 🛡️ Type Safe
 Refactors surface compiler errors instead of silent runtime mismatches.
@@ -151,423 +435,31 @@ Deterministic directory strategy with multiple override layers.
 
 ---
 
-## Installation
-
-### Swift Package Manager
-
-```swift
-dependencies: [
-  .package(url: "https://github.com/mackoj/swift-snapshot", from: "1.0.0")
-]
-```
-
-Target dependency:
-
-```swift
-.target(
-  name: "YourTarget",
-  dependencies: [
-    .product(name: "SwiftSnapshot", package: "swift-snapshot")
-  ]
-)
-```
-
-### Xcode
-
-1. File → Add Package Dependencies
-2. URL: https://github.com/mackoj/swift-snapshot
-3. Add
-
----
-
-## Quick Start (Runtime API Emphasis)
-
-```swift
-import SwiftSnapshot
-
-struct Product {
-    let id: String
-    let name: String
-    let price: Double
-    let categories: [String]
-    let isAvailable: Bool
-}
-
-func testProductPricing() throws {
-    let product = Product(
-        id: "prod-123",
-        name: "Wireless Headphones",
-        price: 199.99,
-        categories: ["Electronics", "Audio"],
-        isAvailable: true
-    )
-
-    // Writes: Tests/__Snapshots__/ProductTests/Product_testProductPricing.swift
-    let fileURL = try SwiftSnapshotRuntime.export(
-        instance: product,
-        variableName: "testProductPricing",
-        testName: #function
-    )
-
-    print("Snapshot saved: \(fileURL.lastPathComponent)")
-}
-```
-
-Consume:
-
-```swift
-let testProduct = Product.testProductPricing
-XCTAssertEqual(testProduct.price, 199.99)
-```
-
----
-
-## Advanced Runtime Options
-
-```swift
-try SwiftSnapshotRuntime.export(
-    instance: user,
-    variableName: "adminUser",
-    fileName: "User_Admin",        // optional explicit file name (default derives from type + variable)
-    outputBasePath: "/tmp/export", // override root directory for this call
-    allowOverwrite: true,
-    context: "Admin role baseline"
-)
-```
-
-### Alternate Naming Patterns
-
-```swift
-// Durable variable name
-try SwiftSnapshotRuntime.export(instance: user, variableName: "baseline")
-
-// Explicit file name (without .swift)
-try SwiftSnapshotRuntime.export(instance: user, variableName: "baseline", fileName: "User_Fixture")
-
-// Per-test naming
-try SwiftSnapshotRuntime.export(instance: user, variableName: "testUserValidation", testName: #function)
-```
-
----
-
-## Directory Resolution Priority
-
-Highest → lowest:
-
-1. `outputBasePath:` parameter (runtime call)
-2. `SwiftSnapshotConfig.setGlobalRoot(_:)`
-3. Environment: `SWIFT_SNAPSHOT_ROOT`
-4. Macro attribute parameter: `@SwiftSnapshot(folder: "...")`
-5. Default:
-   - In tests: `__Snapshots__` alongside the test file
-   - Else: a temporary directory
-
----
-
-## Configuration API
-
-```swift
-// Global output root
-SwiftSnapshotConfig.setGlobalRoot(URL(fileURLWithPath: "/Users/dev/shared-snapshots"))
-
-// Read current root
-let root = SwiftSnapshotConfig.getGlobalRoot()
-```
-
-Environment:
-
-```bash
-export SWIFT_SNAPSHOT_ROOT=/absolute/path/to/snapshots
-swift test
-```
-
----
-
-## Adding Context / Documentation
-
-Macro example (optional):
-
-```swift
-@SwiftSnapshot(context: """
-Represents a premium user with full access privileges.
-
-Usage:
-- Subscription flow tests
-- Billing tier = 'premium'
-- Updated: 2024-11-05 (added metadata)
-""")
-struct PremiumUser {
-    let id: String
-    let email: String
-    let subscriptionTier: String
-    let metadata: UserMetadata
-}
-```
-
-Generated snippet:
-
-```swift
-extension PremiumUser {
-    /// Represents a premium user with full access privileges.
-    ///
-    /// Usage:
-    /// - Subscription flow tests
-    /// - Billing tier = 'premium'
-    /// - Updated: 2024-11-05 (added metadata)
-    static let testPremiumUser: PremiumUser = PremiumUser(
-        // ...
-    )
-}
-```
-
-Context rules:
-- Must be a literal
-- Blank leading/trailing lines trimmed
-- Empty/whitespace ignored
-- Preserves intentional blank lines and bullet formatting
-
----
-
-## Supported Types (Built-In Rendering)
-
-SwiftSnapshot formats:
-
-- Primitives: `String`, `Int`, `Double`, `Bool`, `Float`, `Character`
-- Foundation: `Date`, `UUID`, `URL`, `Decimal`, `Data`
-- Collections: Arrays, Dictionaries, Sets
-- Optionals
-- `RawRepresentable` enums (via `Type(rawValue:)`)
-- Structs / classes via reflection (memberwise)
-- All `ExpressibleBy*Literal` conformers
-
-Example model:
-
-```swift
-struct DataTypes {
-    let text: String
-    let number: Int
-    let decimal: Double
-    let flag: Bool
-    let items: [String]
-    let uniqueItems: Set<Int>
-    let mapping: [String: Int]
-    let optional: String?
-    let optionalArray: [Int]?
-    let timestamp: Date
-    let data: Data
-    let address: Address
-    let addresses: [Address]
-}
-```
-
-Snapshot excerpt:
-
-```swift
-static let sample: DataTypes = DataTypes(
-  text: "Hello \"World\"",
-  number: 42,
-  decimal: 3.14159,
-  flag: true,
-  items: ["one", "two", "three"],
-  uniqueItems: [1, 2, 3],
-  mapping: ["key1": 1, "key2": 2],
-  optional: nil,
-  optionalArray: [1, 2, 3],
-  timestamp: Date(timeIntervalSince1970: 1_694_534_400.0),
-  data: Data([0x48, 0x65, 0x6C, 0x6C, 0x6F]),
-  address: Address(street: "123 Main St", city: "Anytown"),
-  addresses: [...]
-)
-```
-
----
-
-## Custom Rendering
-
-Override how specific types render:
-
-```swift
-import SwiftSnapshot
-
-struct Tag { let rawValue: String }
-
-struct TagRenderer: SnapshotValueRenderer {
-    func canRender<T>(_ value: T, type: Any.Type) -> Bool {
-        type == Tag.self
-    }
-
-    func render<T>(_ value: T, type: Any.Type, context: SnapshotRenderContext) -> String? {
-        let mirror = Mirror(reflecting: value)
-        for case let (label?, raw) in mirror.children where label == "rawValue" {
-            if let s = raw as? String { return "Tag(\"\(s)\")" }
-        }
-        return nil
-    }
-}
-
-SnapshotRenderersRegistry.shared.registerOverride(for: "Tag", renderer: TagRenderer())
-```
-
-When to override:
-- Custom initializer semantics
-- Enum dot shorthand desired
-- Non-memberwise canonical form
-- Default output not compiling / not idiomatic
-
-Built‑ins already handle the common primitives and foundational types.
-
----
-
-## API Reference (Core Runtime)
-
-```swift
-public struct SwiftSnapshotRuntime {
-
-  @discardableResult
-  public static func export<T>(
-      instance: T,
-      variableName: String,
-      fileName: String? = nil,
-      outputBasePath: String? = nil,
-      allowOverwrite: Bool = true,
-      context: String? = nil,
-      testName: String? = nil,
-      line: UInt = #line,
-      fileID: StaticString = #fileID,
-      filePath: StaticString = #filePath
-  ) throws -> URL
-
-  public static func generateSwiftCode<T>(
-      instance: T,
-      variableName: String
-  ) throws -> String
-}
-```
-
-Parameters:
-- variableName: Identifier inside generated extension
-- fileName: Override file (no `.swift` needed)
-- outputBasePath: Per-call directory override
-- allowOverwrite: Fail or replace existing
-- context: Documentation block
-- testName: Optional grouping under test context path
-- fileID/filePath/line: Source location for directory inference
-
-Returns: URL to created `.swift` file.
-
----
-
 ## Examples
 
-### XCTest Integration
-
-```swift
-final class UserServiceTests: XCTestCase {
-
-    func testUserSerialization() throws {
-        let user = User(
-            id: "user-123",
-            name: "John Doe",
-            email: "john@example.com",
-            preferences: UserPreferences(theme: .dark, notifications: true)
-        )
-
-        try SwiftSnapshotRuntime.export(instance: user, variableName: "testUserSerialization", testName: #function)
-
-        let snapshot = User.testUserSerialization
-        let encoded = try JSONEncoder().encode(snapshot)
-        let decoded = try JSONDecoder().decode(User.self, from: encoded)
-
-        XCTAssertEqual(decoded.id, snapshot.id)
-    }
-}
-```
-
-### SwiftUI Previews
-
-```swift
-struct UserProfileView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            UserProfileView(user: User.standardUser)
-                .previewDisplayName("Standard")
-
-            UserProfileView(user: User.adminUser)
-                .previewDisplayName("Admin")
-        }
-    }
-}
-```
-
-### Debug Hot Path
-
-```swift
-func processOrders(_ orders: [Order]) -> ResultSummary {
-    let summary = internalProcess(orders)
-
-    #if DEBUG
-    if let first = orders.first {
-        try? SwiftSnapshotRuntime.export(instance: first, variableName: "debugFirstOrder")
-    }
-    try? SwiftSnapshotRuntime.export(instance: summary, variableName: "debugProcessingResult")
-    #endif
-
-    return summary
-}
-```
+See [Examples/BasicUsage.md](Examples/BasicUsage.md) for comprehensive usage examples including:
+- Primitive and collection types
+- Nested structures
+- Custom renderers
+- Testing integration
+- Configuration options
 
 ---
 
-## Formatting Control
+## Contributing
 
-SwiftSnapshot formats generated files using a hierarchical configuration:
-
-Search order:
-1. `.swift-snapshot-format`
-2. `.editorconfig`
-3. Built‑in defaults
-
-Supported keys:
-
-| Setting | Values | Default | Purpose |
-|---------|--------|---------|---------|
-| indent_style | space | space | Indent style |
-| indent_size | integer | 4 | Spaces per indent |
-| end_of_line | lf / crlf / cr | lf | Line endings |
-| insert_final_newline | true/false | true | EOF newline |
-| trim_trailing_whitespace | true/false | true | Strip trailing spaces |
-
-Example `.swift-snapshot-format`:
-
-```ini
-indent_style = space
-indent_size = 2
-end_of_line = lf
-insert_final_newline = true
-trim_trailing_whitespace = true
-```
-
-EditorConfig example:
-
-```ini
-root = true
-
-[*.swift]
-indent_style = space
-indent_size = 2
-end_of_line = lf
-insert_final_newline = true
-```
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 ---
+
 ## Acknowledgments
 
-- Inspired by ideas from snapshot testing ecosystems (e.g. pointfreeco)
-- Path resolution strategy influenced by swift-snapshot-testing
-- Built atop SwiftSyntax for any macro-powered conveniences
+- Inspired by snapshot testing ecosystems (e.g., [pointfreeco/swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing))
+- Built with [SwiftSyntax](https://github.com/apple/swift-syntax) for robust code generation
+- Uses [swift-issue-reporting](https://github.com/pointfreeco/swift-issue-reporting) for better error messages
 
 ---
 
 ## License
 
-MIT. See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.
