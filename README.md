@@ -323,12 +323,6 @@ SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
 // Or use .swift-format
 let formatURL = URL(fileURLWithPath: ".swift-format")
 SwiftSnapshotConfig.setFormatConfigSource(.swiftFormat(formatURL))
-
-// Load and apply configuration
-if let source = SwiftSnapshotConfig.getFormatConfigSource() {
-    let profile = try FormatConfigLoader.loadProfile(from: source)
-    SwiftSnapshotConfig.setFormattingProfile(profile)
-}
 ```
 
 Supported `.editorconfig` properties:
