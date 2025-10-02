@@ -1,4 +1,5 @@
 import XCTest
+import InlineSnapshotTesting
 
 @testable import SwiftSnapshot
 
@@ -21,9 +22,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testInt"
     )
 
-    XCTAssertTrue(code.contains("extension Int"))
-    XCTAssertTrue(code.contains("static let testInt: Int = 42"))
-    XCTAssertTrue(code.contains("import Foundation"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Int { static let testInt: Int = 42 }
+
+      """
+    }
   }
 
   func testStringGeneration() throws {
@@ -32,8 +38,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testString"
     )
 
-    XCTAssertTrue(code.contains("extension String"))
-    XCTAssertTrue(code.contains("static let testString: String = \"Hello, World!\""))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension String { static let testString: String = "Hello, World!" }
+
+      """
+    }
   }
 
   func testBoolGeneration() throws {
@@ -42,8 +54,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testBool"
     )
 
-    XCTAssertTrue(code.contains("extension Bool"))
-    XCTAssertTrue(code.contains("static let testBool: Bool = true"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Bool { static let testBool: Bool = true }
+
+      """
+    }
   }
 
   func testDoubleGeneration() throws {
@@ -52,9 +70,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testDouble"
     )
 
-    XCTAssertTrue(code.contains("extension Double"))
-    XCTAssertTrue(code.contains("static let testDouble: Double"))
-    XCTAssertTrue(code.contains("3.14159"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Double { static let testDouble: Double = 3.14159 }
+
+      """
+    }
   }
 
   // MARK: - String Escaping Tests
@@ -66,9 +89,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testEscaped"
     )
 
-    XCTAssertTrue(code.contains("\\n"))
-    XCTAssertTrue(code.contains("\\t"))
-    XCTAssertTrue(code.contains("\\\""))
+    assertInlineSnapshot(of: code, as: .description) {
+      #"""
+      import Foundation
+
+      extension String { static let testEscaped: String = #"Hello\nWorld\t\"quoted\""# }
+
+      """#
+    }
   }
 
   // MARK: - Collection Tests
@@ -80,13 +108,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testArray"
     )
 
-    XCTAssertTrue(
-      code.contains("extension [Int]") || code.contains("extension Array<Int>"),
-      "Missing array extension")
-    XCTAssertTrue(code.contains("testArray"), "Missing 'testArray'")
-    // Should contain the numbers
-    XCTAssertTrue(code.contains("1"), "Missing '1'")
-    XCTAssertTrue(code.contains("5"), "Missing '5'")
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Array<Int> { static let testArray: Array<Int> = [1, 2, 3, 4, 5] }
+
+      """
+    }
   }
 
   func testEmptyArrayGeneration() throws {
@@ -96,7 +125,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testEmptyArray"
     )
 
-    XCTAssertTrue(code.contains("[]"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Array<Int> { static let testEmptyArray: Array<Int> = [] }
+
+      """
+    }
   }
 
   func testDictionaryGeneration() throws {
@@ -106,16 +142,16 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testDict"
     )
 
-    print("=== Dictionary Generation Output ===")
-    print(code)
-    print("=== End ===")
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
 
-    XCTAssertTrue(
-      code.contains("extension [String: String]")
-        || code.contains("extension Dictionary<String, String>"), "Missing dictionary extension")
-    // Keys should be present
-    XCTAssertTrue(code.contains("key1"), "Missing 'key1'")
-    XCTAssertTrue(code.contains("key2"), "Missing 'key2'")
+      extension Dictionary<String, String> {
+          static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
+      }
+
+      """
+    }
   }
 
   // MARK: - Optional Tests
@@ -127,8 +163,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testOptional"
     )
 
-    XCTAssertTrue(code.contains("42"))
-    XCTAssertFalse(code.contains("nil"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Optional<Int> { static let testOptional: Optional<Int> = 42 }
+
+      """
+    }
   }
 
   func testOptionalNil() throws {
@@ -138,7 +180,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testOptional"
     )
 
-    XCTAssertTrue(code.contains("nil"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Optional<Int> { static let testOptional: Optional<Int> = nil }
+
+      """
+    }
   }
 
   // MARK: - Foundation Type Tests
@@ -150,8 +199,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testDate"
     )
 
-    XCTAssertTrue(code.contains("Date(timeIntervalSince1970:"))
-    XCTAssertTrue(code.contains("1234567890"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Date { static let testDate: Date = Date(timeIntervalSince1970: 1234567890.0) }
+
+      """
+    }
   }
 
   func testUUIDGeneration() throws {
@@ -161,8 +216,16 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testUUID"
     )
 
-    XCTAssertTrue(code.contains("UUID(uuidString:"))
-    XCTAssertTrue(code.contains("12345678-1234-1234-1234-123456789012"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension UUID {
+          static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
+      }
+
+      """
+    }
   }
 
   func testURLGeneration() throws {
@@ -172,8 +235,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testURL"
     )
 
-    XCTAssertTrue(code.contains("URL(string:"))
-    XCTAssertTrue(code.contains("example.com"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension URL { static let testURL: URL = URL(string: "https://example.com")! }
+
+      """
+    }
   }
 
   func testDataSmallGeneration() throws {
@@ -183,8 +252,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testData"
     )
 
-    XCTAssertTrue(code.contains("Data(["))
-    XCTAssertTrue(code.contains("0x01"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Data { static let testData: Data = Data([0x01, 0x02, 0x03]) }
+
+      """
+    }
   }
 
   func testDataLargeGeneration() throws {
@@ -194,7 +269,19 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testData"
     )
 
-    XCTAssertTrue(code.contains("base64Encoded:"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Data {
+          static let testData: Data = Data(
+              base64Encoded:
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+          )!
+      }
+
+      """
+    }
   }
 
   // MARK: - Struct Reflection Tests
@@ -211,12 +298,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testPerson"
     )
 
-    XCTAssertTrue(code.contains("extension Person"))
-    XCTAssertTrue(code.contains("Person("))
-    XCTAssertTrue(code.contains("name:"))
-    XCTAssertTrue(code.contains("Alice"))
-    XCTAssertTrue(code.contains("age:"))
-    XCTAssertTrue(code.contains("30"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Person { static let testPerson: Person = Person(name: "Alice", age: 30) }
+
+      """
+    }
   }
 
   // MARK: - Enum Tests
@@ -233,8 +322,14 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testStatus"
     )
 
-    XCTAssertTrue(code.contains("extension Status"))
-    XCTAssertTrue(code.contains(".active"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
+
+      extension Status { static let testStatus: Status = .active }
+
+      """
+    }
   }
 
   // MARK: - Header and Context Tests
@@ -246,7 +341,16 @@ final class SwiftSnapshotTests: XCTestCase {
       header: "// Custom Header"
     )
 
-    XCTAssertTrue(code.contains("// Custom Header"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      // // Custom Header
+
+      import Foundation
+
+      extension Int { static let testInt: Int = 42 }
+
+      """
+    }
   }
 
   func testContextGeneration() throws {
@@ -256,7 +360,15 @@ final class SwiftSnapshotTests: XCTestCase {
       context: "This is a test integer"
     )
 
-    XCTAssertTrue(code.contains("/// This is a test integer"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      /// This is a test integer
+      import Foundation
+
+      extension Int { static let testInt: Int = 42 }
+
+      """
+    }
   }
 
   func testGlobalHeaderConfiguration() throws {
@@ -267,7 +379,16 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testInt"
     )
 
-    XCTAssertTrue(code.contains("// Global Header"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      // // Global Header
+
+      import Foundation
+
+      extension Int { static let testInt: Int = 42 }
+
+      """
+    }
   }
 
   // MARK: - File Export Tests
@@ -275,21 +396,25 @@ final class SwiftSnapshotTests: XCTestCase {
   func testFileExport() throws {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)
-
+    
     let url = try SwiftSnapshotRuntime.export(
       instance: 42,
       variableName: "testInt",
       outputBasePath: tempDir.path
     )
-
+    // Cleanup
+    defer { try? FileManager.default.removeItem(at: tempDir) }
     XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
     let content = try String(contentsOf: url, encoding: .utf8)
-    XCTAssertTrue(content.contains("extension Int"))
-    XCTAssertTrue(content.contains("static let testInt: Int = 42"))
+    assertInlineSnapshot(of: content, as: .description) {
+      """
+      import Foundation
 
-    // Cleanup
-    try? FileManager.default.removeItem(at: tempDir)
+      extension Int { static let testInt: Int = 42 }
+
+      """
+    }
   }
 
   func testFileExportOverwriteDisallowed() throws {
@@ -302,6 +427,8 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testInt",
       outputBasePath: tempDir.path
     )
+    // Cleanup
+    defer { try? FileManager.default.removeItem(at: tempDir) }
 
     // Second export with overwrite disallowed should throw
     XCTAssertThrowsError(
@@ -314,9 +441,6 @@ final class SwiftSnapshotTests: XCTestCase {
     ) { error in
       XCTAssertTrue(error is SwiftSnapshotError)
     }
-
-    // Cleanup
-    try? FileManager.default.removeItem(at: tempDir)
   }
 
   // MARK: - Configuration Tests

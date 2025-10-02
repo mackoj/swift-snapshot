@@ -1,4 +1,5 @@
 import XCTest
+import InlineSnapshotTesting
 
 @testable import SwiftSnapshot
 
@@ -104,14 +105,14 @@ final class FormattingConfigTests: XCTestCase {
       variableName: "testValue"
     )
 
-    // Verify the code was generated
-    XCTAssertTrue(code.contains("import Foundation"))
-    XCTAssertTrue(code.contains("extension Int"))
-    XCTAssertTrue(code.contains("testValue"))
-    XCTAssertTrue(code.contains("42"))
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
 
-    // Verify it ends with a newline (insertFinalNewline)
-    XCTAssertTrue(code.hasSuffix("\n"))
+      extension Int { static let testValue: Int = 42 }
+
+      """
+    }
   }
 
   /// Test configuration precedence
@@ -153,13 +154,15 @@ final class FormattingConfigTests: XCTestCase {
       instance: [1, 2, 3],
       variableName: "numbers"
     )
+    
+    assertInlineSnapshot(of: code, as: .description) {
+      """
+      import Foundation
 
-    // Verify code is generated correctly with defaults
-    XCTAssertTrue(code.contains("import Foundation"))
-    XCTAssertTrue(code.contains("numbers"))
-    XCTAssertTrue(code.contains("1"))
-    XCTAssertTrue(code.contains("2"))
-    XCTAssertTrue(code.contains("3"))
+      extension Array<Int> { static let numbers: Array<Int> = [1, 2, 3] }
+
+      """
+    }
   }
 
   /// Test FormatConfigLoader.findConfigFile
