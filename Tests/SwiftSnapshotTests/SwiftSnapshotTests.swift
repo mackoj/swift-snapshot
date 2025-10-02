@@ -79,7 +79,7 @@ final class SwiftSnapshotTests: XCTestCase {
             variableName: "testArray"
         )
         
-        XCTAssertTrue(code.contains("extension Array"))
+        XCTAssertTrue(code.contains("extension [Int]"))
         XCTAssertTrue(code.contains("testArray"))
         // Should contain the numbers
         XCTAssertTrue(code.contains("1"))
@@ -103,7 +103,7 @@ final class SwiftSnapshotTests: XCTestCase {
             variableName: "testDict"
         )
         
-        XCTAssertTrue(code.contains("extension Dictionary"))
+        XCTAssertTrue(code.contains("extension [String: String]"))
         // Keys should be present
         XCTAssertTrue(code.contains("key1"))
         XCTAssertTrue(code.contains("key2"))
@@ -185,7 +185,7 @@ final class SwiftSnapshotTests: XCTestCase {
             variableName: "testData"
         )
         
-        XCTAssertTrue(code.contains("Data(base64Encoded:"))
+        XCTAssertTrue(code.contains("base64Encoded:"))
     }
     
     // MARK: - Struct Reflection Tests

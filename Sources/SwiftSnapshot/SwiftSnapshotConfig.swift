@@ -1,10 +1,53 @@
 import Foundation
 
-/// Global configuration for SwiftSnapshot
+/// Source for format configuration.
+///
+/// Specifies which configuration file to use for code formatting.
+/// Choose either `.editorconfig` or `.swift-format`, not both.
+///
+/// Example:
+/// ```swift
+/// // Use .editorconfig
+/// let configURL = URL(fileURLWithPath: ".editorconfig")
+/// SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
+///
+/// // Or use .swift-format
+/// let formatURL = URL(fileURLWithPath: ".swift-format")
+/// SwiftSnapshotConfig.setFormatConfigSource(.swiftFormat(formatURL))
+/// ```
+public enum FormatConfigSource {
+    /// Use .editorconfig file for formatting configuration
+    case editorconfig(URL)
+    /// Use .swift-format JSON file for formatting configuration
+    case swiftFormat(URL)
+}
+
+/// Global configuration for SwiftSnapshot.
+///
+/// Provides static methods to configure snapshot generation behavior including:
+/// - Output directory paths
+/// - Global headers for generated files
+/// - Code formatting profiles
+/// - Format configuration sources (.editorconfig or .swift-format)
+/// - Rendering options
+///
+/// All configuration methods are thread-safe.
+///
+/// Example:
+/// ```swift
+/// // Configure global settings
+/// SwiftSnapshotConfig.setGlobalRoot(URL(fileURLWithPath: "./Fixtures"))
+/// SwiftSnapshotConfig.setGlobalHeader("// Auto-generated fixtures")
+///
+/// // Configure formatting from .editorconfig
+/// let configURL = URL(fileURLWithPath: ".editorconfig")
+/// SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
+/// ```
 public enum SwiftSnapshotConfig {
     private static var globalRoot: URL?
     private static var globalHeader: String?
     private static var formatProfile: FormatProfile = FormatProfile()
+    private static var formatConfigSource: FormatConfigSource?
     private static var renderOpts: RenderOptions = RenderOptions()
     private static let lock = NSLock()
     
@@ -62,5 +105,34 @@ public enum SwiftSnapshotConfig {
         lock.lock()
         defer { lock.unlock() }
         return renderOpts
+    }
+    
+    /// Set the format configuration source (either .editorconfig or .swift-format).
+    ///
+    /// Use this to specify which configuration file should be used for formatting.
+    /// Pass `nil` to use default formatting.
+    ///
+    /// - Parameter source: The format configuration source, or `nil` for defaults
+    ///
+    /// Example:
+    /// ```swift
+    /// let configURL = URL(fileURLWithPath: ".editorconfig")
+    /// SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
+    /// ```
+    public static func setFormatConfigSource(_ source: FormatConfigSource?) {
+        lock.lock()
+        defer { lock.unlock() }
+        formatConfigSource = source
+    }
+    
+    /// Get the current format configuration source.
+    ///
+    /// Returns the currently configured format source, or `nil` if using defaults.
+    ///
+    /// - Returns: The format configuration source, or `nil` if none is set
+    public static func getFormatConfigSource() -> FormatConfigSource? {
+        lock.lock()
+        defer { lock.unlock() }
+        return formatConfigSource
     }
 }

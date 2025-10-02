@@ -164,7 +164,7 @@ final class IntegrationTests: XCTestCase {
             variableName: "testItems"
         )
         
-        XCTAssertTrue(code.contains("extension Array"))
+        XCTAssertTrue(code.contains("extension [Item]"))
         XCTAssertTrue(code.contains("Item("))
         XCTAssertTrue(code.contains("First"))
         XCTAssertTrue(code.contains("Second"))
@@ -190,7 +190,7 @@ final class IntegrationTests: XCTestCase {
             variableName: "testConfigs"
         )
         
-        XCTAssertTrue(code.contains("extension Dictionary"))
+        XCTAssertTrue(code.contains("extension [String: Config]"))
         XCTAssertTrue(code.contains("production"))
         XCTAssertTrue(code.contains("staging"))
         XCTAssertTrue(code.contains("development"))
