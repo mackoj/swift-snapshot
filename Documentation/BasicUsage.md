@@ -148,7 +148,7 @@ try SwiftSnapshotRuntime.export(instance: person, variableName: "testPerson")
 ### Adding Headers
 
 ```swift
-let code = try SwiftSnapshotRuntime.generateSwiftCode(
+let url = try SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser",
     header: """
@@ -162,7 +162,7 @@ let code = try SwiftSnapshotRuntime.generateSwiftCode(
 ### Adding Documentation Context
 
 ```swift
-let code = try SwiftSnapshotRuntime.generateSwiftCode(
+let url = try SwiftSnapshotRuntime.export(
     instance: product,
     variableName: "sampleProduct",
     context: """
@@ -170,7 +170,7 @@ let code = try SwiftSnapshotRuntime.generateSwiftCode(
     Represents a typical e-commerce product with complete metadata.
     """
 )
-// Generates:
+// Generates file with:
 // /// Standard product fixture used across pricing tests.
 // /// Represents a typical e-commerce product with complete metadata.
 // import Foundation
@@ -264,8 +264,8 @@ SnapshotRendererRegistry.shared.register(CustomType.self) { value, context in
 }
 
 let custom = CustomType(value: "test")
-let code = try SwiftSnapshotRuntime.generateSwiftCode(instance: custom, variableName: "myCustom")
-// Uses your custom renderer
+let url = try SwiftSnapshotRuntime.export(instance: custom, variableName: "myCustom")
+// Uses your custom renderer and exports to file
 ```
 
 ## Tips and Best Practices
