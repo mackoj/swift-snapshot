@@ -1,4 +1,5 @@
 import Foundation
+import Dependencies
 
 /// Context provided to custom renderers
 public struct SnapshotRenderContext {
@@ -13,12 +14,13 @@ public struct SnapshotRenderContext {
 
   public init(
     path: [String] = [],
-    formatting: FormatProfile = FormatProfile(),
-    options: RenderOptions = RenderOptions()
+    formatting: FormatProfile? = nil,
+    options: RenderOptions? = nil
   ) {
+    @Dependency(\.swiftSnapshotConfig) var snapshotConfig
     self.path = path
-    self.formatting = formatting
-    self.options = options
+    self.formatting = formatting ?? snapshotConfig.getFormatProfile()
+    self.options = options ?? snapshotConfig.getRenderOptions()
   }
 
   /// Create a new context with an additional path component

@@ -35,7 +35,7 @@ enum FormatConfigLoader {
   /// - Throws: `SwiftSnapshotError.formatting` if the file cannot be parsed
   static func loadProfile(from source: FormatConfigSource?) throws -> FormatProfile {
     guard let source = source else {
-      return FormatProfile()
+      return SwiftSnapshotConfig.libraryDefaultFormatProfile()
     }
 
     switch source {

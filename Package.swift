@@ -19,6 +19,7 @@ let package = Package(
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.17.0"),
     .package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.5.0"),
+    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.2.0"),
   ],
   targets: [
     // Macro implementation (compiler plugin)
@@ -51,6 +52,7 @@ let package = Package(
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftFormat", package: "swift-format"),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
       ]
     ),
 

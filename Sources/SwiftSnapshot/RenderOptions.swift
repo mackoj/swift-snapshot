@@ -15,10 +15,10 @@ public struct RenderOptions {
   public var forceEnumDotSyntax: Bool
 
   public init(
-    sortDictionaryKeys: Bool = true,
-    setDeterminism: Bool = true,
-    dataInlineThreshold: Int = 16,
-    forceEnumDotSyntax: Bool = true
+    sortDictionaryKeys: Bool,
+    setDeterminism: Bool,
+    dataInlineThreshold: Int,
+    forceEnumDotSyntax: Bool
   ) {
     self.sortDictionaryKeys = sortDictionaryKeys
     self.setDeterminism = setDeterminism
@@ -62,11 +62,11 @@ public struct FormatProfile {
   }
 
   public init(
-    indentStyle: IndentStyle = .space,
-    indentSize: Int = 4,
-    endOfLine: EndOfLine = .lf,
-    insertFinalNewline: Bool = true,
-    trimTrailingWhitespace: Bool = true
+    indentStyle: IndentStyle,
+    indentSize: Int,
+    endOfLine: EndOfLine,
+    insertFinalNewline: Bool,
+    trimTrailingWhitespace: Bool
   ) {
     self.indentStyle = indentStyle
     self.indentSize = indentSize

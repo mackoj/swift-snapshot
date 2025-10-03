@@ -7,10 +7,7 @@ extension SnapshotTests {
   @Suite struct SwiftSnapshotTests {
     init() {
       // Reset configuration between tests
-      SwiftSnapshotConfig.setGlobalRoot(nil)
-      SwiftSnapshotConfig.setGlobalHeader(nil)
-      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
+      SwiftSnapshotConfig.resetToLibraryDefaults()
     }
 
     // MARK: - Basic Primitive Tests
@@ -444,7 +441,13 @@ extension SnapshotTests {
 
     @Test func configurationPrecedence() throws {
     // Test that configuration is properly retrieved
-    let customProfile = FormatProfile(indentSize: 2)
+    let customProfile = FormatProfile(
+      indentStyle: .space,
+      indentSize: 2,
+      endOfLine: .lf,
+      insertFinalNewline: true,
+      trimTrailingWhitespace: true
+    )
     SwiftSnapshotConfig.setFormattingProfile(customProfile)
 
     let retrieved = SwiftSnapshotConfig.formattingProfile()
@@ -452,8 +455,12 @@ extension SnapshotTests {
     }
 
     @Test func renderOptions() throws {
-    var options = RenderOptions()
-    options.sortDictionaryKeys = false
+    let options = RenderOptions(
+      sortDictionaryKeys: false,
+      setDeterminism: true,
+      dataInlineThreshold: 16,
+      forceEnumDotSyntax: true
+    )
     SwiftSnapshotConfig.setRenderOptions(options)
 
     let retrieved = SwiftSnapshotConfig.renderOptions()
