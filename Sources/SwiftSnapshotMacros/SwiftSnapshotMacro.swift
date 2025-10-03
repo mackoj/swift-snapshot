@@ -85,7 +85,6 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "\(raw: typeName.prefix(1).lowercased() + typeName.dropFirst())"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -102,10 +101,6 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("\(raw: typeName).exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """
