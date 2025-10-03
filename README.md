@@ -8,6 +8,8 @@ SwiftSnapshot turns your in‑memory objects into compilable Swift code you can 
 [![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+> **⚠️ Important**: SwiftSnapshot is designed exclusively for **DEBUG builds**. All public APIs are disabled in release builds to ensure **zero runtime overhead** and **zero binary bloat** in production. Your release builds remain completely unaffected by this library.
+
 ---
 
 ## Why SwiftSnapshot?
@@ -30,6 +32,9 @@ No git‑lfs or compression; just fast, lean Swift source.
 ### 🗂️ Scalable Organization
 Deterministic directory strategy with multiple override layers.
 
+### 🚀 Zero Production Impact
+All APIs are DEBUG-only. Release builds have **zero runtime overhead** and **zero binary bloat**.
+
 ---
 
 ## Comparison to Alternatives
@@ -42,6 +47,7 @@ Deterministic directory strategy with multiple override layers.
 | Reusability | ✅ Use anywhere | ⚠️ Parsing required | ❌ Test-only |
 | IDE Support | ✅ Full autocomplete | ❌ No assistance | ❌ No assistance |
 | Debugging | ✅ Easy inspection | ⚠️ Mental parsing | ❌ External tools |
+| Production Impact | ✅ Zero overhead | ⚠️ Bundle bloat | ⚠️ Bundle bloat |
 
 ---
 
@@ -70,6 +76,48 @@ Or add it via Xcode: **File → Add Packages** and enter the repository URL.
 
 ---
 
+## 🔒 DEBUG-Only Architecture
+
+SwiftSnapshot follows the same philosophy as libraries like [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) and [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay): **test infrastructure should not impact production code**.
+
+### How It Works
+
+All public APIs are wrapped in `#if DEBUG` compiler directives:
+
+- **In DEBUG builds**: Full functionality - snapshot generation, file I/O, configuration
+- **In RELEASE builds**: All methods become no-ops or return placeholder values
+- **Result**: Zero runtime overhead, zero binary bloat in production
+
+### Example
+
+```swift
+// This code is safe to leave in your codebase
+@SwiftSnapshot
+struct User {
+    let id: Int
+    let name: String
+}
+
+// In DEBUG: Creates snapshot file
+// In RELEASE: Returns placeholder URL, no I/O
+let url = try user.exportSnapshot()
+```
+
+### Best Practices
+
+While the library is DEBUG-only, you can still wrap your snapshot code in `#if DEBUG` for clarity:
+
+```swift
+#if DEBUG
+let url = try user.exportSnapshot(variableName: "testUser")
+print("Snapshot saved to: \(url.path)")
+#endif
+```
+
+This makes your intent explicit and prevents accidentally relying on the snapshot URL in production code paths.
+
+---
+
 ## Quick Start
 
 ```swift
@@ -83,19 +131,20 @@ struct User {
 }
 
 let user = User(id: 42, name: "Alice")
-let url = try user.exportSnapshot(variableName: "testUser")
 
-// OR using runtime API directly
-let urlDirect = try SwiftSnapshotRuntime.export(
-    instance: user,
-    variableName: "testUser"
-)
+#if DEBUG
+// This only executes in debug builds
+let url = try user.exportSnapshot(variableName: "testUser")
+print("Snapshot saved to: \(url.path)")
+#endif
 
 // Generated file contains:
 // extension User {
 //   static let testUser: User = User(id: 42, name: "Alice")
 // }
 ```
+
+**Note**: The `exportSnapshot()` method is only available in DEBUG builds. In release builds, it becomes a no-op that returns a placeholder URL.
 
 ---
 
@@ -462,9 +511,12 @@ Set(["ios", "swift", "testing"])
 
 ## Configuration
 
+> **Note**: All configuration APIs are DEBUG-only. They have no effect in release builds.
+
 ### Global Settings (Static API)
 
 ```swift
+#if DEBUG
 // Set global output directory
 SwiftSnapshotConfig.setGlobalRoot(
     URL(fileURLWithPath: "/path/to/fixtures")
@@ -497,6 +549,7 @@ SwiftSnapshotConfig.setRenderOptions(options)
 
 // Reset to library defaults
 SwiftSnapshotConfig.resetToLibraryDefaults()
+#endif
 ```
 
 ### Dependency Injection (Recommended for Tests)
@@ -594,6 +647,8 @@ See [Documentation/FormattingConfiguration.md](Documentation/FormattingConfigura
 
 ## Custom Renderers
 
+> **Note**: Custom renderer registration is DEBUG-only.
+
 Register custom renderers for your types:
 
 ```swift
@@ -601,17 +656,22 @@ struct CustomType {
     let value: String
 }
 
-// Register a custom renderer
+#if DEBUG
+// Register a custom renderer (DEBUG only)
 SnapshotRendererRegistry.register(CustomType.self) { value, context in
     ExprSyntax(stringLiteral: "CustomType(value: \"CUSTOM_\(value.value)\")")
 }
+#endif
 
 let custom = CustomType(value: "test")
+
+#if DEBUG
 let url = try SwiftSnapshotRuntime.export(
     instance: custom, 
     variableName: "myCustom"
 )
 // Uses your custom renderer and exports to file
+#endif
 ```
 
 See [Documentation/CustomRenderers.md](Documentation/CustomRenderers.md) for comprehensive guide.
@@ -640,11 +700,14 @@ Concurrent exports (50):      0.019s
 
 ## API Reference
 
+> **Important**: All public APIs are DEBUG-only. In release builds, they become no-ops or return placeholder values.
+
 ### SwiftSnapshotRuntime
 
 ```swift
 public enum SwiftSnapshotRuntime {
     /// Export a value as a Swift source file
+    /// **Debug Only**: No-op in release builds, returns placeholder URL
     @discardableResult
     public static func export<T>(
         instance: T,
@@ -736,9 +799,50 @@ let renderOpts = config.getRenderOptions()
 
 ---
 
+## FAQ
+
+### Why is SwiftSnapshot DEBUG-only?
+
+SwiftSnapshot is a **development tool**, not a runtime feature. Similar to [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay) and test infrastructure in [swift-dependencies](https://github.com/pointfreeco/swift-dependencies), it should have zero impact on your production binaries.
+
+**Benefits:**
+- ✅ Zero runtime overhead in production
+- ✅ Zero binary bloat (entire library excluded from release builds)
+- ✅ No accidental snapshot generation in production
+- ✅ Safe to leave snapshot code in your codebase
+
+### What happens in release builds?
+
+All public methods become no-ops:
+- `SwiftSnapshotRuntime.export()` returns a placeholder URL without I/O
+- `exportSnapshot()` returns a placeholder URL without I/O
+- Configuration setters do nothing
+- Registry operations do nothing
+
+### Can I conditionally use snapshots?
+
+Yes! Wrap your snapshot code in `#if DEBUG` for clarity:
+
+```swift
+#if DEBUG
+let url = try user.exportSnapshot()
+print("Snapshot saved to: \(url.path)")
+#endif
+```
+
+### Is this production-ready?
+
+Yes! The DEBUG-only design means:
+- Your production code is unaffected
+- No performance impact
+- No binary size increase
+- Full functionality in DEBUG builds for development and testing
+
+---
+
 ## Examples
 
-See [Examples/BasicUsage.md](Examples/BasicUsage.md) for comprehensive usage examples including:
+See [Documentation/BasicUsage.md](Documentation/BasicUsage.md) for comprehensive usage examples including:
 - Primitive and collection types
 - Nested structures
 - Custom renderers

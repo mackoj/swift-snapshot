@@ -71,6 +71,10 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
     let extensionDecl: DeclSyntax =
       """
       extension \(raw: typeName): SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -81,6 +85,7 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "\(raw: typeName.prefix(1).lowercased() + typeName.dropFirst())"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -97,6 +102,9 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """

@@ -34,9 +34,12 @@ public enum FormatConfigSource {
 ///
 /// All configuration methods are thread-safe.
 ///
+/// **Note**: All public configuration methods are only available in DEBUG builds.
+/// In release builds, they become no-ops to ensure zero runtime overhead in production.
+///
 /// Example:
 /// ```swift
-/// // Configure global settings
+/// // Configure global settings (DEBUG only)
 /// SwiftSnapshotConfig.setGlobalRoot(URL(fileURLWithPath: "./Fixtures"))
 /// SwiftSnapshotConfig.setGlobalHeader("// Auto-generated fixtures")
 ///
@@ -70,65 +73,107 @@ public enum SwiftSnapshotConfig {
   private static let lock = NSLock()
 
   /// Set the global root directory for snapshot output
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func setGlobalRoot(_ url: URL?) {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     globalRoot = url
+    #endif
   }
 
   /// Get the global root directory
+  ///
+  /// **Debug Only**: Returns `nil` in non-DEBUG builds.
   public static func getGlobalRoot() -> URL? {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     return globalRoot
+    #else
+    return nil
+    #endif
   }
 
   /// Set the global header to be inserted at the top of generated files
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func setGlobalHeader(_ header: String?) {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     globalHeader = header
+    #endif
   }
 
   /// Get the global header
+  ///
+  /// **Debug Only**: Returns `nil` in non-DEBUG builds.
   public static func getGlobalHeader() -> String? {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     return globalHeader
+    #else
+    return nil
+    #endif
   }
 
   /// Set the formatting profile
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func setFormattingProfile(_ profile: FormatProfile) {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     formatProfile = profile
+    #endif
   }
 
   /// Get the current formatting profile
+  ///
+  /// **Debug Only**: Returns default profile in non-DEBUG builds.
   public static func formattingProfile() -> FormatProfile {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     return formatProfile
+    #else
+    return baselineFormatProfile
+    #endif
   }
 
   /// Set the render options
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func setRenderOptions(_ options: RenderOptions) {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     renderOpts = options
+    #endif
   }
 
   /// Get the current render options
+  ///
+  /// **Debug Only**: Returns default options in non-DEBUG builds.
   public static func renderOptions() -> RenderOptions {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     return renderOpts
+    #else
+    return baselineRenderOptions
+    #endif
   }
 
   /// Set the format configuration source (either .editorconfig or .swift-format).
   ///
   /// Use this to specify which configuration file should be used for formatting.
   /// Pass `nil` to use default formatting.
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   ///
   /// - Parameter source: The format configuration source, or `nil` for defaults
   ///
@@ -138,27 +183,38 @@ public enum SwiftSnapshotConfig {
   /// SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
   /// ```
   public static func setFormatConfigSource(_ source: FormatConfigSource?) {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     formatConfigSource = source
+    #endif
   }
 
   /// Get the current format configuration source.
   ///
   /// Returns the currently configured format source, or `nil` if using defaults.
   ///
+  /// **Debug Only**: Returns `nil` in non-DEBUG builds.
+  ///
   /// - Returns: The format configuration source, or `nil` if none is set
   public static func getFormatConfigSource() -> FormatConfigSource? {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     return formatConfigSource
+    #else
+    return nil
+    #endif
   }
   
   /// Reset all configuration to library defaults.
   ///
   /// This clears all global settings and restores baseline values for render options
   /// and format profile.
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func resetToLibraryDefaults() {
+    #if DEBUG
     lock.lock()
     defer { lock.unlock() }
     globalRoot = nil
@@ -166,6 +222,7 @@ public enum SwiftSnapshotConfig {
     formatProfile = baselineFormatProfile
     formatConfigSource = nil
     renderOpts = baselineRenderOptions
+    #endif
   }
   
   /// Get the library default render options.

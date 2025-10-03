@@ -8,6 +8,9 @@ public protocol SnapshotCustomRenderer {
 }
 
 /// Registry for custom type renderers
+///
+/// **Note**: All public registration methods are only available in DEBUG builds.
+/// In release builds, they become no-ops to ensure zero runtime overhead in production.
 public final class SnapshotRendererRegistry {
   static let shared = SnapshotRendererRegistry()
 
@@ -17,20 +20,28 @@ public final class SnapshotRendererRegistry {
   private init() {}
 
   /// Register a custom renderer for a type
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func register<Value>(
     _ type: Value.Type,
     render: @escaping (Value, SnapshotRenderContext) throws -> ExprSyntax
   ) {
+    #if DEBUG
     SnapshotRendererRegistry.shared.register(type, render: render)
+    #endif
   }
 
   /// Register a custom renderer for a type conforming to SnapshotCustomRenderer
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func register<SCR: SnapshotCustomRenderer>(
     _ rendererType: SCR.Type
   ) {
+    #if DEBUG
     SnapshotRendererRegistry.shared.register(SCR.Value.self) { value, context in
       try SCR.render(value, context: context)
     }
+    #endif
   }
 
   /// Register a custom renderer for a type
@@ -65,16 +76,22 @@ public final class SnapshotRendererRegistry {
 }
 
 /// Bootstrap for built-in renderers
+///
+/// **Note**: All public methods are only available in DEBUG builds.
 public enum SwiftSnapshotBootstrap {
   private static var hasRegistered = false
   private static let registrationLock = NSLock()
 
   /// Register default built-in renderers
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
   public static func registerDefaults() {
+    #if DEBUG
     registrationLock.lock()
     defer { registrationLock.unlock() }
 
     guard !hasRegistered else { return }
     hasRegistered = true
+    #endif
   }
 }
