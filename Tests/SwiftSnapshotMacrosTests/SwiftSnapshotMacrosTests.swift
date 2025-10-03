@@ -87,6 +87,7 @@ extension SnapshotTests {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("Product.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
@@ -168,6 +169,7 @@ extension SnapshotTests {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("User.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
@@ -249,6 +251,7 @@ extension SnapshotTests {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("Product.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
@@ -330,6 +333,7 @@ extension SnapshotTests {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("User.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
@@ -418,6 +422,7 @@ extension SnapshotTests {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("Status.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
@@ -495,6 +500,7 @@ extension SnapshotTests {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("Product.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
