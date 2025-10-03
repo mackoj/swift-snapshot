@@ -27,39 +27,6 @@ try user.exportSnapshot(variableName: "testUser")
 
 ---
 
-## Motivation
-
-Traditional test fixtures have problems:
-
-| Problem | SwiftSnapshot Solution |
-|---------|----------------------|
-| JSON fixtures break silently when types change | **Compiler-verified** - won't build if types change |
-| Hardcoded test data scattered across files | **Centralized fixtures** with single source of truth |
-| Binary snapshots have opaque diffs | **Human-readable diffs** in version control |
-| Decoding overhead in every test | **Zero overhead** - use fixtures directly |
-| No IDE support for fixture data | **Full autocomplete** and navigation |
-
-### Example: The Refactoring Problem
-
-```swift
-// You rename a property
-struct User {
--   let name: String
-+   let fullName: String
-}
-
-// ❌ JSON fixtures: Silent runtime failure
-{"name": "Alice"}  // Still has old property name
-
-// ✅ Swift fixtures: Compile-time error
-User(name: "Alice")  // Error: No parameter 'name'
-                     // Compiler guides you to fix it
-```
-
----
-
-
-
 ## Installation
 
 ### Swift Package Manager
@@ -78,84 +45,7 @@ Or in Xcode: **File → Add Packages** → Enter repository URL
 
 - Swift 5.9+
 - macOS (currently macOS-only)
-- DEBUG builds (automatic)
-
----
-
-## DEBUG-Only Architecture
-
-SwiftSnapshot follows the same philosophy as [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) and [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay):
-
-**Development tools should not affect production code.**
-
-### How It Works
-
-- **DEBUG builds**: Full functionality
-- **RELEASE builds**: APIs become no-ops
-- **Result**: Zero production overhead
-
-```swift
-// Safe to leave in codebase
-let url = try user.exportSnapshot()
-// DEBUG: Creates file
-// RELEASE: Returns placeholder, no I/O
-```
-
----
-
-## Quick Start
-
-### Basic Usage
-
-```swift
-import SwiftSnapshot
-
-let user = User(id: 42, name: "Alice", role: .admin)
-
-// Generate fixture
-try SwiftSnapshotRuntime.export(
-    instance: user,
-    variableName: "testUser"
-)
-
-// Use in tests, previews, etc.
-let reference = User.testUser
-```
-
-### With Macros
-
-Add enhanced control with compile-time macros:
-
-```swift
-@SwiftSnapshot
-struct User {
-    let id: Int
-    let name: String
-    
-    @SnapshotIgnore
-    let cache: [String: Any]
-}
-
-// Macro adds convenience method
-try user.exportSnapshot(variableName: "testUser")
-```
-
-### Output
-
-Both approaches generate clean Swift code:
-
-```swift
-// File: User+testUser.swift
-import Foundation
-
-extension User {
-    static let testUser: User = User(
-        id: 42,
-        name: "Alice",
-        role: .admin
-    )
-}
-```
+- iOS 16+
 
 ---
 
@@ -163,13 +53,13 @@ extension User {
 
 ### Core Capabilities
 
-- ✅ **Type-Safe Generation** - Compiler-verified fixtures
-- ✅ **Broad Type Support** - Primitives, collections, Foundation types, custom types
-- ✅ **Custom Renderers** - Extensible type handling
-- ✅ **Deterministic Output** - Sorted keys, stable ordering
-- ✅ **Smart Formatting** - EditorConfig and swift-format integration
-- ✅ **Thread-Safe** - Concurrent exports supported
-- ✅ **DEBUG-Only** - Zero production overhead
+- **Type-Safe Generation** - Compiler-verified fixtures
+- **Broad Type Support** - Primitives, collections, Foundation types, custom types
+- **Custom Renderers** - Extensible type handling
+- **Deterministic Output** - Sorted keys, stable ordering
+- **Smart Formatting** - EditorConfig and swift-format integration
+- **Thread-Safe** - Concurrent exports supported
+- **DEBUG-Only** - Zero production overhead
 
 ### Supported Types
 
@@ -193,6 +83,28 @@ Optional compile-time macros add:
 - `@SnapshotIgnore` - Exclude properties
 - `@SnapshotRedact` - Mask sensitive values
 - `@SnapshotRename` - Change property names
+
+---
+
+## Motivation
+
+Traditional test fixtures have problems:
+
+| Problem | SwiftSnapshot Solution |
+|---------|----------------------|
+| JSON fixtures break silently when types change | **Compiler-verified** - won't build if types change |
+| Hardcoded test data scattered across files | **Centralized fixtures** with single source of truth |
+| Binary snapshots have opaque diffs | **Human-readable diffs** in version control |
+| Decoding overhead in every test | **Zero overhead** - use fixtures directly |
+| No IDE support for fixture data | **Full autocomplete** and navigation |
+
+### Learn More
+
+- [What is SwiftSnapshot and Why?](Sources/SwiftSnapshotCore/Documentation.docc/Articles/WhatAndWhy.md) - Purpose and motivation
+- [Architecture](Sources/SwiftSnapshotCore/Documentation.docc/Articles/Architecture.md) - Technical design
+- [Basic Usage](Sources/SwiftSnapshotCore/Documentation.docc/Articles/BasicUsage.md) - Examples and patterns
+- [Custom Renderers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/CustomRenderers.md) - Type-specific rendering
+- [Formatting Configuration](Sources/SwiftSnapshotCore/Documentation.docc/Articles/FormattingConfiguration.md) - Code style setup
 
 ---
 
@@ -281,9 +193,24 @@ class Tests: XCTestCase {
 }
 ```
 
+### Example: The Refactoring Problem
+
+```swift
+// You rename a property
+struct User {
+-   let name: String
++   let fullName: String
+}
+
+// ❌ JSON fixtures: Silent runtime failure
+{"name": "Alice"}  // Still has old property name
+
+// ✅ Swift fixtures: Compile-time error
+User(name: "Alice")  // Error: No parameter 'name'
+                     // Compiler guides you to fix it
+```
+
 ---
-
-
 
 ## Configuration
 
@@ -332,13 +259,24 @@ withDependencies {
 
 ---
 
-## Learn More
+## DEBUG Only Architecture
 
-- [What is SwiftSnapshot and Why?](Sources/SwiftSnapshotCore/Documentation.docc/Articles/WhatAndWhy.md) - Purpose and motivation
-- [Architecture](Sources/SwiftSnapshotCore/Documentation.docc/Articles/Architecture.md) - Technical design
-- [Basic Usage](Sources/SwiftSnapshotCore/Documentation.docc/Articles/BasicUsage.md) - Examples and patterns
-- [Custom Renderers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/CustomRenderers.md) - Type-specific rendering
-- [Formatting Configuration](Sources/SwiftSnapshotCore/Documentation.docc/Articles/FormattingConfiguration.md) - Code style setup
+SwiftSnapshot follows the same philosophy as [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) and [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay):
+
+**Development tools should not affect production code.**
+
+### How It Works
+
+- **DEBUG builds**: Full functionality
+- **RELEASE builds**: APIs become no-ops
+- **Result**: Zero production overhead
+
+```swift
+// Safe to leave in codebase
+let url = try user.exportSnapshot()
+// DEBUG: Creates file
+// RELEASE: Returns placeholder, no I/O
+```
 
 ---
 
