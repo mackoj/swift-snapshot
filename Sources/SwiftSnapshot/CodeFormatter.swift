@@ -48,36 +48,38 @@ enum CodeFormatter {
     var statements: [CodeBlockItemSyntax] = []
 
     // Add header as leading trivia if present
-    var leadingTrivia: Trivia = []
+    var importLeadingTrivia: Trivia = []
     if let header = header {
       // Add header comments
       for line in header.split(separator: "\n", omittingEmptySubsequences: false) {
-        leadingTrivia += .lineComment("\(line)") + .newlines(1)
+        importLeadingTrivia += .lineComment("\(line)") + .newlines(1)
       }
-      leadingTrivia += .newlines(1)
+      importLeadingTrivia += .newlines(1)
     }
 
-    // Add context documentation if present
-    if let context = context {
-      for line in context.split(separator: "\n", omittingEmptySubsequences: false) {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty {
-          leadingTrivia += .docLineComment("///") + .newlines(1)
-        } else {
-          leadingTrivia += .docLineComment("/// \(trimmed)") + .newlines(1)
-        }
-      }
-    }
-
-    // Create import declaration
+    // Create import declaration (header goes here, but NOT context)
     let importDecl = ImportDeclSyntax(
-      leadingTrivia: leadingTrivia,
+      leadingTrivia: importLeadingTrivia,
       path: [ImportPathComponentSyntax(name: .identifier("Foundation"))]
     )
     statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(importDecl))))
 
-    // Create the static variable declaration
+    // Build context documentation as leading trivia for the variable declaration
+    var variableLeadingTrivia: Trivia = []
+    if let context = context {
+      for line in context.split(separator: "\n", omittingEmptySubsequences: false) {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty {
+          variableLeadingTrivia += .docLineComment("///") + .newlines(1)
+        } else {
+          variableLeadingTrivia += .docLineComment("/// \(trimmed)") + .newlines(1)
+        }
+      }
+    }
+
+    // Create the static variable declaration with context as leading trivia
     let variableDecl = VariableDeclSyntax(
+      leadingTrivia: variableLeadingTrivia,
       modifiers: [DeclModifierSyntax(name: .keyword(.static))],
       bindingSpecifier: .keyword(.let),
       bindings: PatternBindingListSyntax([
