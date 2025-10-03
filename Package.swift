@@ -15,7 +15,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"603.0.0"),
-    .package(url: "https://github.com/swiftlang/swift-format", from: "600.0.0"),
+    .package(url: "https://github.com/swiftlang/swift-format", "509.0.0"..<"603.0.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.17.0"),
     .package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.5.0"),
@@ -71,6 +71,7 @@ let package = Package(
         "SwiftSnapshotMacrosPlugin",
         "SwiftSnapshotMacros",
         "SwiftSnapshot",
+        .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "MacroTesting", package: "swift-macro-testing"),
       ]
     ),

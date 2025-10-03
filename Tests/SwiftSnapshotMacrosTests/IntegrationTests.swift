@@ -1,6 +1,7 @@
 import XCTest
 @testable import SwiftSnapshotMacros
 import SwiftSnapshot
+import InlineSnapshotTesting
 
 // Test types at file level to support extension macros
 
@@ -63,11 +64,12 @@ final class MacroIntegrationTests: XCTestCase {
     
     let product = TestProduct(id: "123", name: "Widget")
     let expr = TestProduct.__swiftSnapshot_makeExpr(from: product)
-    
-    // Verify the expression contains expected content
-    XCTAssertTrue(expr.contains("TestProduct"))
-    XCTAssertTrue(expr.contains("id:"))
-    XCTAssertTrue(expr.contains("name:"))
+
+    assertInlineSnapshot(of: expr.description, as: .description) {
+      """
+      TestProduct(id: 123, name: Widget)
+      """
+    }
   }
   
   func testMacroWithIgnore() throws {
@@ -75,8 +77,11 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestUser.__swiftSnapshot_makeExpr(from: user)
     
     // Verify ignored property is not in expression
-    XCTAssertFalse(expr.contains("cache"))
-    XCTAssertTrue(expr.contains("id:"))
+    assertInlineSnapshot(of: expr.description, as: .description) {
+      """
+      TestUser(id: user123)
+      """
+    }
   }
   
   func testMacroWithRename() throws {
@@ -84,8 +89,11 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestItem.__swiftSnapshot_makeExpr(from: item)
     
     // Verify renamed label is used
-    XCTAssertTrue(expr.contains("displayName:"))
-    XCTAssertFalse(expr.contains("name:"))
+    assertInlineSnapshot(of: expr.description, as: .description) {
+      """
+      TestItem(id: item123, displayName: Test Item)
+      """
+    }
   }
   
   func testMacroWithRedact() throws {
@@ -93,8 +101,11 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestSecret.__swiftSnapshot_makeExpr(from: secret)
     
     // Verify redacted value appears instead of actual value
-    XCTAssertTrue(expr.contains("REDACTED"))
-    XCTAssertFalse(expr.contains("super-secret-key"))
+    assertInlineSnapshot(of: expr.description, as: .description) {
+      """
+      TestSecret(id: secret123, apiKey: "REDACTED")
+      """
+    }
   }
   
   func testMacroWithEnum() throws {
@@ -102,7 +113,11 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestStatus.__swiftSnapshot_makeExpr(from: status)
     
     // Verify enum case is rendered
-    XCTAssertTrue(expr.contains(".active"))
+    assertInlineSnapshot(of: expr.description, as: .description) {
+      """
+      .active
+      """
+    }
   }
   
   // Folder test skipped - requires full runtime integration
@@ -115,7 +130,10 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestResult.__swiftSnapshot_makeExpr(from: success)
     
     // Verify enum with associated values
-    XCTAssertTrue(expr.contains(".success"))
-    XCTAssertTrue(expr.contains("value:"))
+    assertInlineSnapshot(of: expr.description, as: .description) {
+      """
+      .success(value: 42)
+      """
+    }
   }
 }
