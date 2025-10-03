@@ -25,14 +25,14 @@ public final class SnapshotRendererRegistry {
   }
 
   /// Register a custom renderer for a type conforming to SnapshotCustomRenderer
-  public static func register<R: SnapshotCustomRenderer>(
-    _ rendererType: R.Type
+  public static func register<SCR: SnapshotCustomRenderer>(
+    _ rendererType: SCR.Type
   ) {
-    SnapshotRendererRegistry.shared.register(R.Value.self) { value, context in
-      try R.render(value, context: context)
+    SnapshotRendererRegistry.shared.register(SCR.Value.self) { value, context in
+      try SCR.render(value, context: context)
     }
   }
-g
+
   /// Register a custom renderer for a type
   func register<Value>(
     _ type: Value.Type,
