@@ -157,7 +157,7 @@ extension SnapshotTests {
       )
 
       // Test the override
-      try withDependencies {
+      withDependencies {
         $0.swiftSnapshotConfig = testClient
       } operation: {
         @Dependency(\.swiftSnapshotConfig) var config

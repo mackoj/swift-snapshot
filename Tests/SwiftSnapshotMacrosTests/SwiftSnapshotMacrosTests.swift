@@ -69,7 +69,6 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -86,10 +85,6 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("Product.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """#
@@ -151,7 +146,6 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -168,10 +162,6 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("User.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """#
@@ -233,7 +223,6 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -250,10 +239,6 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("Product.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """#
@@ -315,7 +300,6 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -332,10 +316,6 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("User.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """#
@@ -404,7 +384,6 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -421,10 +400,6 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("Status.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """
@@ -482,7 +457,6 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
-          #if DEBUG
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -499,10 +473,6 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
-          #else
-          IssueReporting.reportIssue("Product.exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
-          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
-          #endif
         }
       }
       """#
