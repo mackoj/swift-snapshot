@@ -467,7 +467,7 @@ Set(["ios", "swift", "testing"])
 
 ## Configuration
 
-### Global Settings
+### Global Settings (Static API)
 
 ```swift
 // Set global output directory
@@ -482,21 +482,92 @@ SwiftSnapshotConfig.setGlobalHeader("""
 """)
 
 // Configure formatting
-var profile = FormatProfile()
-profile.indentSize = 2
+let profile = FormatProfile(
+    indentStyle: .space,
+    indentSize: 2,
+    endOfLine: .lf,
+    insertFinalNewline: true,
+    trimTrailingWhitespace: true
+)
 SwiftSnapshotConfig.setFormattingProfile(profile)
 
 // Configure rendering options
-var options = RenderOptions()
-options.sortDictionaryKeys = true
-options.setDeterminism = true
+let options = RenderOptions(
+    sortDictionaryKeys: true,
+    setDeterminism: true,
+    dataInlineThreshold: 16,
+    forceEnumDotSyntax: true
+)
 SwiftSnapshotConfig.setRenderOptions(options)
+
+// Reset to library defaults
+SwiftSnapshotConfig.resetToLibraryDefaults()
 ```
+
+### Dependency Injection (Recommended for Tests)
+
+SwiftSnapshot integrates with [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) for testable configuration:
+
+```swift
+import Dependencies
+import SwiftSnapshot
+
+// In your tests, override configuration using dependency injection
+withDependencies {
+  $0.swiftSnapshotConfig = .init(
+    getGlobalRoot: { URL(fileURLWithPath: "/tmp/test-fixtures") },
+    setGlobalRoot: { _ in },
+    getGlobalHeader: { "// Test Fixtures" },
+    setGlobalHeader: { _ in },
+    getFormatConfigSource: { nil },
+    setFormatConfigSource: { _ in },
+    getRenderOptions: { 
+      RenderOptions(
+        sortDictionaryKeys: false,
+        setDeterminism: true,
+        dataInlineThreshold: 8,
+        forceEnumDotSyntax: true
+      )
+    },
+    setRenderOptions: { _ in },
+    getFormatProfile: {
+      FormatProfile(
+        indentStyle: .space,
+        indentSize: 2,
+        endOfLine: .lf,
+        insertFinalNewline: false,
+        trimTrailingWhitespace: true
+      )
+    },
+    setFormatProfile: { _ in },
+    resetToLibraryDefaults: { },
+    libraryDefaultRenderOptions: { SwiftSnapshotConfig.libraryDefaultRenderOptions() },
+    libraryDefaultFormatProfile: { SwiftSnapshotConfig.libraryDefaultFormatProfile() }
+  )
+} operation: {
+  // Your test code here - all SwiftSnapshot calls will use the overridden config
+  let code = try SwiftSnapshotRuntime.generateSwiftCode(
+    instance: myTestData,
+    variableName: "fixture"
+  )
+}
+
+// Or use the dependency directly in your code
+@Dependency(\.swiftSnapshotConfig) var snapshotConfig
+let options = snapshotConfig.getRenderOptions()
+```
+
+**Benefits of Dependency Injection:**
+- ✅ Isolated test configuration without global state pollution
+- ✅ Parallel test execution safety
+- ✅ Easy to mock and stub configuration values
+- ✅ Type-safe configuration access
+- ✅ Compatible with existing static API during migration
 
 ### Directory Resolution Priority
 
 1. `outputBasePath` parameter (highest priority)
-2. `SwiftSnapshotConfig.setGlobalRoot()`
+2. `SwiftSnapshotConfig.setGlobalRoot()` or `swiftSnapshotConfig.getGlobalRoot()`
 3. `SWIFT_SNAPSHOT_ROOT` environment variable
 
 ---
@@ -620,7 +691,52 @@ public enum SwiftSnapshotConfig {
     public static func formattingProfile() -> FormatProfile
     public static func setRenderOptions(_ options: RenderOptions)
     public static func renderOptions() -> RenderOptions
+    public static func setFormatConfigSource(_ source: FormatConfigSource?)
+    public static func getFormatConfigSource() -> FormatConfigSource?
+    public static func resetToLibraryDefaults()
+    public static func libraryDefaultRenderOptions() -> RenderOptions
+    public static func libraryDefaultFormatProfile() -> FormatProfile
 }
+```
+
+### SwiftSnapshotConfigClient (Dependency Injection)
+
+```swift
+public struct SwiftSnapshotConfigClient: Sendable {
+    public var getGlobalRoot: @Sendable () -> URL?
+    public var setGlobalRoot: @Sendable (URL?) -> Void
+    public var getGlobalHeader: @Sendable () -> String?
+    public var setGlobalHeader: @Sendable (String?) -> Void
+    public var getFormatConfigSource: @Sendable () -> FormatConfigSource?
+    public var setFormatConfigSource: @Sendable (FormatConfigSource?) -> Void
+    public var getRenderOptions: @Sendable () -> RenderOptions
+    public var setRenderOptions: @Sendable (RenderOptions) -> Void
+    public var getFormatProfile: @Sendable () -> FormatProfile
+    public var setFormatProfile: @Sendable (FormatProfile) -> Void
+    public var resetToLibraryDefaults: @Sendable () -> Void
+    public var libraryDefaultRenderOptions: @Sendable () -> RenderOptions
+    public var libraryDefaultFormatProfile: @Sendable () -> FormatProfile
+    
+    // Convenience methods
+    public func makeRenderOptions() -> RenderOptions
+    public func makeFormatProfile() -> FormatProfile
+    
+    // Live implementation
+    public static let live: SwiftSnapshotConfigClient
+}
+
+// Access via swift-dependencies
+extension DependencyValues {
+    public var swiftSnapshotConfig: SwiftSnapshotConfigClient { get set }
+}
+```
+
+**Usage:**
+```swift
+import Dependencies
+
+@Dependency(\.swiftSnapshotConfig) var config
+let renderOpts = config.getRenderOptions()
 ```
 
 ---
