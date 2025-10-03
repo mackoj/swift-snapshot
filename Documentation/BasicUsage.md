@@ -171,10 +171,13 @@ let url = try SwiftSnapshotRuntime.export(
     """
 )
 // Generates file with:
-// /// Standard product fixture used across pricing tests.
-// /// Represents a typical e-commerce product with complete metadata.
 // import Foundation
-// extension Product { ... }
+// 
+// extension Product { 
+//     /// Standard product fixture used across pricing tests.
+//     /// Represents a typical e-commerce product with complete metadata.
+//     static let sampleProduct: Product = ...
+// }
 ```
 
 ### Custom Output Directory

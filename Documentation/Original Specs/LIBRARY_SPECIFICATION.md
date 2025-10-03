@@ -94,17 +94,17 @@ Generated file layout:
 
 ```
 <Header Block if any>
-<Optional Context Doc Comment>
-/// (Context lines)
 import Foundation
 
 extension <TypeName> {
+  <Optional Context Doc Comment>
+  /// (Context lines)
   static let <variableName>: <TypeName> = <Expression>
 }
 ```
 
 - `Header` inserted verbatim at top (no auto-prefixing). Recommended to include comment markers.
-- `Context` is converted to a properly formatted Swift doc comment:
+- `Context` is converted to a properly formatted Swift doc comment placed inside the extension, above the variable declaration:
   - Each non-empty line prefixed with `///`
   - Blank lines preserved
 - Always ensures trailing newline (if formatting profile demands it).

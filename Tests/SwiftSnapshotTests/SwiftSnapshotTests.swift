@@ -358,10 +358,12 @@ extension SnapshotTests {
 
     assertInlineSnapshot(of: code, as: .description) {
       """
-      /// This is a test integer
       import Foundation
 
-      extension Int { static let testInt: Int = 42 }
+      extension Int {
+          /// This is a test integer
+          static let testInt: Int = 42
+      }
 
       """
     }
