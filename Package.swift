@@ -1,8 +1,8 @@
 // swift-tools-version: 5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
-import PackageDescription
 import CompilerPluginSupport
+import PackageDescription
 
 let package = Package(
   name: "swift-snapshot",
@@ -33,14 +33,14 @@ let package = Package(
       ],
       path: "Sources/SwiftSnapshotMacrosPlugin"
     ),
-    
+
     // Macro interface (public types and attributes)
     .target(
       name: "SwiftSnapshotMacros",
       dependencies: ["SwiftSnapshotMacrosPlugin"],
       path: "Sources/SwiftSnapshotMacros"
     ),
-    
+
     // Runtime library
     .target(
       name: "SwiftSnapshot",
@@ -53,7 +53,7 @@ let package = Package(
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
       ]
     ),
-    
+
     // Runtime tests
     .testTarget(
       name: "SwiftSnapshotTests",
@@ -63,7 +63,7 @@ let package = Package(
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
       ]
     ),
-    
+
     // Macro tests
     .testTarget(
       name: "SwiftSnapshotMacrosTests",

@@ -17,7 +17,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       super.invokeTest()
     }
   }
-  
+
   func testBasicStruct() {
     assertMacro {
       """
@@ -32,27 +32,27 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       struct Product {
         let id: String
         let name: String
-      
+
         internal static let __swiftSnapshot_folder: String? = nil
-      
+
         internal struct __SwiftSnapshot_PropertyMetadata {
           let original: String
           let renamed: String?
           let redaction: __SwiftSnapshot_Redaction?
           let ignored: Bool
         }
-      
+
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
           case remove
         }
-      
+
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
           .init(original: "name", renamed: nil, redaction: nil, ignored: false)
         ]
-      
+
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           return "Product(id: \\(instance.id), name: \\(instance.name))"
         }
@@ -91,7 +91,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       """
     }
   }
-  
+
   func testStructWithIgnore() {
     assertMacro {
       """
@@ -107,27 +107,27 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       struct User {
         let id: String
         let cache: [String: Any]
-      
+
         internal static let __swiftSnapshot_folder: String? = nil
-      
+
         internal struct __SwiftSnapshot_PropertyMetadata {
           let original: String
           let renamed: String?
           let redaction: __SwiftSnapshot_Redaction?
           let ignored: Bool
         }
-      
+
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
           case remove
         }
-      
+
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
           .init(original: "cache", renamed: nil, redaction: nil, ignored: true)
         ]
-      
+
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           return "User(id: \\(instance.id))"
         }
@@ -166,7 +166,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       """
     }
   }
-  
+
   func testStructWithRename() {
     assertMacro {
       """
@@ -182,27 +182,27 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       struct Product {
         let id: String
         let name: String
-      
+
         internal static let __swiftSnapshot_folder: String? = nil
-      
+
         internal struct __SwiftSnapshot_PropertyMetadata {
           let original: String
           let renamed: String?
           let redaction: __SwiftSnapshot_Redaction?
           let ignored: Bool
         }
-      
+
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
           case remove
         }
-      
+
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
           .init(original: "name", renamed: "displayName", redaction: nil, ignored: false)
         ]
-      
+
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           return "Product(id: \\(instance.id), displayName: \\(instance.name))"
         }
@@ -241,7 +241,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       """
     }
   }
-  
+
   func testStructWithRedactMask() {
     assertMacro {
       """
@@ -257,27 +257,27 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       struct User {
         let id: String
         let apiKey: String
-      
+
         internal static let __swiftSnapshot_folder: String? = nil
-      
+
         internal struct __SwiftSnapshot_PropertyMetadata {
           let original: String
           let renamed: String?
           let redaction: __SwiftSnapshot_Redaction?
           let ignored: Bool
         }
-      
+
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
           case remove
         }
-      
+
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
           .init(original: "apiKey", renamed: nil, redaction: .mask("SECRET"), ignored: false)
         ]
-      
+
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           return "User(id: \\(instance.id), apiKey: \\"SECRET\\")"
         }
@@ -316,7 +316,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       """
     }
   }
-  
+
   func testSimpleEnum() {
     assertMacro {
       """
@@ -333,25 +333,25 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
         case active
         case inactive
         case pending
-      
+
         internal static let __swiftSnapshot_folder: String? = nil
-      
+
         internal struct __SwiftSnapshot_PropertyMetadata {
           let original: String
           let renamed: String?
           let redaction: __SwiftSnapshot_Redaction?
           let ignored: Bool
         }
-      
+
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
           case remove
         }
-      
+
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
         ]
-      
+
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           switch instance {
           case .active:
@@ -397,7 +397,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       """
     }
   }
-  
+
   func testFolderParameter() {
     assertMacro {
       """
@@ -410,26 +410,26 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       """
       struct Product {
         let id: String
-      
+
         internal static let __swiftSnapshot_folder: String? = "Fixtures/Products"
-      
+
         internal struct __SwiftSnapshot_PropertyMetadata {
           let original: String
           let renamed: String?
           let redaction: __SwiftSnapshot_Redaction?
           let ignored: Bool
         }
-      
+
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
           case remove
         }
-      
+
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false)
         ]
-      
+
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           return "Product(id: \\(instance.id))"
         }

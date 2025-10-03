@@ -1,5 +1,5 @@
-import XCTest
 import InlineSnapshotTesting
+import XCTest
 
 @testable import SwiftSnapshot
 
@@ -154,7 +154,7 @@ final class FormattingConfigTests: XCTestCase {
       instance: [1, 2, 3],
       variableName: "numbers"
     )
-    
+
     assertInlineSnapshot(of: code, as: .description) {
       """
       import Foundation

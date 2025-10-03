@@ -20,9 +20,13 @@
 ///   let name: String
 /// }
 /// ```
-@attached(member, names: named(__swiftSnapshot_folder), named(__swiftSnapshot_properties), named(__swiftSnapshot_makeExpr), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata), named(__SwiftSnapshot_Redaction))
+@attached(
+  member, names: named(__swiftSnapshot_folder), named(__swiftSnapshot_properties),
+  named(__swiftSnapshot_makeExpr), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata),
+  named(__SwiftSnapshot_Redaction))
 @attached(extension, conformances: SwiftSnapshotExportable, names: named(exportSnapshot))
-public macro SwiftSnapshot(folder: String? = nil, context: String? = nil) = #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SwiftSnapshotMacro")
+public macro SwiftSnapshot(folder: String? = nil, context: String? = nil) =
+  #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SwiftSnapshotMacro")
 
 /// Excludes a property from snapshot generation.
 ///
@@ -39,7 +43,8 @@ public macro SwiftSnapshot(folder: String? = nil, context: String? = nil) = #ext
 /// }
 /// ```
 @attached(peer)
-public macro SnapshotIgnore() = #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotIgnoreMacro")
+public macro SnapshotIgnore() =
+  #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotIgnoreMacro")
 
 /// Renames a property in the generated initializer expression.
 ///
@@ -58,7 +63,8 @@ public macro SnapshotIgnore() = #externalMacro(module: "SwiftSnapshotMacrosPlugi
 /// // Generated: User(displayName: "...")
 /// ```
 @attached(peer)
-public macro SnapshotRename(_ name: String) = #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotRenameMacro")
+public macro SnapshotRename(_ name: String) =
+  #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotRenameMacro")
 
 /// Redacts a property value in the generated snapshot.
 ///
@@ -87,7 +93,8 @@ public macro SnapshotRename(_ name: String) = #externalMacro(module: "SwiftSnaps
 /// }
 /// ```
 @attached(peer)
-public macro SnapshotRedact(mask: String? = nil, hash: Bool = false, remove: Bool = false) = #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotRedactMacro")
+public macro SnapshotRedact(mask: String? = nil, hash: Bool = false, remove: Bool = false) =
+  #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotRedactMacro")
 
 /// Protocol that marks types as exportable via macro-generated methods.
 /// This is automatically conformed to by types annotated with @SwiftSnapshot.
