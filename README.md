@@ -4,6 +4,9 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+> [!IMPORTANT]  
+> **DEBUG-Only Design**: SwiftSnapshot is a development tool with **zero production impact**. All APIs are disabled in release builds—no runtime overhead, no binary bloat.
+
 **Generate type-safe Swift source fixtures from runtime values.**
 
 SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere—no JSON, no decoding, just Swift.
@@ -21,10 +24,6 @@ try user.exportSnapshot(variableName: "testUser")
 //     )
 // }
 ```
-
----
-
-> **⚠️ DEBUG-Only Design**: SwiftSnapshot is a development tool with **zero production impact**. All APIs are disabled in release builds—no runtime overhead, no binary bloat.
 
 ---
 
