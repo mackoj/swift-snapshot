@@ -6,8 +6,68 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 
 /// Formats Swift code according to a FormatProfile
+///
+/// `CodeFormatter` handles the complete formatting pipeline for generated snapshot files:
+/// 1. **Syntax Tree Construction**: Builds a complete `SourceFileSyntax` with all components
+/// 2. **swift-format Integration**: Applies swift-format rules for code formatting
+/// 3. **Post-Processing**: Handles EditorConfig properties not supported by swift-format
+///
+/// ## Formatting Pipeline
+///
+/// The formatter processes code in these stages:
+///
+/// 1. **Build**: Constructs SwiftSyntax tree with header, imports, documentation, and extension
+/// 2. **Format**: Applies swift-format for indentation, spacing, and code structure
+/// 3. **Post-Process**: Handles line endings, trailing whitespace, and final newline
+///
+/// ## File Structure
+///
+/// Generated files follow this structure:
+/// ```swift
+/// // Header comment (if provided)
+///
+/// import Foundation
+///
+/// /// Documentation comment (if provided)
+/// extension TypeName {
+///     static let variableName: TypeName = ...
+/// }
+/// ```
+///
+/// ## EditorConfig Support
+///
+/// The formatter handles these EditorConfig properties:
+/// - `indent_style`: Via swift-format
+/// - `indent_size`: Via swift-format  
+/// - `end_of_line`: Post-processing (LF or CRLF)
+/// - `insert_final_newline`: Post-processing
+/// - `trim_trailing_whitespace`: Post-processing
+///
+/// ## See Also
+/// - ``FormatProfile`` for formatting configuration
+/// - ``FormatConfigLoader`` for loading .editorconfig files
+/// - ``SwiftSnapshotRuntime/generateSwiftCode(instance:variableName:header:context:)``
 enum CodeFormatter {
   /// Format a complete Swift file with header, context, and extension
+  ///
+  /// Constructs and formats a complete Swift source file containing an extension
+  /// with a static property.
+  ///
+  /// ## Process
+  ///
+  /// 1. Builds SwiftSyntax tree with all components
+  /// 2. Converts to string and applies swift-format
+  /// 3. Post-processes for EditorConfig properties
+  ///
+  /// - Parameters:
+  ///   - typeName: Name of the type being extended
+  ///   - variableName: Name of the static property
+  ///   - expression: SwiftSyntax expression for the property value
+  ///   - header: Optional header comment (appears at top of file)
+  ///   - context: Optional documentation comment (appears above property)
+  ///   - profile: Formatting profile with style rules
+  ///
+  /// - Returns: Fully formatted Swift source code as a string
   static func formatFile(
     typeName: String,
     variableName: String,
