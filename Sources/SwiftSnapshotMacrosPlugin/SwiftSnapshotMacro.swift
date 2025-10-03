@@ -84,7 +84,6 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
         ) throws -> URL {
           let defaultVarName = "\(raw: typeName.prefix(1).lowercased() + typeName.dropFirst())"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? \(literal: arguments.context ?? "")
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -93,7 +92,7 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
@@ -116,7 +115,6 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
 extension SwiftSnapshotMacro {
   struct MacroArguments {
     var folder: String?
-    var context: String?
   }
 
   static func extractArguments(from node: AttributeSyntax) -> MacroArguments {
@@ -131,8 +129,6 @@ extension SwiftSnapshotMacro {
 
       if label == "folder" {
         args.folder = extractStringLiteral(from: argument.expression)
-      } else if label == "context" {
-        args.context = extractStringLiteral(from: argument.expression)
       }
     }
 
@@ -219,7 +215,6 @@ extension SwiftSnapshotMacro {
 
     var mask: String?
     var hash = false
-    var remove = false
 
     for argument in arguments {
       guard let label = argument.label?.text else { continue }
@@ -230,15 +225,11 @@ extension SwiftSnapshotMacro {
         if let boolLiteral = argument.expression.as(BooleanLiteralExprSyntax.self) {
           hash = boolLiteral.literal.text == "true"
         }
-      } else if label == "remove" {
-        if let boolLiteral = argument.expression.as(BooleanLiteralExprSyntax.self) {
-          remove = boolLiteral.literal.text == "true"
-        }
       }
     }
 
     // Validate mutually exclusive options
-    let activeCount = [mask != nil, hash, remove].filter { $0 }.count
+    let activeCount = [mask != nil, hash].filter { $0 }.count
     if activeCount > 1 {
       context.diagnose(
         Diagnostic(
@@ -248,9 +239,7 @@ extension SwiftSnapshotMacro {
       return nil
     }
 
-    if remove {
-      return RedactionInfo(mode: .remove)
-    } else if hash {
+    if hash {
       return RedactionInfo(mode: .hash)
     } else if let maskValue = mask {
       return RedactionInfo(mode: .mask(maskValue))
@@ -275,7 +264,6 @@ extension SwiftSnapshotMacro {
     internal enum __SwiftSnapshot_Redaction {
       case mask(String)
       case hash
-      case remove
     }
     """
   }
@@ -290,8 +278,6 @@ extension SwiftSnapshotMacro {
             return ".mask(\"\(value)\")"
           case .hash:
             return ".hash"
-          case .remove:
-            return ".remove"
           }
         } ?? "nil"
 
@@ -322,8 +308,8 @@ extension SwiftSnapshotMacro {
       typeName = "Self"
     }
 
-    // Build initializer arguments for non-ignored, non-removed properties
-    let activeProperties = properties.filter { !$0.isIgnored && $0.redaction?.mode != .remove }
+    // Build initializer arguments for non-ignored properties
+    let activeProperties = properties.filter { !$0.isIgnored }
 
     // Build the arguments string
     var argumentParts: [String] = []
@@ -337,8 +323,6 @@ extension SwiftSnapshotMacro {
           argumentParts.append("\(label): \\\"\(maskValue)\\\"")
         case .hash:
           argumentParts.append("\(label): \\\"<hashed>\\\"")
-        case .remove:
-          fatalError("Should not reach here - removed properties are filtered")
         }
       } else {
         // Reference the actual property value via interpolation
@@ -447,7 +431,6 @@ struct RedactionInfo {
   enum Mode: Equatable {
     case mask(String)
     case hash
-    case remove
   }
   let mode: Mode
 }

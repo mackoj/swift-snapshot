@@ -42,7 +42,6 @@ extension SnapshotTests {
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
-          case remove
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -68,7 +67,6 @@ extension SnapshotTests {
         ) throws -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? ""
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -77,7 +75,7 @@ extension SnapshotTests {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
@@ -117,7 +115,6 @@ extension SnapshotTests {
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
-          case remove
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -143,7 +140,6 @@ extension SnapshotTests {
         ) throws -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? ""
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -152,7 +148,7 @@ extension SnapshotTests {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
@@ -192,7 +188,6 @@ extension SnapshotTests {
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
-          case remove
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -218,7 +213,6 @@ extension SnapshotTests {
         ) throws -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? ""
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -227,7 +221,7 @@ extension SnapshotTests {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
@@ -267,7 +261,6 @@ extension SnapshotTests {
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
-          case remove
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -293,7 +286,6 @@ extension SnapshotTests {
         ) throws -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? ""
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -302,7 +294,7 @@ extension SnapshotTests {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
@@ -343,7 +335,6 @@ extension SnapshotTests {
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
-          case remove
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -375,7 +366,6 @@ extension SnapshotTests {
         ) throws -> URL {
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? ""
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -384,7 +374,7 @@ extension SnapshotTests {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
@@ -421,7 +411,6 @@ extension SnapshotTests {
         internal enum __SwiftSnapshot_Redaction {
           case mask(String)
           case hash
-          case remove
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
@@ -446,7 +435,6 @@ extension SnapshotTests {
         ) throws -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
-          let effectiveContext = context ?? ""
 
           return try SwiftSnapshotRuntime.export(
             instance: self,
@@ -455,7 +443,7 @@ extension SnapshotTests {
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
-            context: effectiveContext.isEmpty ? nil : effectiveContext,
+            context: context,
             testName: testName,
             line: line,
             fileID: fileID,
