@@ -9,7 +9,7 @@
 
 **Generate type-safe Swift source fixtures from runtime values.**
 
-SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere—no JSON, no decoding, just Swift.
+SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere: no JSON, no decoding, just Swift.
 
 ```swift
 let user = User(id: 42, name: "Alice", role: .admin)
