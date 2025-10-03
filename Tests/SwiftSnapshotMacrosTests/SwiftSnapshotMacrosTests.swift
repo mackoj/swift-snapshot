@@ -55,6 +55,10 @@ extension SnapshotTests {
       }
 
       extension Product: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -65,6 +69,7 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -81,6 +86,9 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """#
@@ -128,6 +136,10 @@ extension SnapshotTests {
       }
 
       extension User: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -138,6 +150,7 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -154,6 +167,9 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """#
@@ -201,6 +217,10 @@ extension SnapshotTests {
       }
 
       extension Product: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -211,6 +231,7 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -227,6 +248,9 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """#
@@ -274,6 +298,10 @@ extension SnapshotTests {
       }
 
       extension User: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -284,6 +312,7 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -300,6 +329,9 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """#
@@ -354,6 +386,10 @@ extension SnapshotTests {
       }
 
       extension Status: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -364,6 +400,7 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -380,6 +417,9 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """
@@ -423,6 +463,10 @@ extension SnapshotTests {
       }
 
       extension Product: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -433,6 +477,7 @@ extension SnapshotTests {
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
         ) throws -> URL {
+          #if DEBUG
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
@@ -449,6 +494,9 @@ extension SnapshotTests {
             fileID: fileID,
             filePath: filePath
           )
+          #else
+          return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+          #endif
         }
       }
       """#

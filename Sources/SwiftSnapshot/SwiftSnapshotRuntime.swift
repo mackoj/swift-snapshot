@@ -4,8 +4,14 @@ import SwiftSyntax
 import Dependencies
 
 /// Main runtime API for SwiftSnapshot
+///
+/// **Note**: All public methods are only available in DEBUG builds.
+/// In release builds, they become no-ops to ensure zero runtime overhead in production.
 public enum SwiftSnapshotRuntime {
   /// Export a value as a Swift source file
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+  /// it returns a placeholder URL and performs no file I/O.
   @discardableResult
   public static func export<T>(
     instance: T,
@@ -20,6 +26,7 @@ public enum SwiftSnapshotRuntime {
     fileID: StaticString = #fileID,
     filePath: StaticString = #filePath
   ) throws -> URL {
+    #if DEBUG
     // Sanitize the variable name to ensure it's a valid Swift identifier
     let sanitizedVariableName = sanitizeVariableName(variableName)
     
@@ -72,6 +79,10 @@ public enum SwiftSnapshotRuntime {
     }
 
     return filePath
+    #else
+    // In non-DEBUG builds, return a placeholder URL without performing any I/O
+    return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+    #endif
   }
 
   /// Generate Swift code for a value without writing to disk
