@@ -132,16 +132,16 @@ This order ensures that:
 
 SwiftSnapshot resolves EditorConfig properties for Swift files by processing sections in order:
 
-1. Properties before any `[section]` header (currently ignored, uses library defaults)
+1. Properties before any `[section]` header (applies to all files, including Swift)
 2. Properties in `[*]` section (applies to all files)
 3. Properties in `[*.swift]` section (applies specifically to Swift files)
 
-Later sections override earlier sections for matching properties.
+Later sections override earlier sections for matching properties. All three types of sections are accumulated when building the final configuration for Swift files.
 
 ### Example
 
 ```ini
-# These are ignored (no section header)
+# Default section (applies to all files)
 indent_style = tab
 end_of_line = lf
 
@@ -156,9 +156,9 @@ trim_trailing_whitespace = true
 ```
 
 **Resolved for Swift files:**
-- `indent_style` = `space` (from `[*]`, overriding global default)
+- `indent_style` = `space` (from `[*]`, overriding default section)
 - `indent_size` = `4` (from `[*.swift]`, overriding `[*]`)
-- `end_of_line` = `lf` (from library defaults, as no section overrides it)
+- `end_of_line` = `lf` (from default section, no later section overrides it)
 - `insert_final_newline` = `true` (from `[*.swift]`)
 - `trim_trailing_whitespace` = `true` (from `[*.swift]`)
 

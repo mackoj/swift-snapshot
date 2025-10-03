@@ -22,6 +22,7 @@ extension SnapshotTests {
         # EditorConfig - properties before any section
         indent_style = tab
         end_of_line = lf
+        indent_size = 8
         """
 
       try configContent.write(to: configURL, atomically: true, encoding: .utf8)
@@ -30,10 +31,10 @@ extension SnapshotTests {
       SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
       let profile = try FormatConfigLoader.loadProfile(from: .editorconfig(configURL))
 
-      // Default properties should be applied (but currently aren't - this is a bug)
-      // For now, we test the current behavior which uses library defaults
-      #expect(profile.indentSize == 4)  // Library default
-      #expect(profile.endOfLine == .lf)  // Library default
+      // Default properties should be applied to all files including Swift
+      #expect(profile.indentStyle == .tab)
+      #expect(profile.indentSize == 8)
+      #expect(profile.endOfLine == .lf)
     }
 
     /// Test [*] section properties apply to all files including Swift
