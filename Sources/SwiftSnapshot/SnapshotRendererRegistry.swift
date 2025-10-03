@@ -1,5 +1,6 @@
 import Foundation
 import SwiftSyntax
+import IssueReporting
 
 /// Protocol for custom snapshot renderers
 public protocol SnapshotCustomRenderer {
@@ -28,6 +29,8 @@ public final class SnapshotRendererRegistry {
   ) {
     #if DEBUG
     SnapshotRendererRegistry.shared.register(type, render: render)
+    #else
+    reportIssue("SnapshotRendererRegistry.register() called in release build. Custom renderer registration should only be used in DEBUG builds.")
     #endif
   }
 
@@ -41,6 +44,8 @@ public final class SnapshotRendererRegistry {
     SnapshotRendererRegistry.shared.register(SCR.Value.self) { value, context in
       try SCR.render(value, context: context)
     }
+    #else
+    reportIssue("SnapshotRendererRegistry.register() called in release build. Custom renderer registration should only be used in DEBUG builds.")
     #endif
   }
 
@@ -92,6 +97,8 @@ public enum SwiftSnapshotBootstrap {
 
     guard !hasRegistered else { return }
     hasRegistered = true
+    #else
+    reportIssue("SwiftSnapshotBootstrap.registerDefaults() called in release build. Renderer registration should only be used in DEBUG builds.")
     #endif
   }
 }

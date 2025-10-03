@@ -103,6 +103,7 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
             filePath: filePath
           )
           #else
+          IssueReporting.reportIssue("\(raw: typeName).exportSnapshot() called in release build. This method should only be used in DEBUG builds.")
           return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
           #endif
         }
