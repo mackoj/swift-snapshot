@@ -53,8 +53,8 @@ extension SnapshotTests {
       import Foundation
 
       extension User {
-        static let testUserCreation: User = User(
-          id: 42, name: "Alice", role: .admin, isActive: true, tags: ["admin", "beta"])
+          static let testUserCreation: User = User(
+              id: 42, name: "Alice", role: .admin, isActive: true, tags: ["admin", "beta"])
       }
 
       """
@@ -94,9 +94,9 @@ extension SnapshotTests {
       import Foundation
 
       extension Person {
-        static let testPerson: Person = Person(
-          name: "Bob", age: 35, address: Address(street: "123 Main St", city: "Springfield", zip: "12345")
-        )
+          static let testPerson: Person = Person(
+              name: "Bob", age: 35,
+              address: Address(street: "123 Main St", city: "Springfield", zip: "12345"))
       }
 
       """
@@ -138,9 +138,9 @@ extension SnapshotTests {
       import Foundation
 
       extension Product {
-        static let testProduct: Product = Product(
-          id: "PROD-001", name: "Widget", price: 29.99, categories: ["Electronics", "Gadgets"],
-          isAvailable: true, metadata: ["manufacturer": "ACME Corp", "sku": "WDG-001"])
+          static let testProduct: Product = Product(
+              id: "PROD-001", name: "Widget", price: 29.99, categories: ["Electronics", "Gadgets"],
+              isAvailable: true, metadata: ["manufacturer": "ACME Corp", "sku": "WDG-001"])
       }
 
       """
@@ -169,9 +169,9 @@ extension SnapshotTests {
       import Foundation
 
       extension Array<Item> {
-        static let testItems: Array<Item> = [
-          Item(id: 1, name: "First"), Item(id: 2, name: "Second"), Item(id: 3, name: "Third"),
-        ]
+          static let testItems: Array<Item> = [
+              Item(id: 1, name: "First"), Item(id: 2, name: "Second"), Item(id: 3, name: "Third"),
+          ]
       }
 
       """
@@ -200,10 +200,11 @@ extension SnapshotTests {
       import Foundation
 
       extension Dictionary<String, Config> {
-        static let testConfigs: Dictionary<String, Config> = [
-          "development": Config(enabled: false, timeout: 120),
-          "production": Config(enabled: true, timeout: 30), "staging": Config(enabled: true, timeout: 60),
-        ]
+          static let testConfigs: Dictionary<String, Config> = [
+              "development": Config(enabled: false, timeout: 120),
+              "production": Config(enabled: true, timeout: 30),
+              "staging": Config(enabled: true, timeout: 60),
+          ]
       }
 
       """
@@ -235,9 +236,9 @@ extension SnapshotTests {
       import Foundation
 
       extension Task {
-        static let testTask: Task = Task(
-          id: 1, title: "Complete project", description: "Finish the implementation",
-          dueDate: Date(timeIntervalSince1970: 1234567890.0))
+          static let testTask: Task = Task(
+              id: 1, title: "Complete project", description: "Finish the implementation",
+              dueDate: Date(timeIntervalSince1970: 1234567890.0))
       }
 
       """
@@ -288,9 +289,9 @@ extension SnapshotTests {
       import Foundation
 
       extension APIResponse {
-        static let successResponse: APIResponse = APIResponse(
-          success: true, timestamp: Date(timeIntervalSince1970: 1609459200.0),
-          data: ["token": "abc123", "userId": "12345"])
+          static let successResponse: APIResponse = APIResponse(
+              success: true, timestamp: Date(timeIntervalSince1970: 1609459200.0),
+              data: ["token": "abc123", "userId": "12345"])
       }
 
       """
@@ -345,7 +346,7 @@ extension SnapshotTests {
       import Foundation
 
       extension Container {
-        static let emptyContainer: Container = Container(array: [], dict: [:], set: Set([]))
+          static let emptyContainer: Container = Container(array: [], dict: [:], set: Set([]))
       }
 
       """
@@ -375,8 +376,9 @@ extension SnapshotTests {
       import Foundation
 
       extension Message {
-        static let testMessage: Message = Message(
-          text: #"Hello\nWorld\t\"quoted\""#, emoji: #"\u{1F389}\u{1F680}"#, code: #"let x = \"test\""#)
+          static let testMessage: Message = Message(
+              text: #"Hello\nWorld\t\"quoted\""#, emoji: #"\u{1F389}\u{1F680}"#,
+              code: #"let x = \"test\""#)
       }
 
       """#

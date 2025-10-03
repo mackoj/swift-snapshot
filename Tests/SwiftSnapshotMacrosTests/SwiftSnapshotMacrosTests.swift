@@ -25,7 +25,7 @@ extension SnapshotTests {
       }
       """
     } expansion: {
-      """
+      #"""
       struct Product {
         let id: String
         let name: String
@@ -47,11 +47,11 @@ extension SnapshotTests {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "name", renamed: nil, redaction: nil, ignored: false)
+            .init(original: "name", renamed: nil, redaction: nil, ignored: false)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "Product(id: \\(instance.id), name: \\(instance.name))"
+          return "Product(id: \(instance.id), name: \(instance.name))"
         }
       }
 
@@ -69,11 +69,11 @@ extension SnapshotTests {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -85,7 +85,7 @@ extension SnapshotTests {
           )
         }
       }
-      """
+      """#
     }
   }
 
@@ -100,7 +100,7 @@ extension SnapshotTests {
       }
       """
     } expansion: {
-      """
+      #"""
       struct User {
         let id: String
         let cache: [String: Any]
@@ -122,11 +122,11 @@ extension SnapshotTests {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "cache", renamed: nil, redaction: nil, ignored: true)
+            .init(original: "cache", renamed: nil, redaction: nil, ignored: true)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "User(id: \\(instance.id))"
+          return "User(id: \(instance.id))"
         }
       }
 
@@ -144,11 +144,11 @@ extension SnapshotTests {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -160,7 +160,7 @@ extension SnapshotTests {
           )
         }
       }
-      """
+      """#
     }
   }
 
@@ -175,7 +175,7 @@ extension SnapshotTests {
       }
       """
     } expansion: {
-      """
+      #"""
       struct Product {
         let id: String
         let name: String
@@ -197,11 +197,11 @@ extension SnapshotTests {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "name", renamed: "displayName", redaction: nil, ignored: false)
+            .init(original: "name", renamed: "displayName", redaction: nil, ignored: false)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "Product(id: \\(instance.id), displayName: \\(instance.name))"
+          return "Product(id: \(instance.id), displayName: \(instance.name))"
         }
       }
 
@@ -219,11 +219,11 @@ extension SnapshotTests {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -235,7 +235,7 @@ extension SnapshotTests {
           )
         }
       }
-      """
+      """#
     }
   }
 
@@ -250,7 +250,7 @@ extension SnapshotTests {
       }
       """
     } expansion: {
-      """
+      #"""
       struct User {
         let id: String
         let apiKey: String
@@ -272,11 +272,11 @@ extension SnapshotTests {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "apiKey", renamed: nil, redaction: .mask("SECRET"), ignored: false)
+            .init(original: "apiKey", renamed: nil, redaction: .mask("SECRET"), ignored: false)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "User(id: \\(instance.id), apiKey: \\"SECRET\\")"
+          return "User(id: \(instance.id), apiKey: \"SECRET\")"
         }
       }
 
@@ -294,11 +294,11 @@ extension SnapshotTests {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -310,7 +310,7 @@ extension SnapshotTests {
           )
         }
       }
-      """
+      """#
     }
   }
 
@@ -347,16 +347,17 @@ extension SnapshotTests {
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
+
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           switch instance {
           case .active:
-                return ".active"
-          case .inactive:
-                return ".inactive"
-          case .pending:
-                return ".pending"
+              return ".active"
+              case .inactive:
+              return ".inactive"
+              case .pending:
+              return ".pending"
           }
         }
       }
@@ -375,11 +376,11 @@ extension SnapshotTests {
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -404,7 +405,7 @@ extension SnapshotTests {
       }
       """
     } expansion: {
-      """
+      #"""
       struct Product {
         let id: String
 
@@ -428,7 +429,7 @@ extension SnapshotTests {
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "Product(id: \\(instance.id))"
+          return "Product(id: \(instance.id))"
         }
       }
 
@@ -446,11 +447,11 @@ extension SnapshotTests {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -462,7 +463,7 @@ extension SnapshotTests {
           )
         }
       }
-      """
+      """#
     }
     }
   }

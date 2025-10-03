@@ -146,7 +146,7 @@ extension SnapshotTests {
       import Foundation
 
       extension Dictionary<String, String> {
-        static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
+          static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
       }
 
       """
@@ -220,7 +220,7 @@ extension SnapshotTests {
       import Foundation
 
       extension UUID {
-        static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
+          static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
       }
 
       """
@@ -273,10 +273,10 @@ extension SnapshotTests {
       import Foundation
 
       extension Data {
-        static let testData: Data = Data(
-          base64Encoded:
-            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-        )!
+          static let testData: Data = Data(
+              base64Encoded:
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+          )!
       }
 
       """
