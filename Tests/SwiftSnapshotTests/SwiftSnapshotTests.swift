@@ -147,7 +147,7 @@ final class SwiftSnapshotTests: XCTestCase {
       import Foundation
 
       extension Dictionary<String, String> {
-          static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
+        static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
       }
 
       """
@@ -221,7 +221,7 @@ final class SwiftSnapshotTests: XCTestCase {
       import Foundation
 
       extension UUID {
-          static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
+        static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
       }
 
       """
@@ -274,10 +274,10 @@ final class SwiftSnapshotTests: XCTestCase {
       import Foundation
 
       extension Data {
-          static let testData: Data = Data(
-              base64Encoded:
-                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-          )!
+        static let testData: Data = Data(
+          base64Encoded:
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        )!
       }
 
       """
@@ -343,7 +343,7 @@ final class SwiftSnapshotTests: XCTestCase {
 
     assertInlineSnapshot(of: code, as: .description) {
       """
-      // // Custom Header
+      // Custom Header
 
       import Foundation
 
@@ -381,7 +381,7 @@ final class SwiftSnapshotTests: XCTestCase {
 
     assertInlineSnapshot(of: code, as: .description) {
       """
-      // // Global Header
+      // Global Header
 
       import Foundation
 
