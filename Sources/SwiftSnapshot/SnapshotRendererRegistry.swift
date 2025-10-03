@@ -9,7 +9,7 @@ public protocol SnapshotCustomRenderer {
 
 /// Registry for custom type renderers
 public final class SnapshotRendererRegistry {
-  public static let shared = SnapshotRendererRegistry()
+  static let shared = SnapshotRendererRegistry()
 
   private var renderers: [ObjectIdentifier: (Any, SnapshotRenderContext) throws -> ExprSyntax] = [:]
   private let lock = NSLock()
@@ -17,7 +17,24 @@ public final class SnapshotRendererRegistry {
   private init() {}
 
   /// Register a custom renderer for a type
-  public func register<Value>(
+  public static func register<Value>(
+    _ type: Value.Type,
+    render: @escaping (Value, SnapshotRenderContext) throws -> ExprSyntax
+  ) {
+    SnapshotRendererRegistry.shared.register(type, render: render)
+  }
+
+  /// Register a custom renderer for a type conforming to SnapshotCustomRenderer
+  public static func register<R: SnapshotCustomRenderer>(
+    _ rendererType: R.Type
+  ) {
+    SnapshotRendererRegistry.shared.register(R.Value.self) { value, context in
+      try R.render(value, context: context)
+    }
+  }
+g
+  /// Register a custom renderer for a type
+  func register<Value>(
     _ type: Value.Type,
     render: @escaping (Value, SnapshotRenderContext) throws -> ExprSyntax
   ) {
@@ -47,14 +64,6 @@ public final class SnapshotRendererRegistry {
   }
 }
 
-/// Convenience function for auto-registration
-public func autoregister<Value>(
-  _ type: Value.Type,
-  using block: @escaping (Value, SnapshotRenderContext) throws -> ExprSyntax
-) {
-  SnapshotRendererRegistry.shared.register(type, render: block)
-}
-
 /// Bootstrap for built-in renderers
 public enum SwiftSnapshotBootstrap {
   private static var hasRegistered = false
@@ -67,8 +76,5 @@ public enum SwiftSnapshotBootstrap {
 
     guard !hasRegistered else { return }
     hasRegistered = true
-
-    // Built-in renderers are handled in ValueRenderer
-    // This is a placeholder for future custom defaults
   }
 }
