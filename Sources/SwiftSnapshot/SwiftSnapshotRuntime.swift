@@ -81,7 +81,13 @@ public enum SwiftSnapshotRuntime {
     @Dependency(\.swiftSnapshotConfig) var snapshotConfig
     
     // Get formatting and render options
-    let formatting = snapshotConfig.getFormatProfile()
+    // If a config source is set, load the profile from it; otherwise use the stored profile
+    let formatting: FormatProfile
+    if let configSource = snapshotConfig.getFormatConfigSource() {
+      formatting = try FormatConfigLoader.loadProfile(from: configSource)
+    } else {
+      formatting = snapshotConfig.getFormatProfile()
+    }
     let options = snapshotConfig.getRenderOptions()
 
     // Determine header to use

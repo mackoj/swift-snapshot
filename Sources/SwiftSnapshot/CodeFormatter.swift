@@ -31,7 +31,10 @@ enum CodeFormatter {
     // Apply SwiftFormat
     let formatted = applySwiftFormat(to: sourceCode, sourceFile: sourceFile, profile: profile)
 
-    return formatted
+    // Apply post-processing for EditorConfig properties not handled by swift-format
+    let postProcessed = applyEditorConfigPostProcessing(formatted, profile: profile)
+
+    return postProcessed
   }
 
   /// Build a complete SourceFileSyntax tree
@@ -179,5 +182,85 @@ enum CodeFormatter {
     configuration.maximumBlankLines = 1
 
     return configuration
+  }
+
+  /// Apply EditorConfig post-processing for properties not handled by swift-format.
+  ///
+  /// This function handles:
+  /// - `trim_trailing_whitespace`: Removes trailing whitespace from each line
+  /// - `end_of_line`: Converts line endings (LF or CRLF)
+  /// - `insert_final_newline`: Ensures file ends with a newline (or not)
+  ///
+  /// - Parameters:
+  ///   - code: The formatted code from swift-format
+  ///   - profile: The formatting profile with EditorConfig settings
+  /// - Returns: Post-processed code with EditorConfig properties applied
+  private static func applyEditorConfigPostProcessing(
+    _ code: String,
+    profile: FormatProfile
+  ) -> String {
+    var result = code
+
+    // 1. First normalize all line endings to LF for consistent processing
+    result = result.replacingOccurrences(of: "\r\n", with: "\n")
+    result = result.replacingOccurrences(of: "\r", with: "\n")
+
+    // 2. Trim trailing whitespace
+    if profile.trimTrailingWhitespace {
+      result = trimTrailingWhitespace(result)
+    }
+
+    // 3. Handle final newline (using LF temporarily)
+    result = applyFinalNewline(result, insert: profile.insertFinalNewline, lineEnding: "\n")
+
+    // 4. Convert to desired line ending style
+    if profile.endOfLine == .crlf {
+      result = result.replacingOccurrences(of: "\n", with: "\r\n")
+    }
+
+    return result
+  }
+
+  /// Trim trailing whitespace from each line
+  private static func trimTrailingWhitespace(_ code: String) -> String {
+    let lines = code.split(separator: "\n", omittingEmptySubsequences: false)
+    let trimmedLines = lines.map { line -> String in
+      let lineStr = String(line)
+      // Trim trailing spaces and tabs, but preserve the line itself
+      return lineStr.replacingOccurrences(
+        of: "[ \\t]+$",
+        with: "",
+        options: .regularExpression
+      )
+    }
+    return trimmedLines.joined(separator: "\n")
+  }
+
+  /// Apply or remove final newline based on configuration
+  private static func applyFinalNewline(
+    _ code: String,
+    insert: Bool,
+    lineEnding: String
+  ) -> String {
+    if insert {
+      // Ensure file ends with exactly one newline
+      if code.isEmpty {
+        return lineEnding
+      }
+      // Remove any trailing newlines first
+      var result = code
+      while result.hasSuffix(lineEnding) {
+        result = String(result.dropLast(lineEnding.count))
+      }
+      // Add exactly one newline
+      return result + lineEnding
+    } else {
+      // Remove all trailing newlines
+      var result = code
+      while result.hasSuffix(lineEnding) {
+        result = String(result.dropLast(lineEnding.count))
+      }
+      return result
+    }
   }
 }
