@@ -1,55 +1,65 @@
-# SwiftSnapshot 📋
-
-**Generate type-safe, human‑readable Swift source fixtures directly from live runtime values.**
-
-SwiftSnapshot turns your in‑memory objects into compilable Swift code you can commit, diff, and reuse anywhere—tests, previews, documentation, diagnostics—without bespoke serializers.
+# SwiftSnapshot
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> **⚠️ Important**: SwiftSnapshot is designed exclusively for **DEBUG builds**. All public APIs are disabled in release builds to ensure **zero runtime overhead** and **zero binary bloat** in production. Your release builds remain completely unaffected by this library.
+**Generate type-safe Swift source fixtures from runtime values.**
+
+SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere—no JSON, no decoding, just Swift.
+
+```swift
+let user = User(id: 42, name: "Alice", role: .admin)
+try user.exportSnapshot(variableName: "testUser")
+
+// Creates: User+testUser.swift
+// extension User {
+//     static let testUser: User = User(
+//         id: 42,
+//         name: "Alice",
+//         role: .admin
+//     )
+// }
+```
 
 ---
 
-## Why SwiftSnapshot?
-
-### 🔍 Human‑Readable
-Fixtures are plain Swift—review, search, and reason about them like any other code.
-
-### 📝 Diff Friendly
-Line‑level semantic diffs. No sprawling JSON updates or binary churn.
-
-### ♻️ Multi‑Context Reuse
-Use in previews, tests, scripts, debugging hooks, documentation samples—no decoding layer.
-
-### 🛡️ Type Safe
-Refactors surface compiler errors instead of silent runtime mismatches.
-
-### 📦 Lightweight Storage
-No git‑lfs or compression; just fast, lean Swift source.
-
-### 🗂️ Scalable Organization
-Deterministic directory strategy with multiple override layers.
-
-### 🚀 Zero Production Impact
-All APIs are DEBUG-only. Release builds have **zero runtime overhead** and **zero binary bloat**.
+> **⚠️ DEBUG-Only Design**: SwiftSnapshot is a development tool with **zero production impact**. All APIs are disabled in release builds—no runtime overhead, no binary bloat.
 
 ---
 
-## Comparison to Alternatives
+## Motivation
 
-| Feature | SwiftSnapshot | JSON Fixtures | Snapshot Testing |
-|---------|---------------|---------------|------------------|
-| Human Readable | ✅ Swift source | ❌ JSON structure | ❌ Binary/text blobs |
-| Type Safety | ✅ Compile-time | ❌ Runtime parsing | ❌ No type info |
-| Version Control | ✅ Meaningful diffs | ⚠️ Hard to review | ❌ Opaque changes |
-| Reusability | ✅ Use anywhere | ⚠️ Parsing required | ❌ Test-only |
-| IDE Support | ✅ Full autocomplete | ❌ No assistance | ❌ No assistance |
-| Debugging | ✅ Easy inspection | ⚠️ Mental parsing | ❌ External tools |
-| Production Impact | ✅ Zero overhead | ⚠️ Bundle bloat | ⚠️ Bundle bloat |
+Traditional test fixtures have problems:
+
+| Problem | SwiftSnapshot Solution |
+|---------|----------------------|
+| JSON fixtures break silently when types change | **Compiler-verified** - won't build if types change |
+| Hardcoded test data scattered across files | **Centralized fixtures** with single source of truth |
+| Binary snapshots have opaque diffs | **Human-readable diffs** in version control |
+| Decoding overhead in every test | **Zero overhead** - use fixtures directly |
+| No IDE support for fixture data | **Full autocomplete** and navigation |
+
+### Example: The Refactoring Problem
+
+```swift
+// You rename a property
+struct User {
+-   let name: String
++   let fullName: String
+}
+
+// ❌ JSON fixtures: Silent runtime failure
+{"name": "Alice"}  // Still has old property name
+
+// ✅ Swift fixtures: Compile-time error
+User(name: "Alice")  // Error: No parameter 'name'
+                     // Compiler guides you to fix it
+```
 
 ---
+
+
 
 ## Installation
 
@@ -120,31 +130,57 @@ This makes your intent explicit and prevents accidentally relying on the snapsho
 
 ## Quick Start
 
+### Basic Usage
+
 ```swift
 import SwiftSnapshot
 
-// Using macros (recommended)
+let user = User(id: 42, name: "Alice", role: .admin)
+
+// Generate fixture
+try SwiftSnapshotRuntime.export(
+    instance: user,
+    variableName: "testUser"
+)
+
+// Use in tests, previews, etc.
+let reference = User.testUser
+```
+
+### With Macros
+
+Add enhanced control with compile-time macros:
+
+```swift
 @SwiftSnapshot
 struct User {
     let id: Int
     let name: String
+    
+    @SnapshotIgnore
+    let cache: [String: Any]
 }
 
-let user = User(id: 42, name: "Alice")
-
-#if DEBUG
-// This only executes in debug builds
-let url = try user.exportSnapshot(variableName: "testUser")
-print("Snapshot saved to: \(url.path)")
-#endif
-
-// Generated file contains:
-// extension User {
-//   static let testUser: User = User(id: 42, name: "Alice")
-// }
+// Macro adds convenience method
+try user.exportSnapshot(variableName: "testUser")
 ```
 
-**Note**: The `exportSnapshot()` method is only available in DEBUG builds. In release builds, it becomes a no-op that returns a placeholder URL.
+### Output
+
+Both approaches generate clean Swift code:
+
+```swift
+// File: User+testUser.swift
+import Foundation
+
+extension User {
+    static let testUser: User = User(
+        id: 42,
+        name: "Alice",
+        role: .admin
+    )
+}
+```
 
 ---
 

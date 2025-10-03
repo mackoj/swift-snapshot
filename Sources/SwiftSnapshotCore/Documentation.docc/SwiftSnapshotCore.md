@@ -60,6 +60,8 @@ The library is organized into these main subsystems:
 
 ### Articles
 
+- <doc:WhatAndWhy>
+- <doc:Architecture>
 - <doc:BasicUsage>
 - <doc:CustomRenderers>
 - <doc:FormattingConfiguration>
