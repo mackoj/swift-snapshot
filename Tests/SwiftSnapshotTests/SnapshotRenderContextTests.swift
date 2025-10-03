@@ -2,7 +2,7 @@ import Testing
 import Foundation
 import Dependencies
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 extension SnapshotTests {
   /// Tests for SnapshotRenderContext

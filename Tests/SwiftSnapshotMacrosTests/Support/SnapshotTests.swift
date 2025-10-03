@@ -1,7 +1,7 @@
 import MacroTesting
 import SnapshotTesting
 import Testing
-import SwiftSnapshotMacrosPlugin
+import SwiftSnapshotMacros
 
 @MainActor
 @Suite(

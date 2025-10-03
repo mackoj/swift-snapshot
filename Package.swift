@@ -10,7 +10,7 @@ let package = Package(
   products: [
     .library(
       name: "SwiftSnapshot",
-      targets: ["SwiftSnapshot", "SwiftSnapshotMacros"]
+      targets: ["SwiftSnapshot"]
     )
   ],
   dependencies: [
@@ -22,9 +22,9 @@ let package = Package(
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.2.0"),
   ],
   targets: [
-    // Macro implementation (compiler plugin)
+    // Macro implementation (compiler plugin + public macro definitions)
     .macro(
-      name: "SwiftSnapshotMacrosPlugin",
+      name: "SwiftSnapshotMacros",
       dependencies: [
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
@@ -32,31 +32,34 @@ let package = Package(
         .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
         .product(name: "SwiftDiagnostics", package: "swift-syntax"),
       ],
-      path: "Sources/SwiftSnapshotMacrosPlugin"
-    ),
-
-    // Macro interface (public types and attributes)
-    .target(
-      name: "SwiftSnapshotMacros",
-      dependencies: ["SwiftSnapshotMacrosPlugin"],
       path: "Sources/SwiftSnapshotMacros"
     ),
 
-    // Runtime library
+    // Core runtime library implementation
     .target(
-      name: "SwiftSnapshot",
+      name: "SwiftSnapshotCore",
       dependencies: [
-        "SwiftSnapshotMacros",
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftFormat", package: "swift-format"),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
         .product(name: "Dependencies", package: "swift-dependencies"),
-      ]
+      ],
+      path: "Sources/SwiftSnapshotCore"
     ),
 
-    // Runtime tests
+    // Unified import module (re-exports Core + Macros)
+    .target(
+      name: "SwiftSnapshot",
+      dependencies: [
+        "SwiftSnapshotCore",
+        "SwiftSnapshotMacros",
+      ],
+      path: "Sources/SwiftSnapshot"
+    ),
+
+    // Core runtime tests
     .testTarget(
       name: "SwiftSnapshotTests",
       dependencies: [
@@ -70,7 +73,6 @@ let package = Package(
     .testTarget(
       name: "SwiftSnapshotMacrosTests",
       dependencies: [
-        "SwiftSnapshotMacrosPlugin",
         "SwiftSnapshotMacros",
         "SwiftSnapshot",
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),

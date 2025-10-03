@@ -1,7 +1,7 @@
 import MacroTesting
 import Testing
 
-@testable import SwiftSnapshotMacrosPlugin
+@testable import SwiftSnapshotMacros
 
 extension SnapshotTests {
   @Suite(

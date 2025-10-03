@@ -1,7 +1,7 @@
 import InlineSnapshotTesting
 import Testing
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 extension SnapshotTests {
   /// Tests for format configuration loading from .swift-format and .editorconfig files
