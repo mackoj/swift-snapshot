@@ -20,10 +20,13 @@ public enum SwiftSnapshotRuntime {
     fileID: StaticString = #fileID,
     filePath: StaticString = #filePath
   ) throws -> URL {
+    // Sanitize the variable name to ensure it's a valid Swift identifier
+    let sanitizedVariableName = sanitizeVariableName(variableName)
+    
     // Generate the Swift code
     let code = try generateSwiftCode(
       instance: instance,
-      variableName: variableName,
+      variableName: sanitizedVariableName,
       header: header,
       context: context
     )
@@ -39,7 +42,7 @@ public enum SwiftSnapshotRuntime {
     let typeName = String(describing: T.self)
     let filePath = PathResolver.resolveFilePath(
       typeName: typeName,
-      variableName: variableName,
+      variableName: sanitizedVariableName,
       fileName: fileName,
       outputDirectory: outputDirectory
     )
@@ -79,6 +82,9 @@ public enum SwiftSnapshotRuntime {
     context: String? = nil
   ) throws -> String {
     @Dependency(\.swiftSnapshotConfig) var snapshotConfig
+    
+    // Sanitize the variable name to ensure it's a valid Swift identifier
+    let sanitizedVariableName = sanitizeVariableName(variableName)
     
     // Get formatting and render options
     // If a config source is set, load the profile from it; otherwise use the stored profile
@@ -122,7 +128,7 @@ public enum SwiftSnapshotRuntime {
     // Format the file
     let code = CodeFormatter.formatFile(
       typeName: typeName,
-      variableName: variableName,
+      variableName: sanitizedVariableName,
       expression: expression,
       header: effectiveHeader,
       context: context,
@@ -130,5 +136,56 @@ public enum SwiftSnapshotRuntime {
     )
 
     return code
+  }
+  
+  /// Sanitize a variable name to ensure it's a valid Swift identifier
+  ///
+  /// This function:
+  /// - Replaces invalid characters with underscores
+  /// - Ensures the name starts with a letter or underscore (prefixes with _ if needed)
+  /// - Wraps Swift keywords in backticks
+  /// - Returns a fallback "_" for empty or all-invalid names
+  ///
+  /// - Parameter name: The variable name to sanitize
+  /// - Returns: A valid Swift identifier
+  private static func sanitizeVariableName(_ name: String) -> String {
+    // Define Swift keywords that need to be escaped
+    let swiftKeywords: Set<String> = [
+      "associatedtype", "class", "deinit", "enum", "extension", "fileprivate", "func",
+      "import", "init", "inout", "internal", "let", "open", "operator", "private",
+      "precedencegroup", "protocol", "public", "rethrows", "static", "struct",
+      "subscript", "typealias", "var", "break", "case", "catch", "continue", "default",
+      "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat",
+      "return", "throw", "switch", "where", "while", "as", "false", "is", "nil",
+      "self", "Self", "super", "throws", "true", "try", "await", "async"
+    ]
+    
+    // If the name is a Swift keyword, wrap it in backticks
+    if swiftKeywords.contains(name) {
+      return "`\(name)`"
+    }
+    
+    // Replace invalid characters with underscores
+    let sanitized = name.map { char -> Character in
+      if char.isLetter || char.isNumber || char == "_" {
+        return char
+      } else {
+        return "_"
+      }
+    }
+    
+    var result = String(sanitized)
+    
+    // If empty or only underscores, return single underscore
+    if result.isEmpty || result.allSatisfy({ $0 == "_" }) {
+      return "_"
+    }
+    
+    // Ensure the name starts with a letter or underscore
+    if let first = result.first, first.isNumber {
+      result = "_" + result
+    }
+    
+    return result
   }
 }
