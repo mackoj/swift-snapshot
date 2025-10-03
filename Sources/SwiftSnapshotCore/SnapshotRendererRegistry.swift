@@ -88,7 +88,7 @@ public protocol SnapshotCustomRenderer {
 ///
 /// **Note**: All public registration methods are only available in DEBUG builds.
 /// In release builds, they become no-ops to ensure zero runtime overhead in production.
-public final class SnapshotRendererRegistry {
+public final class SnapshotRendererRegistry: @unchecked Sendable {
   static let shared = SnapshotRendererRegistry()
 
   private var renderers: [ObjectIdentifier: (Any, SnapshotRenderContext) throws -> ExprSyntax] = [:]
@@ -194,7 +194,7 @@ public final class SnapshotRendererRegistry {
 ///
 /// **Note**: All public methods are only available in DEBUG builds.
 public enum SwiftSnapshotBootstrap {
-  private static var hasRegistered = false
+  private nonisolated(unsafe) static var hasRegistered = false
   private static let registrationLock = NSLock()
 
   /// Register default built-in renderers
