@@ -1,21 +1,20 @@
 import InlineSnapshotTesting
-import XCTest
+import Testing
 
 @testable import SwiftSnapshot
 
-final class IntegrationTests: XCTestCase {
+extension SnapshotTests {
+  @Suite struct IntegrationTests {
+    init() {
+      SwiftSnapshotConfig.setGlobalRoot(nil)
+      SwiftSnapshotConfig.setGlobalHeader(nil)
+      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
+      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
+    }
 
-  override func setUp() {
-    super.setUp()
-    SwiftSnapshotConfig.setGlobalRoot(nil)
-    SwiftSnapshotConfig.setGlobalHeader(nil)
-    SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-    SwiftSnapshotConfig.setRenderOptions(RenderOptions())
-  }
+    // MARK: - Complex Type Tests
 
-  // MARK: - Complex Type Tests
-
-  func testComplexUserModel() throws {
+    @Test func complexUserModel() throws {
     enum Role {
       case admin
       case manager
@@ -62,7 +61,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testNestedStructures() throws {
+    @Test func nestedStructures() throws {
     struct Address {
       let street: String
       let city: String
@@ -104,7 +103,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testProductModel() throws {
+    @Test func productModel() throws {
     struct Product {
       let id: String
       let name: String
@@ -148,7 +147,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testArrayOfStructs() throws {
+    @Test func arrayOfStructs() throws {
     struct Item {
       let id: Int
       let name: String
@@ -179,7 +178,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testDictionaryWithComplexValues() throws {
+    @Test func dictionaryWithComplexValues() throws {
     struct Config {
       let enabled: Bool
       let timeout: Int
@@ -211,7 +210,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testOptionalFields() throws {
+    @Test func optionalFields() throws {
     struct Task {
       let id: Int
       let title: String
@@ -245,7 +244,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testFileExportWorkflow() throws {
+    @Test func fileExportWorkflow() throws {
     struct APIResponse {
       let success: Bool
       let timestamp: Date
@@ -274,10 +273,10 @@ final class IntegrationTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: tempDir) }
 
     // Verify file exists
-    XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+    #expect(FileManager.default.fileExists(atPath: url.path))
 
     // Verify file name
-    XCTAssertTrue(url.lastPathComponent == "APIResponse+Fixtures.swift")
+    #expect(url.lastPathComponent == "APIResponse+Fixtures.swift")
 
     // Read and verify content
     let content = try String(contentsOf: url, encoding: .utf8)
@@ -298,9 +297,9 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  // MARK: - Custom Renderer Test
+    // MARK: - Custom Renderer Test
 
-  func testCustomRenderer() throws {
+    @Test func customRenderer() throws {
     struct CustomType {
       let value: String
     }
@@ -326,9 +325,9 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  // MARK: - Edge Cases
+    // MARK: - Edge Cases
 
-  func testEmptyCollections() throws {
+    @Test func emptyCollections() throws {
     struct Container {
       let array: [Int]
       let dict: [String: Int]
@@ -353,7 +352,7 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  func testSpecialCharacters() throws {
+    @Test func specialCharacters() throws {
     struct Message {
       let text: String
       let emoji: String
@@ -381,6 +380,7 @@ final class IntegrationTests: XCTestCase {
       }
 
       """#
+    }
     }
   }
 }

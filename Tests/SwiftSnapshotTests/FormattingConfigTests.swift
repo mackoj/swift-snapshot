@@ -1,25 +1,24 @@
 import InlineSnapshotTesting
-import XCTest
+import Testing
 
 @testable import SwiftSnapshot
 
-/// Tests for format configuration loading from .swift-format and .editorconfig files
-final class FormattingConfigTests: XCTestCase {
+extension SnapshotTests {
+  /// Tests for format configuration loading from .swift-format and .editorconfig files
+  @Suite struct FormattingConfigTests {
+    init() {
+      // Reset configuration between tests
+      SwiftSnapshotConfig.setGlobalRoot(nil)
+      SwiftSnapshotConfig.setGlobalHeader(nil)
+      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
+      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
+      SwiftSnapshotConfig.setFormatConfigSource(nil)
+    }
 
-  override func setUp() {
-    super.setUp()
-    // Reset configuration between tests
-    SwiftSnapshotConfig.setGlobalRoot(nil)
-    SwiftSnapshotConfig.setGlobalHeader(nil)
-    SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-    SwiftSnapshotConfig.setRenderOptions(RenderOptions())
-    SwiftSnapshotConfig.setFormatConfigSource(nil)
-  }
+    // MARK: - Configuration Loading Tests
 
-  // MARK: - Configuration Loading Tests
-
-  /// Test loading configuration from .editorconfig
-  func testEditorConfigLoading() throws {
+    /// Test loading configuration from .editorconfig
+    @Test func editorConfigLoading() throws {
     // Create a temporary .editorconfig file
     let tempDir = FileManager.default.temporaryDirectory
     let configURL = tempDir.appendingPathComponent("test-\(UUID()).editorconfig")
@@ -41,19 +40,19 @@ final class FormattingConfigTests: XCTestCase {
 
     // Verify the config source is set
     let source = SwiftSnapshotConfig.getFormatConfigSource()
-    XCTAssertNotNil(source)
+    #expect(source != nil)
 
     // Load and verify profile
     let profile = try FormatConfigLoader.loadProfile(from: source)
-    XCTAssertEqual(profile.indentSize, 2)
-    XCTAssertEqual(profile.indentStyle, .space)
-    XCTAssertEqual(profile.endOfLine, .lf)
-    XCTAssertTrue(profile.insertFinalNewline)
-    XCTAssertTrue(profile.trimTrailingWhitespace)
-  }
+    #expect(profile.indentSize == 2)
+    #expect(profile.indentStyle == .space)
+    #expect(profile.endOfLine == .lf)
+    #expect(profile.insertFinalNewline)
+    #expect(profile.trimTrailingWhitespace)
+    }
 
-  /// Test loading configuration from .swift-format
-  func testSwiftFormatConfigLoading() throws {
+    /// Test loading configuration from .swift-format
+    @Test func swiftFormatConfigLoading() throws {
     // Create a temporary .swift-format file
     let tempDir = FileManager.default.temporaryDirectory
     let configURL = tempDir.appendingPathComponent("test-\(UUID()).swift-format")
@@ -77,17 +76,17 @@ final class FormattingConfigTests: XCTestCase {
 
     // Verify the config source is set
     let source = SwiftSnapshotConfig.getFormatConfigSource()
-    XCTAssertNotNil(source)
+    #expect(source != nil)
 
     if case .swiftFormat(let url) = source {
-      XCTAssertEqual(url, configURL)
+      #expect(url == configURL)
     } else {
-      XCTFail("Expected swiftFormat config source")
+      Issue.record("Expected swiftFormat config source")
     }
-  }
+    }
 
-  /// Test that formatting respects configuration
-  func testFormattingWithCustomConfig() throws {
+    /// Test that formatting respects configuration
+    @Test func formattingWithCustomConfig() throws {
     // Create a profile with custom indentation
     let customProfile = FormatProfile(
       indentStyle: .space,
@@ -113,10 +112,10 @@ final class FormattingConfigTests: XCTestCase {
 
       """
     }
-  }
+    }
 
-  /// Test configuration precedence
-  func testConfigurationPrecedence() throws {
+    /// Test configuration precedence
+    @Test func configurationPrecedence() throws {
     // Create a temporary .editorconfig file
     let tempDir = FileManager.default.temporaryDirectory
     let configURL = tempDir.appendingPathComponent("test-\(UUID()).editorconfig")
@@ -141,11 +140,11 @@ final class FormattingConfigTests: XCTestCase {
     let loadedProfile = try FormatConfigLoader.loadProfile(from: source)
 
     // Config file should override
-    XCTAssertEqual(loadedProfile.indentSize, 8)
-  }
+    #expect(loadedProfile.indentSize == 8)
+    }
 
-  /// Test default configuration when no config file is specified
-  func testDefaultConfiguration() throws {
+    /// Test default configuration when no config file is specified
+    @Test func defaultConfiguration() throws {
     // Don't set any config source
     SwiftSnapshotConfig.setFormatConfigSource(nil)
 
@@ -163,10 +162,10 @@ final class FormattingConfigTests: XCTestCase {
 
       """
     }
-  }
+    }
 
-  /// Test FormatConfigLoader.findConfigFile
-  func testConfigFileFinding() throws {
+    /// Test FormatConfigLoader.findConfigFile
+    @Test func configFileFinding() throws {
     // Create a temporary directory structure
     let tempDir = FileManager.default.temporaryDirectory
     let testDir = tempDir.appendingPathComponent("test-\(UUID())")
@@ -186,7 +185,8 @@ final class FormattingConfigTests: XCTestCase {
     )
 
     // Should find the config file in parent directory
-    XCTAssertNotNil(foundURL)
-    XCTAssertEqual(foundURL?.path, configURL.path)
+    #expect(foundURL != nil)
+    #expect(foundURL?.path == configURL.path)
+    }
   }
 }

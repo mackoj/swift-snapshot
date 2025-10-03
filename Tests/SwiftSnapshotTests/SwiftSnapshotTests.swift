@@ -1,22 +1,21 @@
 import InlineSnapshotTesting
-import XCTest
+import Testing
 
 @testable import SwiftSnapshot
 
-final class SwiftSnapshotTests: XCTestCase {
+extension SnapshotTests {
+  @Suite struct SwiftSnapshotTests {
+    init() {
+      // Reset configuration between tests
+      SwiftSnapshotConfig.setGlobalRoot(nil)
+      SwiftSnapshotConfig.setGlobalHeader(nil)
+      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
+      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
+    }
 
-  override func setUp() {
-    super.setUp()
-    // Reset configuration between tests
-    SwiftSnapshotConfig.setGlobalRoot(nil)
-    SwiftSnapshotConfig.setGlobalHeader(nil)
-    SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-    SwiftSnapshotConfig.setRenderOptions(RenderOptions())
-  }
+    // MARK: - Basic Primitive Tests
 
-  // MARK: - Basic Primitive Tests
-
-  func testIntGeneration() throws {
+    @Test func intGeneration() throws {
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: 42,
       variableName: "testInt"
@@ -32,7 +31,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testStringGeneration() throws {
+    @Test func stringGeneration() throws {
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: "Hello, World!",
       variableName: "testString"
@@ -48,7 +47,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testBoolGeneration() throws {
+    @Test func boolGeneration() throws {
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: true,
       variableName: "testBool"
@@ -64,7 +63,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testDoubleGeneration() throws {
+    @Test func doubleGeneration() throws {
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: 3.14159,
       variableName: "testDouble"
@@ -80,9 +79,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - String Escaping Tests
+    // MARK: - String Escaping Tests
 
-  func testStringEscaping() throws {
+    @Test func stringEscaping() throws {
     let testString = "Hello\nWorld\t\"quoted\""
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: testString,
@@ -99,9 +98,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - Collection Tests
+    // MARK: - Collection Tests
 
-  func testArrayGeneration() throws {
+    @Test func arrayGeneration() throws {
     let array = [1, 2, 3, 4, 5]
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: array,
@@ -118,7 +117,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testEmptyArrayGeneration() throws {
+    @Test func emptyArrayGeneration() throws {
     let array: [Int] = []
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: array,
@@ -135,7 +134,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testDictionaryGeneration() throws {
+    @Test func dictionaryGeneration() throws {
     let dict = ["key1": "value1", "key2": "value2"]
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: dict,
@@ -154,9 +153,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - Optional Tests
+    // MARK: - Optional Tests
 
-  func testOptionalSome() throws {
+    @Test func optionalSome() throws {
     let optional: Int? = 42
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: optional,
@@ -173,7 +172,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testOptionalNil() throws {
+    @Test func optionalNil() throws {
     let optional: Int? = nil
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: optional,
@@ -190,9 +189,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - Foundation Type Tests
+    // MARK: - Foundation Type Tests
 
-  func testDateGeneration() throws {
+    @Test func dateGeneration() throws {
     let date = Date(timeIntervalSince1970: 1234567890.0)
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: date,
@@ -209,7 +208,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testUUIDGeneration() throws {
+    @Test func uuidGeneration() throws {
     let uuid = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: uuid,
@@ -228,7 +227,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testURLGeneration() throws {
+    @Test func urlGeneration() throws {
     let url = URL(string: "https://example.com")!
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: url,
@@ -245,7 +244,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testDataSmallGeneration() throws {
+    @Test func dataSmallGeneration() throws {
     let data = Data([0x01, 0x02, 0x03])
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: data,
@@ -262,7 +261,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testDataLargeGeneration() throws {
+    @Test func dataLargeGeneration() throws {
     let data = Data(count: 100)
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: data,
@@ -284,9 +283,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - Struct Reflection Tests
+    // MARK: - Struct Reflection Tests
 
-  func testSimpleStructGeneration() throws {
+    @Test func simpleStructGeneration() throws {
     struct Person {
       let name: String
       let age: Int
@@ -308,9 +307,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - Enum Tests
+    // MARK: - Enum Tests
 
-  func testSimpleEnumGeneration() throws {
+    @Test func simpleEnumGeneration() throws {
     enum Status {
       case active
       case inactive
@@ -332,9 +331,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - Header and Context Tests
+    // MARK: - Header and Context Tests
 
-  func testHeaderGeneration() throws {
+    @Test func headerGeneration() throws {
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: 42,
       variableName: "testInt",
@@ -353,7 +352,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testContextGeneration() throws {
+    @Test func contextGeneration() throws {
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
       instance: 42,
       variableName: "testInt",
@@ -371,7 +370,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testGlobalHeaderConfiguration() throws {
+    @Test func globalHeaderConfiguration() throws {
     SwiftSnapshotConfig.setGlobalHeader("// Global Header")
 
     let code = try SwiftSnapshotRuntime.generateSwiftCode(
@@ -391,9 +390,9 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  // MARK: - File Export Tests
+    // MARK: - File Export Tests
 
-  func testFileExport() throws {
+    @Test func fileExport() throws {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)
 
@@ -404,7 +403,7 @@ final class SwiftSnapshotTests: XCTestCase {
     )
     // Cleanup
     defer { try? FileManager.default.removeItem(at: tempDir) }
-    XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+    #expect(FileManager.default.fileExists(atPath: url.path))
 
     let content = try String(contentsOf: url, encoding: .utf8)
     assertInlineSnapshot(of: content, as: .description) {
@@ -417,7 +416,7 @@ final class SwiftSnapshotTests: XCTestCase {
     }
   }
 
-  func testFileExportOverwriteDisallowed() throws {
+    @Test func fileExportOverwriteDisallowed() throws {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)
 
@@ -431,35 +430,34 @@ final class SwiftSnapshotTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: tempDir) }
 
     // Second export with overwrite disallowed should throw
-    XCTAssertThrowsError(
+    #expect(throws: (any Error).self) {
       try SwiftSnapshotRuntime.export(
         instance: 43,
         variableName: "testInt",
         outputBasePath: tempDir.path,
         allowOverwrite: false
       )
-    ) { error in
-      XCTAssertTrue(error is SwiftSnapshotError)
     }
   }
 
-  // MARK: - Configuration Tests
+    // MARK: - Configuration Tests
 
-  func testConfigurationPrecedence() throws {
+    @Test func configurationPrecedence() throws {
     // Test that configuration is properly retrieved
     let customProfile = FormatProfile(indentSize: 2)
     SwiftSnapshotConfig.setFormattingProfile(customProfile)
 
     let retrieved = SwiftSnapshotConfig.formattingProfile()
-    XCTAssertEqual(retrieved.indentSize, 2)
-  }
+    #expect(retrieved.indentSize == 2)
+    }
 
-  func testRenderOptions() throws {
+    @Test func renderOptions() throws {
     var options = RenderOptions()
     options.sortDictionaryKeys = false
     SwiftSnapshotConfig.setRenderOptions(options)
 
     let retrieved = SwiftSnapshotConfig.renderOptions()
-    XCTAssertFalse(retrieved.sortDictionaryKeys)
+    #expect(!retrieved.sortDictionaryKeys)
+    }
   }
 }

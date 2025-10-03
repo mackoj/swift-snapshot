@@ -1,24 +1,21 @@
 import MacroTesting
-import XCTest
+import Testing
 
 @testable import SwiftSnapshotMacrosPlugin
 
-final class SwiftSnapshotMacrosTests: XCTestCase {
-  override func invokeTest() {
-    withMacroTesting(
-      // isRecording: true,  // Enable to record new snapshots
-      macros: [
+extension SnapshotTests {
+  @Suite(
+    .macros(
+      [
         "SwiftSnapshot": SwiftSnapshotMacro.self,
         "SnapshotIgnore": SnapshotIgnoreMacro.self,
         "SnapshotRename": SnapshotRenameMacro.self,
         "SnapshotRedact": SnapshotRedactMacro.self,
       ]
-    ) {
-      super.invokeTest()
-    }
-  }
-
-  func testBasicStruct() {
+    )
+  )
+  struct SwiftSnapshotMacrosTests {
+    @Test func basicStruct() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -92,7 +89,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
     }
   }
 
-  func testStructWithIgnore() {
+    @Test func structWithIgnore() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -167,7 +164,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
     }
   }
 
-  func testStructWithRename() {
+    @Test func structWithRename() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -242,7 +239,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
     }
   }
 
-  func testStructWithRedactMask() {
+    @Test func structWithRedactMask() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -317,7 +314,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
     }
   }
 
-  func testSimpleEnum() {
+    @Test func simpleEnum() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -398,7 +395,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
     }
   }
 
-  func testFolderParameter() {
+    @Test func folderParameter() {
     assertMacro {
       """
       @SwiftSnapshot(folder: "Fixtures/Products")
@@ -466,6 +463,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
         }
       }
       """
+    }
     }
   }
 }
