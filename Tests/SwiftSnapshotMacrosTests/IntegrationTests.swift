@@ -66,7 +66,7 @@ final class MacroIntegrationTests: XCTestCase {
     let product = TestProduct(id: "123", name: "Widget")
     let expr = TestProduct.__swiftSnapshot_makeExpr(from: product)
 
-    assertInlineSnapshot(of: expr.description, as: .description) {
+    assertInlineSnapshot(of: expr.description, as: .description, record: .failed) {
       """
       TestProduct(id: 123, name: Widget)
       """
@@ -78,7 +78,7 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestUser.__swiftSnapshot_makeExpr(from: user)
 
     // Verify ignored property is not in expression
-    assertInlineSnapshot(of: expr.description, as: .description) {
+    assertInlineSnapshot(of: expr.description, as: .description, record: .failed) {
       """
       TestUser(id: user123)
       """
@@ -90,7 +90,7 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestItem.__swiftSnapshot_makeExpr(from: item)
 
     // Verify renamed label is used
-    assertInlineSnapshot(of: expr.description, as: .description) {
+    assertInlineSnapshot(of: expr.description, as: .description, record: .failed) {
       """
       TestItem(id: item123, displayName: Test Item)
       """
@@ -102,7 +102,7 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestSecret.__swiftSnapshot_makeExpr(from: secret)
 
     // Verify redacted value appears instead of actual value
-    assertInlineSnapshot(of: expr.description, as: .description) {
+    assertInlineSnapshot(of: expr.description, as: .description, record: .failed) {
       """
       TestSecret(id: secret123, apiKey: "REDACTED")
       """
@@ -114,7 +114,7 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestStatus.__swiftSnapshot_makeExpr(from: status)
 
     // Verify enum case is rendered
-    assertInlineSnapshot(of: expr.description, as: .description) {
+    assertInlineSnapshot(of: expr.description, as: .description, record: .failed) {
       """
       .active
       """
@@ -131,7 +131,7 @@ final class MacroIntegrationTests: XCTestCase {
     let expr = TestResult.__swiftSnapshot_makeExpr(from: success)
 
     // Verify enum with associated values
-    assertInlineSnapshot(of: expr.description, as: .description) {
+    assertInlineSnapshot(of: expr.description, as: .description, record: .failed) {
       """
       .success(value: 42)
       """

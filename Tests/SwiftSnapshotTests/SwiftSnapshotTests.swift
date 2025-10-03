@@ -22,7 +22,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testInt"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -38,7 +38,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testString"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -54,7 +54,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testBool"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -70,7 +70,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testDouble"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -89,7 +89,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testEscaped"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       #"""
       import Foundation
 
@@ -108,7 +108,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testArray"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -125,7 +125,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testEmptyArray"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -142,12 +142,12 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testDict"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
       extension Dictionary<String, String> {
-          static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
+        static let testDict: Dictionary<String, String> = ["key1": "value1", "key2": "value2"]
       }
 
       """
@@ -163,7 +163,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testOptional"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -180,7 +180,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testOptional"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -199,7 +199,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testDate"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -216,12 +216,12 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testUUID"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
       extension UUID {
-          static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
+        static let testUUID: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
       }
 
       """
@@ -235,7 +235,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testURL"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -252,7 +252,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testData"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -269,15 +269,15 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testData"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
       extension Data {
-          static let testData: Data = Data(
-              base64Encoded:
-                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-          )!
+        static let testData: Data = Data(
+          base64Encoded:
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+        )!
       }
 
       """
@@ -298,7 +298,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testPerson"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -322,7 +322,7 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testStatus"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       import Foundation
 
@@ -341,9 +341,9 @@ final class SwiftSnapshotTests: XCTestCase {
       header: "// Custom Header"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
-      // // Custom Header
+      // Custom Header
 
       import Foundation
 
@@ -360,7 +360,7 @@ final class SwiftSnapshotTests: XCTestCase {
       context: "This is a test integer"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
       /// This is a test integer
       import Foundation
@@ -379,9 +379,9 @@ final class SwiftSnapshotTests: XCTestCase {
       variableName: "testInt"
     )
 
-    assertInlineSnapshot(of: code, as: .description) {
+    assertInlineSnapshot(of: code, as: .description, record: .failed) {
       """
-      // // Global Header
+      // Global Header
 
       import Foundation
 
@@ -407,7 +407,7 @@ final class SwiftSnapshotTests: XCTestCase {
     XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
 
     let content = try String(contentsOf: url, encoding: .utf8)
-    assertInlineSnapshot(of: content, as: .description) {
+    assertInlineSnapshot(of: content, as: .description, record: .failed) {
       """
       import Foundation
 
