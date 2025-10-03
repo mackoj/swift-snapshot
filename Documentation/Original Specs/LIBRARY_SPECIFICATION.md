@@ -52,7 +52,8 @@ public enum SwiftSnapshotRuntime {
     filePath: StaticString = #filePath
   ) throws -> URL
 
-  public static func generateSwiftCode<T>(
+  // Internal: generateSwiftCode is used internally by export() and in tests
+  internal static func generateSwiftCode<T>(
     instance: T,
     variableName: String,
     header: String? = nil,

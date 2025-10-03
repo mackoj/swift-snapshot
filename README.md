@@ -541,11 +541,11 @@ SnapshotRendererRegistry.register(CustomType.self) { value, context in
 }
 
 let custom = CustomType(value: "test")
-let code = try SwiftSnapshotRuntime.generateSwiftCode(
+let url = try SwiftSnapshotRuntime.export(
     instance: custom, 
     variableName: "myCustom"
 )
-// Uses your custom renderer
+// Uses your custom renderer and exports to file
 ```
 
 See [Documentation/CustomRenderers.md](Documentation/CustomRenderers.md) for comprehensive guide.
@@ -593,14 +593,6 @@ public enum SwiftSnapshotRuntime {
         fileID: StaticString = #fileID,
         filePath: StaticString = #filePath
     ) throws -> URL
-
-    /// Generate Swift code without writing to disk
-    public static func generateSwiftCode<T>(
-        instance: T,
-        variableName: String,
-        header: String? = nil,
-        context: String? = nil
-    ) throws -> String
 }
 ```
 

@@ -71,7 +71,7 @@ public enum SwiftSnapshotRuntime {
   }
 
   /// Generate Swift code for a value without writing to disk
-  public static func generateSwiftCode<T>(
+  internal static func generateSwiftCode<T>(
     instance: T,
     variableName: String,
     header: String? = nil,
