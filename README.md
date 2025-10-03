@@ -149,9 +149,8 @@ The macro layer provides compile-time code generation for enhanced control:
 - **Property Attributes**: `@SnapshotIgnore`, `@SnapshotRename`, `@SnapshotRedact`
 - **Optimized Generation**: Skip reflection for macro-annotated types
 - **Enhanced Enum Support**: Full associated value labels with compile-time generation
-- **Redaction Modes**: Mask, hash, or remove sensitive properties
+- **Redaction Modes**: Mask or hash sensitive properties
 - **Folder Organization**: Specify output directories per type
-- **Context Documentation**: Add documentation comments to generated code
 
 ---
 
@@ -267,7 +266,7 @@ struct Product {
 }
 
 // Macro with property attributes
-@SwiftSnapshot(folder: "Fixtures/Users", context: "Standard user fixture")
+@SwiftSnapshot(folder: "Fixtures/Users")
 struct User {
     let id: String
     
@@ -312,7 +311,7 @@ struct SecureData {
     let password: String
     
     // Remove from output entirely
-    @SnapshotRedact(remove: true)
+    @SnapshotIgnore
     let sessionToken: String
 }
 ```
@@ -348,7 +347,6 @@ Marks a type for snapshot fixture export with compile-time code generation.
 
 **Parameters:**
 - `folder: String?` - Optional output directory hint (e.g., `"Fixtures/Users"`)
-- `context: String?` - Optional documentation context added as comments
 
 **Generated Members:**
 - `static let __swiftSnapshot_folder: String?` - Stores folder parameter
@@ -358,7 +356,7 @@ Marks a type for snapshot fixture export with compile-time code generation.
 
 **Example:**
 ```swift
-@SwiftSnapshot(folder: "Fixtures/Products", context: "Standard product fixture")
+@SwiftSnapshot(folder: "Fixtures/Products")
 struct Product {
     let id: String
     let name: String
@@ -402,7 +400,6 @@ Redacts sensitive property values in generated snapshots. Three modes available 
 **Parameters:**
 - `mask: String?` - Replace value with literal string (default: `"•••"`)
 - `hash: Bool` - Replace with deterministic hash placeholder
-- `remove: Bool` - Omit property from initializer entirely
 
 **Examples:**
 ```swift
@@ -413,15 +410,13 @@ struct SecureData {
     
     @SnapshotRedact(hash: true)
     let password: String  // Generated as: password: "<hashed>"
-    
-    @SnapshotRedact(remove: true)
-    let sessionToken: String  // Omitted from output
 }
 ```
 
+**Note:** To completely omit a property from the snapshot, use `@SnapshotIgnore` instead.
+
 **Diagnostics:**
 - Error if multiple redaction modes specified
-- Error if `remove` mode would create invalid initializer
 
 ---
 

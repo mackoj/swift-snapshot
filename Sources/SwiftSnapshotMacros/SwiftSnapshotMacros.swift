@@ -10,11 +10,10 @@
 ///
 /// - Parameters:
 ///   - folder: Optional output directory hint (literal string)
-///   - context: Optional documentation context (literal string)
 ///
 /// Example:
 /// ```swift
-/// @SwiftSnapshot(folder: "Fixtures/Users", context: "Standard user fixture")
+/// @SwiftSnapshot(folder: "Fixtures/Users")
 /// struct User {
 ///   let id: String
 ///   let name: String
@@ -25,7 +24,7 @@
   named(__swiftSnapshot_makeExpr), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata),
   named(__SwiftSnapshot_Redaction))
 @attached(extension, conformances: SwiftSnapshotExportable, names: named(exportSnapshot))
-public macro SwiftSnapshot(folder: String? = nil, context: String? = nil) =
+public macro SwiftSnapshot(folder: String? = nil) =
   #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SwiftSnapshotMacro")
 
 /// Excludes a property from snapshot generation.
@@ -68,15 +67,13 @@ public macro SnapshotRename(_ name: String) =
 
 /// Redacts a property value in the generated snapshot.
 ///
-/// Three redaction modes are available (mutually exclusive):
+/// Two redaction modes are available (mutually exclusive):
 /// - `mask`: Replace value with a literal string (default: "•••")
 /// - `hash`: Replace with a deterministic hash of the value
-/// - `remove`: Omit the property from the initializer entirely
 ///
 /// - Parameters:
 ///   - mask: String literal to use instead of the actual value
 ///   - hash: If true, use a hash of the value
-///   - remove: If true, omit the property entirely
 ///
 /// Example:
 /// ```swift
@@ -87,13 +84,10 @@ public macro SnapshotRename(_ name: String) =
 ///
 ///   @SnapshotRedact(hash: true)
 ///   let password: String
-///
-///   @SnapshotRedact(remove: true)
-///   let sessionToken: String
 /// }
 /// ```
 @attached(peer)
-public macro SnapshotRedact(mask: String? = nil, hash: Bool = false, remove: Bool = false) =
+public macro SnapshotRedact(mask: String? = nil, hash: Bool = false) =
   #externalMacro(module: "SwiftSnapshotMacrosPlugin", type: "SnapshotRedactMacro")
 
 /// Protocol that marks types as exportable via macro-generated methods.
