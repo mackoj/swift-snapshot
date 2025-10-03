@@ -1,4 +1,5 @@
 import Foundation
+import IssueReporting
 import SwiftFormat
 import SwiftParser
 import SwiftSyntax
@@ -48,7 +49,7 @@ enum CodeFormatter {
     if let header = header {
       // Add header comments
       for line in header.split(separator: "\n", omittingEmptySubsequences: false) {
-        leadingTrivia += .lineComment("// \(line)") + .newlines(1)
+        leadingTrivia += .lineComment("\(line)") + .newlines(1)
       }
       leadingTrivia += .newlines(1)
     }
@@ -127,6 +128,7 @@ enum CodeFormatter {
       return formattedCode
     } catch {
       // If formatting fails, return original code
+      reportIssue("Failed to format code: \(error.localizedDescription)")
       return code
     }
   }

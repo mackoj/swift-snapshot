@@ -1,5 +1,5 @@
-import XCTest
 import InlineSnapshotTesting
+import XCTest
 
 @testable import SwiftSnapshot
 
@@ -396,7 +396,7 @@ final class SwiftSnapshotTests: XCTestCase {
   func testFileExport() throws {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)
-    
+
     let url = try SwiftSnapshotRuntime.export(
       instance: 42,
       variableName: "testInt",

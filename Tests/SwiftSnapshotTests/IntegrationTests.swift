@@ -1,5 +1,5 @@
-import XCTest
 import InlineSnapshotTesting
+import XCTest
 
 @testable import SwiftSnapshot
 
