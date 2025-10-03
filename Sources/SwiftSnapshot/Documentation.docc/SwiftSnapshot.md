@@ -22,11 +22,11 @@ extension User {
 ```
 
 This approach provides:
-- ✅ **Type Safety**: Refactors surface compiler errors
-- ✅ **Human Readable**: Review and understand fixtures like any code
-- ✅ **Diff Friendly**: Line-by-line semantic diffs in version control
-- ✅ **Reusable**: Use in tests, previews, documentation, anywhere
-- ✅ **Zero Production Impact**: DEBUG-only, no release build overhead
+- **Type Safety**: Refactors surface compiler errors
+- **Human Readable**: Review and understand fixtures like any code
+- **Diff Friendly**: Line-by-line semantic diffs in version control
+- **Reusable**: Use in tests, previews, documentation, anywhere
+- **Zero Production Impact**: DEBUG-only, no release build overhead
 
 ### Quick Start
 

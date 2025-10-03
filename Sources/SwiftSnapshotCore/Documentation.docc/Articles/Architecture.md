@@ -10,32 +10,32 @@ SwiftSnapshot is built on a layered architecture that separates concerns and pro
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    User Application                          │
+│                    User Application                         │
 └────────────────┬────────────────────────────────────────────┘
                  │
 ┌────────────────┴────────────────────────────────────────────┐
-│              SwiftSnapshot Public API                        │
+│              SwiftSnapshot Public API                       │
 │  - SwiftSnapshotRuntime.export()                            │
-│  - Macro-generated convenience methods                       │
+│  - Macro-generated convenience methods                      │
 └────────────────┬────────────────────────────────────────────┘
                  │
 ┌────────────────┴────────────────────────────────────────────┐
-│                   Core Components                            │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ValueRenderer │  │CodeFormatter │  │PathResolver  │     │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
-│         │                  │                  │              │
-│  ┌──────┴────────┐  ┌──────┴──────┐   ┌──────┴──────┐     │
-│  │RendererRegistry│  │FormatLoader│   │Config System│     │
-│  └───────────────┘  └─────────────┘   └─────────────┘     │
-└─────────────────────────────────────────────────────────────┘
+│                   Core Components                           │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ValueRenderer │  │CodeFormatter │  │PathResolver  │       │
+│  └──────┬───────┘  └───────┬──────┘  └──────┬───────┘       │
+│         │                  │                │               │
+│  ┌──────┴─────────┐ ┌──────┴──────┐   ┌─────┴───────┐       │
+│  │RendererRegistry│ │FormatLoader │   │Config System│       │
+│  └────────────────┘ └─────────────┘   └─────────────┘       │
+└────────────────┬────────────────────────────────────────────┘
                  │
 ┌────────────────┴────────────────────────────────────────────┐
-│              External Dependencies                           │
+│              External Dependencies                          │
 │  - SwiftSyntax (AST generation)                             │
-│  - swift-format (code formatting)                            │
-│  - swift-dependencies (DI)                                   │
+│  - swift-format (code formatting)                           │
+│  - swift-dependencies (DI)                                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
