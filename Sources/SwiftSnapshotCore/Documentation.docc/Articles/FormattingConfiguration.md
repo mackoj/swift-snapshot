@@ -1,10 +1,20 @@
 # Formatting Configuration
 
-SwiftSnapshot supports configurable code formatting through `.editorconfig` or `.swift-format` files.
+Configure code formatting using `.editorconfig` or `.swift-format` files for consistent style.
+
+## Overview
+
+SwiftSnapshot integrates with standard formatting tools to ensure generated code matches your project's style:
+
+- **EditorConfig**: Industry-standard configuration format
+- **swift-format**: Apple's Swift formatting tool
+- **Manual Configuration**: Programmatic ``FormatProfile`` setup
+
+All formatting options are configured via ``SwiftSnapshotConfig`` and processed by ``CodeFormatter``.
 
 ## Configuration Sources
 
-You can specify the format configuration source using `SwiftSnapshotConfig`:
+Specify the format configuration source using ``SwiftSnapshotConfig/setFormatConfigSource(_:)``:
 
 ```swift
 // Use .editorconfig file
