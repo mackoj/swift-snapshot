@@ -141,9 +141,9 @@ enum FormatConfigLoader {
     // Extract relevant settings with defaults
     var indentSize = 4
     var indentStyle = FormatProfile.IndentStyle.space
-    var endOfLine = FormatProfile.EndOfLine.lf
-    var insertFinalNewline = true
-    var trimTrailingWhitespace = true
+    let endOfLine = FormatProfile.EndOfLine.lf
+    let insertFinalNewline = true
+    let trimTrailingWhitespace = true
 
     // Parse indentation
     if let indentation = json["indentation"] as? [String: Any] {

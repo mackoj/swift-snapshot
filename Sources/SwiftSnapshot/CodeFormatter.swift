@@ -148,7 +148,7 @@ enum CodeFormatter {
         if FileManager.default.fileExists(atPath: url.path) {
           return try SwiftFormat.Configuration(contentsOf: url)
         }
-        return try SwiftFormat.Configuration()
+        return SwiftFormat.Configuration()
 
       case .editorconfig:
         // Load from .editorconfig and convert to SwiftFormat.Configuration

@@ -65,7 +65,6 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
     in context: some MacroExpansionContext
   ) throws -> [ExtensionDeclSyntax] {
     // Extract macro arguments
-    let arguments = extractArguments(from: node)
     let typeName = type.trimmedDescription
 
     // Generate export convenience method
@@ -145,10 +144,7 @@ extension SwiftSnapshotMacro {
   static func collectProperties(
     from declaration: some DeclGroupSyntax, context: some MacroExpansionContext
   ) -> [PropertyInfo] {
-    guard let members = declaration.memberBlock.members.as(MemberBlockItemListSyntax.self) else {
-      return []
-    }
-
+    let members = declaration.memberBlock.members
     var properties: [PropertyInfo] = []
 
     for member in members {
@@ -347,8 +343,6 @@ extension SwiftSnapshotMacro {
     guard let enumDecl = declaration.as(EnumDeclSyntax.self) else {
       throw MacroError.notAnEnum
     }
-
-    let typeName = enumDecl.name.text
 
     // Collect all enum cases
     var cases: [String] = []
