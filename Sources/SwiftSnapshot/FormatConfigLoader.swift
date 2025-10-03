@@ -49,6 +49,8 @@ enum FormatConfigLoader {
   /// Parse .editorconfig file
   private static func loadFromEditorConfig(_ url: URL) throws -> FormatProfile {
     let contents = try String(contentsOf: url, encoding: .utf8)
+    
+    // Start with library defaults
     var indentSize = 4
     var indentStyle = FormatProfile.IndentStyle.space
     var endOfLine = FormatProfile.EndOfLine.lf
@@ -56,8 +58,10 @@ enum FormatConfigLoader {
     var trimTrailingWhitespace = true
 
     // Parse .editorconfig format
+    // Properties are accumulated across sections, with later sections overriding earlier ones
     let lines = contents.split(separator: "\n")
-    var inGlobalSection = false
+    var currentlyInSwiftSection = true  // Start as true to process default section
+    var hasSeenSection = false
 
     for line in lines {
       let trimmed = line.trimmingCharacters(in: .whitespaces)
@@ -69,14 +73,17 @@ enum FormatConfigLoader {
 
       // Check for section headers
       if trimmed.hasPrefix("[") && trimmed.hasSuffix("]") {
+        hasSeenSection = true
         let section = trimmed.dropFirst().dropLast()
-        // Apply to all files or specifically to Swift files
-        inGlobalSection = section == "*" || section.contains("*.swift")
+        // Check if this section applies to Swift files
+        // Sections that apply: [*] or [*.swift] or other patterns matching .swift files
+        currentlyInSwiftSection = section == "*" || section.contains("*.swift")
         continue
       }
 
       // Parse key-value pairs
-      if inGlobalSection {
+      // Process if: no section seen yet (default section) OR we're in a Swift-applicable section
+      if !hasSeenSection || currentlyInSwiftSection {
         let parts = trimmed.split(separator: "=", maxSplits: 1)
         if parts.count == 2 {
           let key = parts[0].trimmingCharacters(in: .whitespaces)
@@ -86,6 +93,8 @@ enum FormatConfigLoader {
           case "indent_style":
             if value == "space" {
               indentStyle = .space
+            } else if value == "tab" {
+              indentStyle = .tab
             }
           case "indent_size":
             if let size = Int(value) {
@@ -148,10 +157,8 @@ enum FormatConfigLoader {
       indentSize = tabWidth
     }
 
-    // Parse line ending
-    if let lineBreak = json["lineBreakBeforeEachArgument"] as? Bool {
-      // This is a different setting, but we can check for line ending preferences
-    }
+    // Note: swift-format doesn't provide line ending configuration
+    // We use platform defaults (LF on Unix-like systems)
 
     // Most .swift-format files use LF by default on macOS
     // insertFinalNewline defaults to true
