@@ -4,4 +4,3 @@
 // the macro definitions and the runtime library.
 
 @_exported import SwiftSnapshotCore
-@_exported import SwiftSnapshotMacros

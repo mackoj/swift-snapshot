@@ -1,3 +1,4 @@
+import SwiftSnapshotCore
 // Macro definitions for SwiftSnapshot
 // These are the public-facing macro attributes that users can apply to their types
 
