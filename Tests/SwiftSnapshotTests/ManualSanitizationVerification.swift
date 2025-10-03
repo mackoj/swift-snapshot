@@ -1,5 +1,6 @@
 import Testing
 @testable import SwiftSnapshot
+import InlineSnapshotTesting
 
 extension SnapshotTests {
   @Suite struct ManualSanitizationVerification {
@@ -16,7 +17,14 @@ extension SnapshotTests {
           instance: 42,
           variableName: "myTestValue"
         )
-        #expect(code.contains("static let myTestValue: Int = 42"))
+        assertInlineSnapshot(of: code, as: .description) {
+          """
+          import Foundation
+
+          extension Int { static let myTestValue: Int = 42 }
+
+          """
+        }
         print("✓ Valid name 'myTestValue' remains unchanged")
       }
 
@@ -26,7 +34,14 @@ extension SnapshotTests {
           instance: 42,
           variableName: "my test value"
         )
-        #expect(code.contains("static let my_test_value: Int = 42"))
+        assertInlineSnapshot(of: code, as: .description) {
+          """
+          import Foundation
+
+          extension Int { static let my_test_value: Int = 42 }
+
+          """
+        }
         print("✓ 'my test value' → 'my_test_value'")
       }
 
@@ -36,7 +51,14 @@ extension SnapshotTests {
           instance: 42,
           variableName: "123test"
         )
-        #expect(code.contains("static let _123test: Int = 42"))
+        assertInlineSnapshot(of: code, as: .description) {
+          """
+          import Foundation
+
+          extension Int { static let _123test: Int = 42 }
+
+          """
+        }
         print("✓ '123test' → '_123test'")
       }
 
@@ -46,7 +68,14 @@ extension SnapshotTests {
           instance: 42,
           variableName: "class"
         )
-        #expect(code.contains("static let `class`: Int = 42"))
+        assertInlineSnapshot(of: code, as: .description) {
+          """
+          import Foundation
+
+          extension Int { static let `class`: Int = 42 }
+
+          """
+        }
         print("✓ 'class' → '`class`'")
       }
 
@@ -56,7 +85,14 @@ extension SnapshotTests {
           instance: 42,
           variableName: "test@value#123"
         )
-        #expect(code.contains("static let test_value_123: Int = 42"))
+        assertInlineSnapshot(of: code, as: .description) {
+          """
+          import Foundation
+
+          extension Int { static let test_value_123: Int = 42 }
+
+          """
+        }
         print("✓ 'test@value#123' → 'test_value_123'")
       }
 
@@ -66,7 +102,14 @@ extension SnapshotTests {
           instance: 42,
           variableName: ""
         )
-        #expect(code.contains("static let _: Int = 42"))
+        assertInlineSnapshot(of: code, as: .description) {
+          """
+          import Foundation
+
+          extension Int { static let _: Int = 42 }
+
+          """
+        }
         print("✓ '' → '_'")
       }
 
