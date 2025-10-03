@@ -10,6 +10,41 @@ SwiftSnapshot turns your in‑memory objects into compilable Swift code you can 
 
 ---
 
+## Why SwiftSnapshot?
+
+### 🔍 Human‑Readable
+Fixtures are plain Swift—review, search, and reason about them like any other code.
+
+### 📝 Diff Friendly
+Line‑level semantic diffs. No sprawling JSON updates or binary churn.
+
+### ♻️ Multi‑Context Reuse
+Use in previews, tests, scripts, debugging hooks, documentation samples—no decoding layer.
+
+### 🛡️ Type Safe
+Refactors surface compiler errors instead of silent runtime mismatches.
+
+### 📦 Lightweight Storage
+No git‑lfs or compression; just fast, lean Swift source.
+
+### 🗂️ Scalable Organization
+Deterministic directory strategy with multiple override layers.
+
+---
+
+## Comparison to Alternatives
+
+| Feature | SwiftSnapshot | JSON Fixtures | Snapshot Testing |
+|---------|---------------|---------------|------------------|
+| Human Readable | ✅ Swift source | ❌ JSON structure | ❌ Binary/text blobs |
+| Type Safety | ✅ Compile-time | ❌ Runtime parsing | ❌ No type info |
+| Version Control | ✅ Meaningful diffs | ⚠️ Hard to review | ❌ Opaque changes |
+| Reusability | ✅ Use anywhere | ⚠️ Parsing required | ❌ Test-only |
+| IDE Support | ✅ Full autocomplete | ❌ No assistance | ❌ No assistance |
+| Debugging | ✅ Easy inspection | ⚠️ Mental parsing | ❌ External tools |
+
+---
+
 ## Installation
 
 ### Swift Package Manager
@@ -81,16 +116,16 @@ extension User {
 ```
 
 These fixtures:
-- ✅ **Compile** (type safety)
-- ✅ **Diff cleanly** (great review ergonomics)
-- ✅ **Instantly reusable** (no decoding step)
-- ✅ **Evolve with refactors** (compiler guides updates)
+- **Compile** (type safety)
+- **Diff cleanly** (great review ergonomics)
+- **Instantly reusable** (no decoding step)
+- **Evolve with refactors** (compiler guides updates)
 
 ---
 
 ## Features
 
-### ✅ Currently Implemented
+### Currently Implemented
 
 - **Runtime API**: Generate Swift fixtures from any value at runtime
 - **Primitive Types**: String, Int, Double, Float, Bool, Character
@@ -106,7 +141,7 @@ These fixtures:
 - **String Escaping**: Proper handling of special characters, unicode, and emoji
 - **Thread-Safe**: Concurrent exports supported
 
-### ✅ Macro Layer (New!)
+### Macro Layer
 
 The macro layer provides compile-time code generation for enhanced control:
 
@@ -595,41 +630,6 @@ public enum SwiftSnapshotConfig {
     public static func renderOptions() -> RenderOptions
 }
 ```
-
----
-
-## Why SwiftSnapshot?
-
-### 🔍 Human‑Readable
-Fixtures are plain Swift—review, search, and reason about them like any other code.
-
-### 📝 Diff Friendly
-Line‑level semantic diffs. No sprawling JSON updates or binary churn.
-
-### ♻️ Multi‑Context Reuse
-Use in previews, tests, scripts, debugging hooks, documentation samples—no decoding layer.
-
-### 🛡️ Type Safe
-Refactors surface compiler errors instead of silent runtime mismatches.
-
-### 📦 Lightweight Storage
-No git‑lfs or compression; just fast, lean Swift source.
-
-### 🗂️ Scalable Organization
-Deterministic directory strategy with multiple override layers.
-
----
-
-## Comparison to Alternatives
-
-| Feature | SwiftSnapshot | JSON Fixtures | Snapshot Testing |
-|---------|---------------|---------------|------------------|
-| Human Readable | ✅ Swift source | ❌ JSON structure | ❌ Binary/text blobs |
-| Type Safety | ✅ Compile-time | ❌ Runtime parsing | ❌ No type info |
-| Version Control | ✅ Meaningful diffs | ⚠️ Hard to review | ❌ Opaque changes |
-| Reusability | ✅ Use anywhere | ⚠️ Parsing required | ❌ Test-only |
-| IDE Support | ✅ Full autocomplete | ❌ No assistance | ❌ No assistance |
-| Debugging | ✅ Easy inspection | ⚠️ Mental parsing | ❌ External tools |
 
 ---
 
