@@ -1,21 +1,20 @@
 import InlineSnapshotTesting
-import XCTest
+import Testing
 
 @testable import SwiftSnapshot
 
-final class IntegrationTests: XCTestCase {
+extension SnapshotTests {
+  @Suite struct IntegrationTests {
+    init() {
+      SwiftSnapshotConfig.setGlobalRoot(nil)
+      SwiftSnapshotConfig.setGlobalHeader(nil)
+      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
+      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
+    }
 
-  override func setUp() {
-    super.setUp()
-    SwiftSnapshotConfig.setGlobalRoot(nil)
-    SwiftSnapshotConfig.setGlobalHeader(nil)
-    SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-    SwiftSnapshotConfig.setRenderOptions(RenderOptions())
-  }
+    // MARK: - Complex Type Tests
 
-  // MARK: - Complex Type Tests
-
-  func testComplexUserModel() throws {
+    @Test func complexUserModel() throws {
     enum Role {
       case admin
       case manager
@@ -54,15 +53,15 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension User {
-        static let testUserCreation: User = User(
-          id: 42, name: "Alice", role: .admin, isActive: true, tags: ["admin", "beta"])
+          static let testUserCreation: User = User(
+              id: 42, name: "Alice", role: .admin, isActive: true, tags: ["admin", "beta"])
       }
 
       """
     }
   }
 
-  func testNestedStructures() throws {
+    @Test func nestedStructures() throws {
     struct Address {
       let street: String
       let city: String
@@ -95,16 +94,16 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Person {
-        static let testPerson: Person = Person(
-          name: "Bob", age: 35, address: Address(street: "123 Main St", city: "Springfield", zip: "12345")
-        )
+          static let testPerson: Person = Person(
+              name: "Bob", age: 35,
+              address: Address(street: "123 Main St", city: "Springfield", zip: "12345"))
       }
 
       """
     }
   }
 
-  func testProductModel() throws {
+    @Test func productModel() throws {
     struct Product {
       let id: String
       let name: String
@@ -139,16 +138,16 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Product {
-        static let testProduct: Product = Product(
-          id: "PROD-001", name: "Widget", price: 29.99, categories: ["Electronics", "Gadgets"],
-          isAvailable: true, metadata: ["manufacturer": "ACME Corp", "sku": "WDG-001"])
+          static let testProduct: Product = Product(
+              id: "PROD-001", name: "Widget", price: 29.99, categories: ["Electronics", "Gadgets"],
+              isAvailable: true, metadata: ["manufacturer": "ACME Corp", "sku": "WDG-001"])
       }
 
       """
     }
   }
 
-  func testArrayOfStructs() throws {
+    @Test func arrayOfStructs() throws {
     struct Item {
       let id: Int
       let name: String
@@ -170,16 +169,16 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Array<Item> {
-        static let testItems: Array<Item> = [
-          Item(id: 1, name: "First"), Item(id: 2, name: "Second"), Item(id: 3, name: "Third"),
-        ]
+          static let testItems: Array<Item> = [
+              Item(id: 1, name: "First"), Item(id: 2, name: "Second"), Item(id: 3, name: "Third"),
+          ]
       }
 
       """
     }
   }
 
-  func testDictionaryWithComplexValues() throws {
+    @Test func dictionaryWithComplexValues() throws {
     struct Config {
       let enabled: Bool
       let timeout: Int
@@ -201,17 +200,18 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Dictionary<String, Config> {
-        static let testConfigs: Dictionary<String, Config> = [
-          "development": Config(enabled: false, timeout: 120),
-          "production": Config(enabled: true, timeout: 30), "staging": Config(enabled: true, timeout: 60),
-        ]
+          static let testConfigs: Dictionary<String, Config> = [
+              "development": Config(enabled: false, timeout: 120),
+              "production": Config(enabled: true, timeout: 30),
+              "staging": Config(enabled: true, timeout: 60),
+          ]
       }
 
       """
     }
   }
 
-  func testOptionalFields() throws {
+    @Test func optionalFields() throws {
     struct Task {
       let id: Int
       let title: String
@@ -236,16 +236,16 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Task {
-        static let testTask: Task = Task(
-          id: 1, title: "Complete project", description: "Finish the implementation",
-          dueDate: Date(timeIntervalSince1970: 1234567890.0))
+          static let testTask: Task = Task(
+              id: 1, title: "Complete project", description: "Finish the implementation",
+              dueDate: Date(timeIntervalSince1970: 1234567890.0))
       }
 
       """
     }
   }
 
-  func testFileExportWorkflow() throws {
+    @Test func fileExportWorkflow() throws {
     struct APIResponse {
       let success: Bool
       let timestamp: Date
@@ -274,10 +274,10 @@ final class IntegrationTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: tempDir) }
 
     // Verify file exists
-    XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+    #expect(FileManager.default.fileExists(atPath: url.path))
 
     // Verify file name
-    XCTAssertTrue(url.lastPathComponent == "APIResponse+Fixtures.swift")
+    #expect(url.lastPathComponent == "APIResponse+Fixtures.swift")
 
     // Read and verify content
     let content = try String(contentsOf: url, encoding: .utf8)
@@ -289,18 +289,18 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension APIResponse {
-        static let successResponse: APIResponse = APIResponse(
-          success: true, timestamp: Date(timeIntervalSince1970: 1609459200.0),
-          data: ["token": "abc123", "userId": "12345"])
+          static let successResponse: APIResponse = APIResponse(
+              success: true, timestamp: Date(timeIntervalSince1970: 1609459200.0),
+              data: ["token": "abc123", "userId": "12345"])
       }
 
       """
     }
   }
 
-  // MARK: - Custom Renderer Test
+    // MARK: - Custom Renderer Test
 
-  func testCustomRenderer() throws {
+    @Test func customRenderer() throws {
     struct CustomType {
       let value: String
     }
@@ -326,9 +326,9 @@ final class IntegrationTests: XCTestCase {
     }
   }
 
-  // MARK: - Edge Cases
+    // MARK: - Edge Cases
 
-  func testEmptyCollections() throws {
+    @Test func emptyCollections() throws {
     struct Container {
       let array: [Int]
       let dict: [String: Int]
@@ -346,14 +346,14 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Container {
-        static let emptyContainer: Container = Container(array: [], dict: [:], set: Set([]))
+          static let emptyContainer: Container = Container(array: [], dict: [:], set: Set([]))
       }
 
       """
     }
   }
 
-  func testSpecialCharacters() throws {
+    @Test func specialCharacters() throws {
     struct Message {
       let text: String
       let emoji: String
@@ -376,11 +376,13 @@ final class IntegrationTests: XCTestCase {
       import Foundation
 
       extension Message {
-        static let testMessage: Message = Message(
-          text: #"Hello\nWorld\t\"quoted\""#, emoji: #"\u{1F389}\u{1F680}"#, code: #"let x = \"test\""#)
+          static let testMessage: Message = Message(
+              text: #"Hello\nWorld\t\"quoted\""#, emoji: #"\u{1F389}\u{1F680}"#,
+              code: #"let x = \"test\""#)
       }
 
       """#
+    }
     }
   }
 }

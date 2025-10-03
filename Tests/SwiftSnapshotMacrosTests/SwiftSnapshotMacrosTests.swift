@@ -1,24 +1,21 @@
 import MacroTesting
-import XCTest
+import Testing
 
 @testable import SwiftSnapshotMacrosPlugin
 
-final class SwiftSnapshotMacrosTests: XCTestCase {
-  override func invokeTest() {
-    withMacroTesting(
-      // isRecording: true,  // Enable to record new snapshots
-      macros: [
+extension SnapshotTests {
+  @Suite(
+    .macros(
+      [
         "SwiftSnapshot": SwiftSnapshotMacro.self,
         "SnapshotIgnore": SnapshotIgnoreMacro.self,
         "SnapshotRename": SnapshotRenameMacro.self,
         "SnapshotRedact": SnapshotRedactMacro.self,
       ]
-    ) {
-      super.invokeTest()
-    }
-  }
-
-  func testBasicStruct() {
+    )
+  )
+  struct SwiftSnapshotMacrosTests {
+    @Test func basicStruct() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -28,7 +25,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       }
       """
     } expansion: {
-      """
+      #"""
       struct Product {
         let id: String
         let name: String
@@ -50,11 +47,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "name", renamed: nil, redaction: nil, ignored: false)
+            .init(original: "name", renamed: nil, redaction: nil, ignored: false)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "Product(id: \\(instance.id), name: \\(instance.name))"
+          return "Product(id: \(instance.id), name: \(instance.name))"
         }
       }
 
@@ -72,11 +69,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -88,11 +85,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           )
         }
       }
-      """
+      """#
     }
   }
 
-  func testStructWithIgnore() {
+    @Test func structWithIgnore() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -103,7 +100,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       }
       """
     } expansion: {
-      """
+      #"""
       struct User {
         let id: String
         let cache: [String: Any]
@@ -125,11 +122,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "cache", renamed: nil, redaction: nil, ignored: true)
+            .init(original: "cache", renamed: nil, redaction: nil, ignored: true)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "User(id: \\(instance.id))"
+          return "User(id: \(instance.id))"
         }
       }
 
@@ -147,11 +144,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -163,11 +160,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           )
         }
       }
-      """
+      """#
     }
   }
 
-  func testStructWithRename() {
+    @Test func structWithRename() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -178,7 +175,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       }
       """
     } expansion: {
-      """
+      #"""
       struct Product {
         let id: String
         let name: String
@@ -200,11 +197,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "name", renamed: "displayName", redaction: nil, ignored: false)
+            .init(original: "name", renamed: "displayName", redaction: nil, ignored: false)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "Product(id: \\(instance.id), displayName: \\(instance.name))"
+          return "Product(id: \(instance.id), displayName: \(instance.name))"
         }
       }
 
@@ -222,11 +219,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -238,11 +235,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           )
         }
       }
-      """
+      """#
     }
   }
 
-  func testStructWithRedactMask() {
+    @Test func structWithRedactMask() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -253,7 +250,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       }
       """
     } expansion: {
-      """
+      #"""
       struct User {
         let id: String
         let apiKey: String
@@ -275,11 +272,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
           .init(original: "id", renamed: nil, redaction: nil, ignored: false),
-          .init(original: "apiKey", renamed: nil, redaction: .mask("SECRET"), ignored: false)
+            .init(original: "apiKey", renamed: nil, redaction: .mask("SECRET"), ignored: false)
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "User(id: \\(instance.id), apiKey: \\"SECRET\\")"
+          return "User(id: \(instance.id), apiKey: \"SECRET\")"
         }
       }
 
@@ -297,11 +294,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -313,11 +310,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           )
         }
       }
-      """
+      """#
     }
   }
 
-  func testSimpleEnum() {
+    @Test func simpleEnum() {
     assertMacro {
       """
       @SwiftSnapshot
@@ -350,16 +347,17 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
         }
 
         internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
+
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
           switch instance {
           case .active:
-                return ".active"
-          case .inactive:
-                return ".inactive"
-          case .pending:
-                return ".pending"
+              return ".active"
+              case .inactive:
+              return ".inactive"
+              case .pending:
+              return ".pending"
           }
         }
       }
@@ -378,11 +376,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -398,7 +396,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
     }
   }
 
-  func testFolderParameter() {
+    @Test func folderParameter() {
     assertMacro {
       """
       @SwiftSnapshot(folder: "Fixtures/Products")
@@ -407,7 +405,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
       }
       """
     } expansion: {
-      """
+      #"""
       struct Product {
         let id: String
 
@@ -431,7 +429,7 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
         ]
 
         internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
-          return "Product(id: \\(instance.id))"
+          return "Product(id: \(instance.id))"
         }
       }
 
@@ -449,11 +447,11 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
           let effectiveContext = context ?? ""
-          
+
           return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
-            fileName: nil,
+            fileName: nil as String?,
             outputBasePath: Self.__swiftSnapshot_folder,
             allowOverwrite: allowOverwrite,
             header: header,
@@ -465,7 +463,8 @@ final class SwiftSnapshotMacrosTests: XCTestCase {
           )
         }
       }
-      """
+      """#
+    }
     }
   }
 }
