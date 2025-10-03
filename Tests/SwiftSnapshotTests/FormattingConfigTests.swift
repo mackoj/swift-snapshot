@@ -105,7 +105,7 @@ final class FormattingConfigTests: XCTestCase {
       variableName: "testValue"
     )
 
-    assertInlineSnapshot(of: code, as: .description, record: .failed) {
+    assertInlineSnapshot(of: code, as: .description) {
       """
       import Foundation
 
@@ -155,7 +155,7 @@ final class FormattingConfigTests: XCTestCase {
       variableName: "numbers"
     )
 
-    assertInlineSnapshot(of: code, as: .description, record: .failed) {
+    assertInlineSnapshot(of: code, as: .description) {
       """
       import Foundation
 
