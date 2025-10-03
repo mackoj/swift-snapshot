@@ -1,7 +1,7 @@
 import InlineSnapshotTesting
 import Testing
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 extension SnapshotTests {
   /// Comprehensive tests for EditorConfig behavior verification

@@ -1,5 +1,5 @@
 import Testing
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 import InlineSnapshotTesting
 
 extension SnapshotTests {

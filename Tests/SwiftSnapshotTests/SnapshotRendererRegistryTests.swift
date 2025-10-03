@@ -2,7 +2,7 @@ import Testing
 import Foundation
 import SwiftSyntax
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 extension SnapshotTests {
   /// Tests for SnapshotRendererRegistry

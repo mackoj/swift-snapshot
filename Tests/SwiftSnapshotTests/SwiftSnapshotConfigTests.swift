@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 extension SnapshotTests {
   /// Tests for SwiftSnapshotConfig

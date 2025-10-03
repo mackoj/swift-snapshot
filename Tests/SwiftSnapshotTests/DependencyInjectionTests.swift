@@ -2,7 +2,7 @@ import Dependencies
 import InlineSnapshotTesting
 import Testing
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 extension SnapshotTests {
   @Suite struct DependencyInjectionTests {

@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import SwiftSnapshot
+@testable import SwiftSnapshotCore
 
 //final class PerformanceTests: XCTestCase {
 //
