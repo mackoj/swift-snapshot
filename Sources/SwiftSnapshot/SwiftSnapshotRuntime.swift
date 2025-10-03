@@ -1,6 +1,7 @@
 import Foundation
 import IssueReporting
 import SwiftSyntax
+import Dependencies
 
 /// Main runtime API for SwiftSnapshot
 public enum SwiftSnapshotRuntime {
@@ -77,12 +78,14 @@ public enum SwiftSnapshotRuntime {
     header: String? = nil,
     context: String? = nil
   ) throws -> String {
+    @Dependency(\.swiftSnapshotConfig) var snapshotConfig
+    
     // Get formatting and render options
-    let formatting = SwiftSnapshotConfig.formattingProfile()
-    let options = SwiftSnapshotConfig.renderOptions()
+    let formatting = snapshotConfig.getFormatProfile()
+    let options = snapshotConfig.getRenderOptions()
 
     // Determine header to use
-    let effectiveHeader = header ?? SwiftSnapshotConfig.getGlobalHeader()
+    let effectiveHeader = header ?? snapshotConfig.getGlobalHeader()
 
     // Create render context
     let renderContext = SnapshotRenderContext(

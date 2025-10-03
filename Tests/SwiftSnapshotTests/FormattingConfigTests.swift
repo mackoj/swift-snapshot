@@ -8,11 +8,7 @@ extension SnapshotTests {
   @Suite struct FormattingConfigTests {
     init() {
       // Reset configuration between tests
-      SwiftSnapshotConfig.setGlobalRoot(nil)
-      SwiftSnapshotConfig.setGlobalHeader(nil)
-      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
-      SwiftSnapshotConfig.setFormatConfigSource(nil)
+      SwiftSnapshotConfig.resetToLibraryDefaults()
     }
 
     // MARK: - Configuration Loading Tests
@@ -132,7 +128,13 @@ extension SnapshotTests {
     SwiftSnapshotConfig.setFormatConfigSource(.editorconfig(configURL))
 
     // Also set a different profile
-    let customProfile = FormatProfile(indentSize: 2)
+    let customProfile = FormatProfile(
+      indentStyle: .space,
+      indentSize: 2,
+      endOfLine: .lf,
+      insertFinalNewline: true,
+      trimTrailingWhitespace: true
+    )
     SwiftSnapshotConfig.setFormattingProfile(customProfile)
 
     // The config file should be used by the formatter when present

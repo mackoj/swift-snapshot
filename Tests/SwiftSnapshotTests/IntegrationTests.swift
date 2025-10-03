@@ -6,10 +6,7 @@ import Testing
 extension SnapshotTests {
   @Suite struct IntegrationTests {
     init() {
-      SwiftSnapshotConfig.setGlobalRoot(nil)
-      SwiftSnapshotConfig.setGlobalHeader(nil)
-      SwiftSnapshotConfig.setFormattingProfile(FormatProfile())
-      SwiftSnapshotConfig.setRenderOptions(RenderOptions())
+      SwiftSnapshotConfig.resetToLibraryDefaults()
     }
 
     // MARK: - Complex Type Tests
