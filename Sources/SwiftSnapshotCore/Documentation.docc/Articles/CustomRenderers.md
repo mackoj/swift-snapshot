@@ -1,10 +1,20 @@
 # Custom Renderer Guide
 
-SwiftSnapshot allows you to register custom renderers for your types to control how they are serialized to Swift code.
+Learn how to register custom renderers to control how your types are converted to Swift code.
+
+## Overview
+
+SwiftSnapshot's ``SnapshotRendererRegistry`` allows you to register custom rendering logic for types that:
+- Need special initialization syntax
+- Should be rendered differently than the default reflection-based approach
+- Have properties that should be excluded or transformed
+- Require custom formatting or validation
+
+Custom renderers are checked **before** built-in renderers, giving you complete control over type serialization.
 
 ## Basic Custom Renderer
 
-Register a custom renderer for your type:
+Register a custom renderer using ``SnapshotRendererRegistry/register(_:render:)``:
 
 ```swift
 import SwiftSnapshot
@@ -52,7 +62,7 @@ private let _ = autoregister(MyCustomType.self) { value, ctx in
 
 ## Using Render Context
 
-The render context provides access to formatting and options:
+The ``SnapshotRenderContext`` parameter provides access to formatting and options:
 
 ```swift
 SnapshotRendererRegistry.register(MyType.self) { instance, context in
@@ -73,18 +83,26 @@ SnapshotRendererRegistry.register(MyType.self) { instance, context in
 
 ## Render Context Properties
 
-```swift
-public struct SnapshotRenderContext {
-    public let path: [String]        // Breadcrumb path in object graph
-    public let formatting: FormatProfile  // Formatting configuration
-    public let options: RenderOptions     // Render options
-}
+The ``SnapshotRenderContext`` provides three key properties:
 
-public struct RenderOptions {
-    public var sortDictionaryKeys: Bool      // Sort dictionary keys
-    public var setDeterminism: Bool          // Deterministic set ordering
-    public var dataInlineThreshold: Int      // Threshold for inlining Data
-    public var forceEnumDotSyntax: Bool      // Force .case syntax for enums
+- **path**: Array of property names showing location in the object graph
+- **formatting**: ``FormatProfile`` with indentation, line endings, and whitespace rules
+- **options**: ``RenderOptions`` controlling sorting, determinism, and thresholds
+
+Example usage:
+
+```swift
+SnapshotRendererRegistry.register(MyType.self) { value, context in
+    // Use path for error reporting
+    print("Rendering at: \(context.path.joined(separator: "."))")
+    
+    // Use formatting for consistent indentation
+    let indent = context.formatting.indent(level: 1)
+    
+    // Use options for conditional logic
+    let sorted = context.options.sortDictionaryKeys
+    
+    return ExprSyntax(stringLiteral: "MyType(...)")
 }
 ```
 

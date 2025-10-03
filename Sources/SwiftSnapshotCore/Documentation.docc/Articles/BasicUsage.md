@@ -1,4 +1,6 @@
-# SwiftSnapshot - Basic Usage Examples
+# Basic Usage Examples
+
+Learn how to use SwiftSnapshot to generate type-safe Swift fixtures from runtime values.
 
 ## Simple Types
 
@@ -206,6 +208,8 @@ let url = try SwiftSnapshotRuntime.export(
 
 ### Global Settings
 
+Configure SwiftSnapshot behavior globally using ``SwiftSnapshotConfig``:
+
 ```swift
 // Set global output directory
 SwiftSnapshotConfig.setGlobalRoot(URL(fileURLWithPath: "/path/to/fixtures"))
@@ -216,17 +220,27 @@ SwiftSnapshotConfig.setGlobalHeader("""
 // Auto-generated - Do not edit manually
 """)
 
-// Configure formatting
-var profile = FormatProfile()
-profile.indentSize = 2
+// Configure formatting with FormatProfile
+let profile = FormatProfile(
+    indentStyle: .space,
+    indentSize: 2,
+    endOfLine: .lf,
+    insertFinalNewline: true,
+    trimTrailingWhitespace: true
+)
 SwiftSnapshotConfig.setFormattingProfile(profile)
 
-// Configure rendering options
-var options = RenderOptions()
-options.sortDictionaryKeys = true
-options.setDeterminism = true
+// Configure rendering options with RenderOptions
+let options = RenderOptions(
+    sortDictionaryKeys: true,
+    setDeterminism: true,
+    dataInlineThreshold: 16,
+    forceEnumDotSyntax: true
+)
 SwiftSnapshotConfig.setRenderOptions(options)
 ```
+
+See ``SwiftSnapshotConfig``, ``FormatProfile``, and ``RenderOptions`` for more details.
 
 ## Testing Integration
 
@@ -256,13 +270,15 @@ class UserTests: XCTestCase {
 
 ## Custom Renderers
 
+For types that need custom rendering logic, use ``SnapshotRendererRegistry``:
+
 ```swift
 struct CustomType {
     let value: String
 }
 
 // Register a custom renderer
-SnapshotRendererRegistry.shared.register(CustomType.self) { value, context in
+SnapshotRendererRegistry.register(CustomType.self) { value, context in
     ExprSyntax(stringLiteral: "CustomType(value: \"CUSTOM_\(value.value)\")")
 }
 
@@ -270,6 +286,8 @@ let custom = CustomType(value: "test")
 let url = try SwiftSnapshotRuntime.export(instance: custom, variableName: "myCustom")
 // Uses your custom renderer and exports to file
 ```
+
+See <doc:CustomRenderers> for a comprehensive guide on custom type rendering.
 
 ## Tips and Best Practices
 

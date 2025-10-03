@@ -3,8 +3,86 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 
 /// Core value renderer that converts Swift values to ExprSyntax
+///
+/// `ValueRenderer` is the heart of SwiftSnapshot's code generation. It traverses values
+/// and converts them to SwiftSyntax expressions that can be formatted and written to files.
+///
+/// ## Overview
+///
+/// The renderer uses a multi-stage approach:
+/// 1. **Custom Renderers**: Check ``SnapshotRendererRegistry`` for user-defined handlers
+/// 2. **Primitives**: Handle built-in Swift types (String, Int, Bool, etc.)
+/// 3. **Collections**: Handle Array, Dictionary, Set with deterministic ordering
+/// 4. **Foundation Types**: Handle Date, UUID, URL, Data, Decimal
+/// 5. **Reflection**: Fall back to Mirror-based rendering for custom types
+///
+/// ## Supported Types
+///
+/// ### Primitives
+/// - String, Int, Double, Float, Bool, Character
+///
+/// ### Collections
+/// - Array, Dictionary (with sorted keys), Set (with deterministic ordering)
+/// - Optional values (nil handling)
+///
+/// ### Foundation
+/// - Date (as `timeIntervalSince1970`)
+/// - UUID (as `uuidString`)
+/// - URL (as `string`)
+/// - Data (hex array or base64)
+/// - Decimal
+///
+/// ### Custom Types
+/// - Structs, classes, enums via reflection
+/// - User types via ``SnapshotRendererRegistry``
+///
+/// ## Example Output
+///
+/// ```swift
+/// // String
+/// "Hello, World!"
+///
+/// // Date
+/// Date(timeIntervalSince1970: 1234567890.0)
+///
+/// // Array
+/// [1, 2, 3, 4, 5]
+///
+/// // Dictionary (sorted keys)
+/// ["apple": 1, "banana": 2, "cherry": 3]
+///
+/// // Custom struct (via reflection)
+/// User(id: 42, name: "Alice", active: true)
+/// ```
+///
+/// ## See Also
+/// - ``SnapshotRendererRegistry`` for custom type handling
+/// - ``SnapshotRenderContext`` for rendering configuration
+/// - ``SwiftSnapshotError`` for error handling
 enum ValueRenderer {
   /// Render any value to a Swift expression
+  ///
+  /// The main entry point for value rendering. Routes values through the appropriate
+  /// renderer based on type, checking custom renderers first.
+  ///
+  /// ## Rendering Priority
+  ///
+  /// 1. Custom renderers from ``SnapshotRendererRegistry``
+  /// 2. Built-in primitive renderers
+  /// 3. Optional handling
+  /// 4. Collection renderers (Array, Dictionary, Set)
+  /// 5. Foundation type renderers
+  /// 6. Reflection-based fallback
+  ///
+  /// - Parameters:
+  ///   - value: The value to render (can be any type)
+  ///   - context: Rendering context with formatting and path information
+  ///
+  /// - Returns: SwiftSyntax expression representing the value
+  ///
+  /// - Throws:
+  ///   - ``SwiftSnapshotError/unsupportedType(_:path:)`` if type cannot be rendered
+  ///   - ``SwiftSnapshotError/reflection(_:path:)`` if reflection fails
   static func render(_ value: Any, context: SnapshotRenderContext) throws -> ExprSyntax {
     // Check custom renderers first
     if let customRenderer = SnapshotRendererRegistry.shared.renderer(for: value) {

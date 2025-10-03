@@ -5,10 +5,110 @@ import Dependencies
 
 /// Main runtime API for SwiftSnapshot
 ///
-/// **Note**: All public methods are only available in DEBUG builds.
-/// In release builds, they become no-ops to ensure zero runtime overhead in production.
+/// `SwiftSnapshotRuntime` provides the core functionality for converting Swift values into
+/// compilable Swift source code and writing them to disk. This enables creating type-safe,
+/// human-readable fixtures that can be committed, diffed, and reused across your project.
+///
+/// ## Overview
+///
+/// The primary method ``export(instance:variableName:fileName:outputBasePath:allowOverwrite:header:context:testName:line:fileID:filePath:)``
+/// takes any Swift value and generates a `.swift` file containing an extension with a static property.
+///
+/// ## Example
+///
+/// ```swift
+/// struct User {
+///     let id: Int
+///     let name: String
+/// }
+///
+/// let user = User(id: 42, name: "Alice")
+/// let url = try SwiftSnapshotRuntime.export(
+///     instance: user,
+///     variableName: "testUser"
+/// )
+/// // Creates a file like: User+testUser.swift
+/// // Contents:
+/// // extension User {
+/// //     static let testUser: User = User(id: 42, name: "Alice")
+/// // }
+/// ```
+///
+/// ## DEBUG-Only Architecture
+///
+/// All public methods are wrapped in `#if DEBUG` directives:
+/// - **In DEBUG builds**: Full functionality with file I/O and code generation
+/// - **In RELEASE builds**: Methods become no-ops, returning placeholder values
+/// - **Result**: Zero runtime overhead and zero binary bloat in production
+///
+/// ## See Also
+/// - ``SwiftSnapshotConfig`` for global configuration
+/// - ``SnapshotRendererRegistry`` for custom type rendering
+/// - ``SwiftSnapshotError`` for error handling
 public enum SwiftSnapshotRuntime {
   /// Export a value as a Swift source file
+  ///
+  /// Converts any Swift value into a compilable `.swift` file containing an extension
+  /// with a static property. The generated code is human-readable, type-safe, and can be
+  /// committed to version control.
+  ///
+  /// ## Behavior
+  ///
+  /// 1. Sanitizes the variable name to ensure it's a valid Swift identifier
+  /// 2. Renders the value using ``ValueRenderer`` (checking custom renderers first)
+  /// 3. Formats the code according to ``SwiftSnapshotConfig`` settings
+  /// 4. Resolves the output directory (see ``PathResolver``)
+  /// 5. Creates necessary directories and writes the file
+  ///
+  /// ## Directory Resolution Priority
+  ///
+  /// The output directory is determined by the first available option:
+  /// 1. `outputBasePath` parameter (highest priority)
+  /// 2. ``SwiftSnapshotConfig/setGlobalRoot(_:)``
+  /// 3. `SWIFT_SNAPSHOT_ROOT` environment variable
+  /// 4. Default: `__Snapshots__` adjacent to the calling file
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// let user = User(id: 1, name: "Alice")
+  ///
+  /// // Basic usage
+  /// let url = try SwiftSnapshotRuntime.export(
+  ///     instance: user,
+  ///     variableName: "testUser"
+  /// )
+  ///
+  /// // With custom header and documentation
+  /// let url2 = try SwiftSnapshotRuntime.export(
+  ///     instance: user,
+  ///     variableName: "adminUser",
+  ///     header: "// Test Fixtures - Auto-generated",
+  ///     context: "Admin user fixture for authorization tests"
+  /// )
+  /// ```
+  ///
+  /// - Parameters:
+  ///   - instance: The value to export. Can be any type (primitives, collections, custom types)
+  ///   - variableName: Name for the generated static property. Will be sanitized to a valid Swift identifier
+  ///   - fileName: Optional custom file name (without `.swift` extension). Defaults to `TypeName+variableName`
+  ///   - outputBasePath: Optional directory path. Overrides global configuration
+  ///   - allowOverwrite: Whether to replace existing files. Default is `true`
+  ///   - header: Optional file header comment. Overrides global header from ``SwiftSnapshotConfig``
+  ///   - context: Optional documentation comment for the generated property
+  ///   - testName: Optional test name hint for organization (typically `#function`)
+  ///   - line: Source line number (automatically captured via `#line`)
+  ///   - fileID: Source file identifier (automatically captured via `#fileID`)
+  ///   - filePath: Source file path (automatically captured via `#filePath`)
+  ///
+  /// - Returns: URL to the created `.swift` file. In release builds, returns a placeholder URL
+  ///
+  /// - Throws:
+  ///   - ``SwiftSnapshotError/unsupportedType(_:path:)`` if the type cannot be rendered
+  ///   - ``SwiftSnapshotError/overwriteDisallowed(_:)`` if file exists and `allowOverwrite` is `false`
+  ///   - ``SwiftSnapshotError/io(_:)`` if file writing fails
+  ///   - ``SwiftSnapshotError/formatting(_:)`` if code formatting fails
+  ///   - ``SwiftSnapshotError/reflection(_:path:)`` if reflection-based rendering fails
   ///
   /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
   /// it returns a placeholder URL and performs no file I/O.
@@ -87,6 +187,26 @@ public enum SwiftSnapshotRuntime {
   }
 
   /// Generate Swift code for a value without writing to disk
+  ///
+  /// Internal method used by ``export(instance:variableName:fileName:outputBasePath:allowOverwrite:header:context:testName:line:fileID:filePath:)``
+  /// and available for testing. Converts a value to formatted Swift source code without performing file I/O.
+  ///
+  /// ## Process
+  ///
+  /// 1. Loads format configuration from ``SwiftSnapshotConfig`` or configured source
+  /// 2. Creates a ``SnapshotRenderContext`` with formatting and render options
+  /// 3. Renders the value using ``ValueRenderer/render(_:context:)``
+  /// 4. Formats the complete file using ``CodeFormatter/formatFile(typeName:variableName:expression:header:context:profile:)``
+  ///
+  /// - Parameters:
+  ///   - instance: The value to render
+  ///   - variableName: Name for the static property
+  ///   - header: Optional header comment for the file
+  ///   - context: Optional documentation for the property
+  ///
+  /// - Returns: Formatted Swift source code as a string
+  ///
+  /// - Throws: ``SwiftSnapshotError`` if rendering or formatting fails
   internal static func generateSwiftCode<T>(
     instance: T,
     variableName: String,
