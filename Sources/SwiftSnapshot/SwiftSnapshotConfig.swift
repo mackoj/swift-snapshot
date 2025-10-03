@@ -1,5 +1,6 @@
 import Foundation
 import Dependencies
+import IssueReporting
 
 /// Source for format configuration.
 ///
@@ -80,6 +81,8 @@ public enum SwiftSnapshotConfig {
     lock.lock()
     defer { lock.unlock() }
     globalRoot = url
+    #else
+    reportIssue("SwiftSnapshotConfig.setGlobalRoot() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
   }
 
@@ -92,6 +95,7 @@ public enum SwiftSnapshotConfig {
     defer { lock.unlock() }
     return globalRoot
     #else
+    reportIssue("SwiftSnapshotConfig.getGlobalRoot() called in release build. Configuration methods should only be used in DEBUG builds.")
     return nil
     #endif
   }
@@ -104,6 +108,8 @@ public enum SwiftSnapshotConfig {
     lock.lock()
     defer { lock.unlock() }
     globalHeader = header
+    #else
+    reportIssue("SwiftSnapshotConfig.setGlobalHeader() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
   }
 
@@ -116,6 +122,7 @@ public enum SwiftSnapshotConfig {
     defer { lock.unlock() }
     return globalHeader
     #else
+    reportIssue("SwiftSnapshotConfig.getGlobalHeader() called in release build. Configuration methods should only be used in DEBUG builds.")
     return nil
     #endif
   }
@@ -128,6 +135,8 @@ public enum SwiftSnapshotConfig {
     lock.lock()
     defer { lock.unlock() }
     formatProfile = profile
+    #else
+    reportIssue("SwiftSnapshotConfig.setFormattingProfile() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
   }
 
@@ -140,6 +149,7 @@ public enum SwiftSnapshotConfig {
     defer { lock.unlock() }
     return formatProfile
     #else
+    reportIssue("SwiftSnapshotConfig.formattingProfile() called in release build. Configuration methods should only be used in DEBUG builds.")
     return baselineFormatProfile
     #endif
   }
@@ -152,6 +162,8 @@ public enum SwiftSnapshotConfig {
     lock.lock()
     defer { lock.unlock() }
     renderOpts = options
+    #else
+    reportIssue("SwiftSnapshotConfig.setRenderOptions() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
   }
 
@@ -164,6 +176,7 @@ public enum SwiftSnapshotConfig {
     defer { lock.unlock() }
     return renderOpts
     #else
+    reportIssue("SwiftSnapshotConfig.renderOptions() called in release build. Configuration methods should only be used in DEBUG builds.")
     return baselineRenderOptions
     #endif
   }
@@ -187,6 +200,8 @@ public enum SwiftSnapshotConfig {
     lock.lock()
     defer { lock.unlock() }
     formatConfigSource = source
+    #else
+    reportIssue("SwiftSnapshotConfig.setFormatConfigSource() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
   }
 
@@ -203,6 +218,7 @@ public enum SwiftSnapshotConfig {
     defer { lock.unlock() }
     return formatConfigSource
     #else
+    reportIssue("SwiftSnapshotConfig.getFormatConfigSource() called in release build. Configuration methods should only be used in DEBUG builds.")
     return nil
     #endif
   }
@@ -222,6 +238,8 @@ public enum SwiftSnapshotConfig {
     formatProfile = baselineFormatProfile
     formatConfigSource = nil
     renderOpts = baselineRenderOptions
+    #else
+    reportIssue("SwiftSnapshotConfig.resetToLibraryDefaults() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
   }
   

@@ -81,6 +81,7 @@ public enum SwiftSnapshotRuntime {
     return filePath
     #else
     // In non-DEBUG builds, return a placeholder URL without performing any I/O
+    reportIssue("SwiftSnapshot.export() called in release build. This method should only be used in DEBUG builds.")
     return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
     #endif
   }
