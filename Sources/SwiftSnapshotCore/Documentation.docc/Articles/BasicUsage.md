@@ -287,6 +287,36 @@ let url = try SwiftSnapshotRuntime.export(instance: custom, variableName: "myCus
 // Uses your custom renderer and exports to file
 ```
 
+### Handling Transformed Initialization Values
+
+Some types transform their input during initialization, making the original value inaccessible. For these types, create an alternative initializer and use a custom renderer:
+
+```swift
+@SwiftSnapshot
+struct HashedValue {
+    let hash: Int
+    
+    // Primary initializer - original string is lost
+    init(from string: String) {
+        self.hash = string.hash
+    }
+    
+    // Alternative initializer for snapshots
+    init(restoringHash hash: Int) {
+        self.hash = hash
+    }
+}
+
+// Register custom renderer
+SnapshotRendererRegistry.register(HashedValue.self) { value, context in
+    ExprSyntax(stringLiteral: "HashedValue(restoringHash: \(value.hash))")
+}
+
+let hashed = HashedValue(from: "secret")
+let url = try hashed.exportSnapshot(variableName: "myHashed")
+// Generates: HashedValue(restoringHash: 1234567890)
+```
+
 See <doc:CustomRenderers> for a comprehensive guide on custom type rendering.
 
 ## Tips and Best Practices
