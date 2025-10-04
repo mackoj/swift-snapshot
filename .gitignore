@@ -1,0 +1,13 @@
+xcuserdata/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+.build/
+.swiftpm/
+*/__Snapshots__/
+*.DS_Store
+*.profraw
+*.profdata
