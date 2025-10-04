@@ -25,7 +25,7 @@ import Foundation
 /// ## See Also
 /// - ``FormatProfile`` for code formatting options
 /// - ``SwiftSnapshotConfig`` for global configuration
-public struct RenderOptions {
+public struct RenderOptions: Sendable {
   /// Whether to sort dictionary keys lexicographically
   ///
   /// When `true`, dictionary keys are sorted alphabetically in the generated code.
@@ -157,7 +157,7 @@ public struct RenderOptions {
 /// - ``RenderOptions`` for rendering behavior
 /// - ``FormatConfigLoader`` for loading configuration files
 /// - ``CodeFormatter`` for the formatting implementation
-public struct FormatProfile {
+public struct FormatProfile: Sendable {
   /// Style of indentation
   ///
   /// Determines whether to use spaces or tabs for indentation.
@@ -199,7 +199,7 @@ public struct FormatProfile {
   public var trimTrailingWhitespace: Bool
 
   /// Style of indentation
-  public enum IndentStyle {
+  public enum IndentStyle: Sendable {
     /// Use spaces for indentation
     case space
     /// Use tabs for indentation
@@ -207,7 +207,7 @@ public struct FormatProfile {
   }
 
   /// Line ending style
-  public enum EndOfLine {
+  public enum EndOfLine: Sendable {
     /// Unix-style line endings (\\n)
     case lf
     /// Windows-style line endings (\\r\\n)

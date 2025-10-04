@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 import SwiftSyntax
+import SwiftSyntaxBuilder
 
 @testable import SwiftSnapshotCore
 

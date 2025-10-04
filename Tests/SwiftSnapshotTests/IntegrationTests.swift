@@ -1,5 +1,6 @@
 import InlineSnapshotTesting
 import Testing
+import SwiftSyntaxBuilder
 
 @testable import SwiftSnapshotCore
 

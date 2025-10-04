@@ -4,6 +4,8 @@ import SwiftFormat
 import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxBuilder
+import SwiftBasicFormat
+import SwiftOperators
 
 /// Formats Swift code according to a FormatProfile
 ///

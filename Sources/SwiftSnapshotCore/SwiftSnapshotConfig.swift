@@ -17,7 +17,7 @@ import IssueReporting
 /// let formatURL = URL(fileURLWithPath: ".swift-format")
 /// SwiftSnapshotConfig.setFormatConfigSource(.swiftFormat(formatURL))
 /// ```
-public enum FormatConfigSource {
+public enum FormatConfigSource: Sendable {
   /// Use .editorconfig file for formatting configuration
   case editorconfig(URL)
   /// Use .swift-format JSON file for formatting configuration
@@ -66,11 +66,12 @@ public enum SwiftSnapshotConfig {
   )
   
   // MARK: - Active Configuration State
-  private static var globalRoot: URL?
-  private static var globalHeader: String?
-  private static var formatProfile: FormatProfile = baselineFormatProfile
-  private static var formatConfigSource: FormatConfigSource?
-  private static var renderOpts: RenderOptions = baselineRenderOptions
+  // These properties are protected by 'lock' for thread safety
+  private nonisolated(unsafe) static var globalRoot: URL?
+  private nonisolated(unsafe) static var globalHeader: String?
+  private nonisolated(unsafe) static var formatProfile: FormatProfile = baselineFormatProfile
+  private nonisolated(unsafe) static var formatConfigSource: FormatConfigSource?
+  private nonisolated(unsafe) static var renderOpts: RenderOptions = baselineRenderOptions
   private static let lock = NSLock()
 
   /// Set the global root directory for snapshot output
