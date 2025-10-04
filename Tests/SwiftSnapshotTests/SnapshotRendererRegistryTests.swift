@@ -256,5 +256,51 @@ extension SnapshotTests {
         #expect(allSucceeded)
       }
     }
+    
+    // MARK: - Transformed Value Pattern Tests
+    
+    /// Test custom renderer for types with transformed/destroyed initialization values
+    @Test func transformedValuePattern() throws {
+      // Type that transforms input during initialization
+      struct Bizarro {
+        let transformed: Int
+        
+        // Primary initializer transforms input - original value is lost
+        init(_ content: String) {
+          self.transformed = content.hash
+        }
+        
+        // Alternative initializer for reconstruction
+        init(whyAreYouSoooMean transformed: Int) {
+          self.transformed = transformed
+        }
+      }
+      
+      // Register custom renderer using the alternative initializer
+      SnapshotRendererRegistry.register(Bizarro.self) { instance, context in
+        ExprSyntax(stringLiteral: "Bizarro(whyAreYouSoooMean: \(instance.transformed))")
+      }
+      
+      // Create instance with primary initializer
+      let original = Bizarro("Pikachu")
+      let context = SnapshotRenderContext()
+      
+      // Verify renderer is registered
+      let renderer = SnapshotRendererRegistry.shared.renderer(for: original)
+      #expect(renderer != nil)
+      
+      // Verify the rendered output uses the alternative initializer
+      if let renderer = renderer {
+        let result = try renderer(original, context)
+        let output = result.description
+        
+        // Should use the alternative initializer
+        #expect(output.contains("Bizarro(whyAreYouSoooMean:"))
+        #expect(output.contains("\(original.transformed)"))
+        
+        // Should NOT try to use the original string (which is lost)
+        #expect(!output.contains("Pikachu"))
+      }
+    }
   }
 }

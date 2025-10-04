@@ -149,6 +149,51 @@ SnapshotRendererRegistry.register(Address.self) { address, context in
 }
 ```
 
+### Example 4: Types with Transformed or Destroyed Initialization Values
+
+Some types transform their input during initialization, making it impossible to reconstruct them from the original value. In these cases, you must use a custom renderer that references an alternative initializer.
+
+```swift
+@SwiftSnapshot
+struct Bizarro {
+    let transformed: Int
+    
+    // Primary initializer transforms input - original value is lost
+    public init(_ content: String) {
+        self.transformed = content.hash
+    }
+    
+    // Alternative initializer for reconstruction
+    init(whyAreYouSoooMean transformed: Int) {
+        self.transformed = transformed
+    }
+}
+
+// Register custom renderer using the alternative initializer
+SnapshotRendererRegistry.register(Bizarro.self) { instance, context in
+    ExprSyntax(stringLiteral: """
+    Bizarro(whyAreYouSoooMean: \(instance.transformed))
+    """)
+}
+
+// Now snapshots work correctly
+let bizarre = Bizarro("Pikachu")
+let url = try bizarre.exportSnapshot(variableName: "crazyyyyy")
+// Generates: Bizarro(whyAreYouSoooMean: 8234567890)
+```
+
+This pattern is essential for types that:
+- Compute hashes or derived values during initialization
+- Encrypt or encode input data
+- Perform lossy transformations (e.g., rounding, truncation)
+- Convert between incompatible representations
+
+**Key Guidelines:**
+- Provide an alternative initializer that accepts the stored/transformed values
+- Use descriptive parameter names to clarify the alternative initialization path
+- Document the relationship between initializers in your type's documentation
+- Ensure the alternative initializer is accessible from your test code
+
 ## Best Practices
 
 1. **Register Early**: Register custom renderers before using them
