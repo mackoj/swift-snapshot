@@ -74,6 +74,7 @@ let package = Package(
         "SwiftSnapshot",
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "MacroTesting", package: "swift-macro-testing"),
+        .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
       ]
     ),
   ],

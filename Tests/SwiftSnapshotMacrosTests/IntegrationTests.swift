@@ -1,8 +1,7 @@
 import InlineSnapshotTesting
 import SwiftSnapshot
 import Testing
-
-@testable import SwiftSnapshotMacros
+import SwiftSnapshotMacros
 
 // Test types at file level to support extension macros
 
