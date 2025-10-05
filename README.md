@@ -4,7 +4,10 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> [!IMPORTANT]  
+> [!WARNING]
+> This is a work in progress everything is not ready yet some feature may be buggy or work in very limited use cases.
+
+> [!NOTE] 
 > **DEBUG-Only Design**: SwiftSnapshot is a development tool with **zero production impact**. All APIs are disabled in release builds—no runtime overhead, no binary bloat.
 
 **Generate type-safe Swift source fixtures from runtime values.**
