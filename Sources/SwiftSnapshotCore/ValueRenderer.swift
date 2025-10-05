@@ -14,15 +14,17 @@ import SwiftSyntaxBuilder
 /// 2. **Primitives**: Handle built-in Swift types (String, Int, Bool, etc.)
 /// 3. **Collections**: Handle Array, Dictionary, Set with deterministic ordering
 /// 4. **Foundation Types**: Handle Date, UUID, URL, Data, Decimal
-/// 5. **Reflection**: Fall back to Mirror-based rendering for custom types
+/// 5. **Generic Collections**: Handle types conforming to Collection protocol
+/// 6. **Reflection**: Fall back to Mirror-based rendering for custom types
 ///
 /// ## Supported Types
 ///
 /// ### Primitives
-/// - String, Int, Double, Float, Bool, Character
+/// - String, Int (all variants: Int, Int8, Int16, Int32, Int64, UInt, UInt8, UInt16, UInt32, UInt64), Double, Float, Bool, Character
 ///
 /// ### Collections
 /// - Array, Dictionary (with sorted keys), Set (with deterministic ordering)
+/// - Generic Collection types (e.g., IdentifiedArray, custom collections)
 /// - Optional values (nil handling)
 ///
 /// ### Foundation
@@ -71,8 +73,9 @@ enum ValueRenderer {
   /// 2. Built-in primitive renderers
   /// 3. Optional handling
   /// 4. Collection renderers (Array, Dictionary, Set)
-  /// 5. Foundation type renderers
-  /// 6. Reflection-based fallback
+  /// 5. Foundation type renderers (Date, UUID, URL, Data, Decimal)
+  /// 6. Generic Collection types (any type conforming to Collection protocol)
+  /// 7. Reflection-based fallback
   ///
   /// - Parameters:
   ///   - value: The value to render (can be any type)
@@ -95,6 +98,24 @@ enum ValueRenderer {
       return try renderString(v)
     case let v as Int:
       return renderInt(v)
+    case let v as Int8:
+      return renderInt8(v)
+    case let v as Int16:
+      return renderInt16(v)
+    case let v as Int32:
+      return renderInt32(v)
+    case let v as Int64:
+      return renderInt64(v)
+    case let v as UInt:
+      return renderUInt(v)
+    case let v as UInt8:
+      return renderUInt8(v)
+    case let v as UInt16:
+      return renderUInt16(v)
+    case let v as UInt32:
+      return renderUInt32(v)
+    case let v as UInt64:
+      return renderUInt64(v)
     case let v as Double:
       return renderDouble(v)
     case let v as Float:
@@ -146,6 +167,13 @@ enum ValueRenderer {
       return renderDecimal(decimal)
     }
 
+    // Handle generic Collection types (e.g., IdentifiedArray)
+    // This must come after specific Array/Dictionary/Set/Data checks to avoid false matches
+    // Data conforms to Collection but has its own specialized handler above
+    if let collection = value as? any Collection {
+      return try renderCollection(collection, context: context)
+    }
+
     // Fallback to reflection
     return try renderViaReflection(value, context: context)
   }
@@ -159,6 +187,42 @@ enum ValueRenderer {
 
   static func renderInt(_ value: Int) -> ExprSyntax {
     ExprSyntax(IntegerLiteralExprSyntax(integerLiteral: value))
+  }
+
+  static func renderInt8(_ value: Int8) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int8(\(value))")
+  }
+
+  static func renderInt16(_ value: Int16) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int16(\(value))")
+  }
+
+  static func renderInt32(_ value: Int32) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int32(\(value))")
+  }
+
+  static func renderInt64(_ value: Int64) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int64(\(value))")
+  }
+
+  static func renderUInt(_ value: UInt) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt(\(value))")
+  }
+
+  static func renderUInt8(_ value: UInt8) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt8(\(value))")
+  }
+
+  static func renderUInt16(_ value: UInt16) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt16(\(value))")
+  }
+
+  static func renderUInt32(_ value: UInt32) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt32(\(value))")
+  }
+
+  static func renderUInt64(_ value: UInt64) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt64(\(value))")
   }
 
   static func renderDouble(_ value: Double) -> ExprSyntax {
@@ -316,6 +380,52 @@ enum ValueRenderer {
 
     let arrayExpr = try renderArray(elements, context: context)
     return ExprSyntax(stringLiteral: "Set(\(arrayExpr))")
+  }
+
+  /// Render generic Collection types
+  ///
+  /// Handles any type conforming to the Collection protocol that isn't handled by
+  /// more specific renderers (Array, Dictionary, Set, Data).
+  ///
+  /// This is particularly useful for generic collection types like IdentifiedArray,
+  /// custom collection wrappers, and other specialized collection types.
+  ///
+  /// ## Output Format
+  ///
+  /// ```swift
+  /// TypeName<Element>([element1, element2, ...])
+  /// ```
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// // Input: IdentifiedArray<Int, Person>([Person(id: 1, name: "Alice")])
+  /// // Output: IdentifiedArray<Int, Person>([Person(id: 1, name: "Alice")])
+  /// ```
+  ///
+  /// - Parameters:
+  ///   - collection: The collection to render
+  ///   - context: Rendering context with formatting and path information
+  ///
+  /// - Returns: SwiftSyntax expression representing the collection
+  ///
+  /// - Throws: ``SwiftSnapshotError`` if elements cannot be rendered
+  static func renderCollection(_ collection: any Collection, context: SnapshotRenderContext) throws
+    -> ExprSyntax
+  {
+    // Convert collection to array of Any for rendering
+    var elements: [Any] = []
+    for element in collection {
+      elements.append(element)
+    }
+    
+    let arrayExpr = try renderArray(elements, context: context)
+    
+    // Get the type name for the collection
+    let typeName = String(describing: type(of: collection))
+    
+    // Return as TypeName(arrayLiteral: [...])
+    return ExprSyntax(stringLiteral: "\(typeName)(\(arrayExpr))")
   }
 
   // MARK: - Reflection Fallback

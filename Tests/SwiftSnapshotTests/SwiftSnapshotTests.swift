@@ -468,5 +468,36 @@ extension SnapshotTests {
     let retrieved = SwiftSnapshotConfig.renderOptions()
     #expect(!retrieved.sortDictionaryKeys)
     }
+
+    // MARK: - Generic Collection Tests
+
+    @Test func genericCollectionSupport() throws {
+      struct GenericWrapper<Element>: Collection {
+        let elements: [Element]
+        
+        init(_ elements: [Element]) {
+          self.elements = elements
+        }
+        
+        typealias Index = Array<Element>.Index
+        var startIndex: Index { elements.startIndex }
+        var endIndex: Index { elements.endIndex }
+        subscript(position: Index) -> Element { elements[position] }
+        func index(after i: Index) -> Index { elements.index(after: i) }
+      }
+      
+      let wrapper = GenericWrapper([1, 2, 3])
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: wrapper,
+        variableName: "testWrapper"
+      )
+      
+      // Should contain the type name with generic parameter
+      #expect(code.contains("GenericWrapper<Int>"))
+      // Should contain the elements
+      #expect(code.contains("1"))
+      #expect(code.contains("2"))
+      #expect(code.contains("3"))
+    }
   }
 }
