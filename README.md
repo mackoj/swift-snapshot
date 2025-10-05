@@ -7,9 +7,6 @@
 > [!WARNING]
 > This is a work in progress everything is not ready yet some feature may be buggy or work in very limited use cases.
 
-> [!NOTE] 
-> **DEBUG-Only Design**: SwiftSnapshot is a development tool with **zero production impact**. All APIs are disabled in release builds—no runtime overhead, no binary bloat.
-
 **Generate type-safe Swift source fixtures from runtime values.**
 
 SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere: no JSON, no decoding, just Swift.
@@ -27,6 +24,8 @@ try user.exportSnapshot(variableName: "testUser")
 //     )
 // }
 ```
+
+_This project was built using an LLM. It shows that, with proper guidance, they can create something quite effective_
 
 ---
 
