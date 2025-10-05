@@ -14,7 +14,8 @@ import SwiftSyntaxBuilder
 /// 2. **Primitives**: Handle built-in Swift types (String, Int, Bool, etc.)
 /// 3. **Collections**: Handle Array, Dictionary, Set with deterministic ordering
 /// 4. **Foundation Types**: Handle Date, UUID, URL, Data, Decimal
-/// 5. **Reflection**: Fall back to Mirror-based rendering for custom types
+/// 5. **Generic Collections**: Handle types conforming to Collection protocol
+/// 6. **Reflection**: Fall back to Mirror-based rendering for custom types
 ///
 /// ## Supported Types
 ///
@@ -23,6 +24,7 @@ import SwiftSyntaxBuilder
 ///
 /// ### Collections
 /// - Array, Dictionary (with sorted keys), Set (with deterministic ordering)
+/// - Generic Collection types (e.g., IdentifiedArray, custom collections)
 /// - Optional values (nil handling)
 ///
 /// ### Foundation
@@ -71,8 +73,9 @@ enum ValueRenderer {
   /// 2. Built-in primitive renderers
   /// 3. Optional handling
   /// 4. Collection renderers (Array, Dictionary, Set)
-  /// 5. Foundation type renderers
-  /// 6. Reflection-based fallback
+  /// 5. Foundation type renderers (Date, UUID, URL, Data, Decimal)
+  /// 6. Generic Collection types (any type conforming to Collection protocol)
+  /// 7. Reflection-based fallback
   ///
   /// - Parameters:
   ///   - value: The value to render (can be any type)
@@ -144,6 +147,13 @@ enum ValueRenderer {
 
     if let decimal = value as? Decimal {
       return renderDecimal(decimal)
+    }
+
+    // Handle generic Collection types (e.g., IdentifiedArray)
+    // This must come after specific Array/Dictionary/Set/Data checks to avoid false matches
+    // Data conforms to Collection but has its own specialized handler above
+    if let collection = value as? any Collection {
+      return try renderCollection(collection, context: context)
     }
 
     // Fallback to reflection
@@ -316,6 +326,52 @@ enum ValueRenderer {
 
     let arrayExpr = try renderArray(elements, context: context)
     return ExprSyntax(stringLiteral: "Set(\(arrayExpr))")
+  }
+
+  /// Render generic Collection types
+  ///
+  /// Handles any type conforming to the Collection protocol that isn't handled by
+  /// more specific renderers (Array, Dictionary, Set, Data).
+  ///
+  /// This is particularly useful for generic collection types like IdentifiedArray,
+  /// custom collection wrappers, and other specialized collection types.
+  ///
+  /// ## Output Format
+  ///
+  /// ```swift
+  /// TypeName<Element>([element1, element2, ...])
+  /// ```
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// // Input: IdentifiedArray<Int, Person>([Person(id: 1, name: "Alice")])
+  /// // Output: IdentifiedArray<Int, Person>([Person(id: 1, name: "Alice")])
+  /// ```
+  ///
+  /// - Parameters:
+  ///   - collection: The collection to render
+  ///   - context: Rendering context with formatting and path information
+  ///
+  /// - Returns: SwiftSyntax expression representing the collection
+  ///
+  /// - Throws: ``SwiftSnapshotError`` if elements cannot be rendered
+  static func renderCollection(_ collection: any Collection, context: SnapshotRenderContext) throws
+    -> ExprSyntax
+  {
+    // Convert collection to array of Any for rendering
+    var elements: [Any] = []
+    for element in collection {
+      elements.append(element)
+    }
+    
+    let arrayExpr = try renderArray(elements, context: context)
+    
+    // Get the type name for the collection
+    let typeName = String(describing: type(of: collection))
+    
+    // Return as TypeName(arrayLiteral: [...])
+    return ExprSyntax(stringLiteral: "\(typeName)(\(arrayExpr))")
   }
 
   // MARK: - Reflection Fallback
