@@ -20,7 +20,7 @@ import SwiftSyntaxBuilder
 /// ## Supported Types
 ///
 /// ### Primitives
-/// - String, Int, Double, Float, Bool, Character
+/// - String, Int (all variants: Int, Int8, Int16, Int32, Int64, UInt, UInt8, UInt16, UInt32, UInt64), Double, Float, Bool, Character
 ///
 /// ### Collections
 /// - Array, Dictionary (with sorted keys), Set (with deterministic ordering)
@@ -98,6 +98,24 @@ enum ValueRenderer {
       return try renderString(v)
     case let v as Int:
       return renderInt(v)
+    case let v as Int8:
+      return renderInt8(v)
+    case let v as Int16:
+      return renderInt16(v)
+    case let v as Int32:
+      return renderInt32(v)
+    case let v as Int64:
+      return renderInt64(v)
+    case let v as UInt:
+      return renderUInt(v)
+    case let v as UInt8:
+      return renderUInt8(v)
+    case let v as UInt16:
+      return renderUInt16(v)
+    case let v as UInt32:
+      return renderUInt32(v)
+    case let v as UInt64:
+      return renderUInt64(v)
     case let v as Double:
       return renderDouble(v)
     case let v as Float:
@@ -169,6 +187,42 @@ enum ValueRenderer {
 
   static func renderInt(_ value: Int) -> ExprSyntax {
     ExprSyntax(IntegerLiteralExprSyntax(integerLiteral: value))
+  }
+
+  static func renderInt8(_ value: Int8) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int8(\(value))")
+  }
+
+  static func renderInt16(_ value: Int16) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int16(\(value))")
+  }
+
+  static func renderInt32(_ value: Int32) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int32(\(value))")
+  }
+
+  static func renderInt64(_ value: Int64) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "Int64(\(value))")
+  }
+
+  static func renderUInt(_ value: UInt) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt(\(value))")
+  }
+
+  static func renderUInt8(_ value: UInt8) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt8(\(value))")
+  }
+
+  static func renderUInt16(_ value: UInt16) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt16(\(value))")
+  }
+
+  static func renderUInt32(_ value: UInt32) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt32(\(value))")
+  }
+
+  static func renderUInt64(_ value: UInt64) -> ExprSyntax {
+    ExprSyntax(stringLiteral: "UInt64(\(value))")
   }
 
   static func renderDouble(_ value: Double) -> ExprSyntax {
