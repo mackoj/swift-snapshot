@@ -25,7 +25,7 @@ try user.exportSnapshot(variableName: "testUser")
 // }
 ```
 
-_This project was built using an LLM. It shows that, with proper guidance, they can create something quite effective_
+_This project was built with help of Copilot. I wanted to tests it's capabilities. This shows that, with proper guidance, it can create something that works._
 
 ---
 
