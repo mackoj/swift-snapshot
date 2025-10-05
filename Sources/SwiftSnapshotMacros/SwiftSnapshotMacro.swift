@@ -333,7 +333,7 @@ extension SwiftSnapshotMacro {
     let arguments = argumentParts.joined(separator: ", ")
 
     return """
-      internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
+      internal static func __swiftSnapshot_makeExpr(from instance: \(raw: typeName)) -> String {
         return "\(raw: typeName)(\(raw: arguments))"
       }
       """
@@ -347,6 +347,9 @@ extension SwiftSnapshotMacro {
     guard let enumDecl = declaration.as(EnumDeclSyntax.self) else {
       throw MacroError.notAnEnum
     }
+
+    // Get enum name
+    let enumName = enumDecl.name.text
 
     // Collect all enum cases
     var cases: [String] = []
@@ -406,7 +409,7 @@ extension SwiftSnapshotMacro {
     let switchBody = cases.joined(separator: "\n      ")
 
     return """
-      internal static func __swiftSnapshot_makeExpr(from instance: Self) -> String {
+      internal static func __swiftSnapshot_makeExpr(from instance: \(raw: enumName)) -> String {
         switch instance {
         \(raw: switchBody)
         }
