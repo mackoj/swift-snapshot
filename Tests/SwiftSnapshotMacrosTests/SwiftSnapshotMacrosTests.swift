@@ -557,4 +557,87 @@ extension SnapshotTests {
       """#
     }
   }
+
+    @Test func genericStruct() {
+    assertMacro {
+      """
+      @SwiftSnapshot
+      struct User<T: Codable> {
+        let id: Int
+        let name: String
+        let some: [T]
+      }
+      """
+    } expansion: {
+      #"""
+      struct User<T: Codable> {
+        let id: Int
+        let name: String
+        let some: [T]
+
+        internal static var __swiftSnapshot_folder: String? {
+          nil
+        }
+
+        internal struct __SwiftSnapshot_PropertyMetadata {
+          let original: String
+          let renamed: String?
+          let redaction: __SwiftSnapshot_Redaction?
+          let ignored: Bool
+        }
+
+        internal enum __SwiftSnapshot_Redaction {
+          case mask(String)
+          case hash
+        }
+
+        internal static var __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] {
+          [
+            .init(original: "id", renamed: nil, redaction: nil, ignored: false),
+            .init(original: "name", renamed: nil, redaction: nil, ignored: false),
+            .init(original: "some", renamed: nil, redaction: nil, ignored: false)
+          ]
+        }
+
+        internal static func __swiftSnapshot_makeExpr(from instance: User) -> String {
+          return "User(id: \(instance.id), name: \(instance.name), some: \(instance.some))"
+        }
+      }
+
+      extension User: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
+        public func exportSnapshot(
+          variableName: String? = nil,
+          testName: String? = nil,
+          header: String? = nil,
+          context: String? = nil,
+          allowOverwrite: Bool = true,
+          line: UInt = #line,
+          fileID: StaticString = #fileID,
+          filePath: StaticString = #filePath
+        ) throws -> URL {
+          let defaultVarName = "user"
+          let effectiveVarName = variableName ?? defaultVarName
+
+          return try SwiftSnapshotRuntime.export(
+            instance: self,
+            variableName: effectiveVarName,
+            fileName: nil as String?,
+            outputBasePath: Self.__swiftSnapshot_folder,
+            allowOverwrite: allowOverwrite,
+            header: header,
+            context: context,
+            testName: testName,
+            line: line,
+            fileID: fileID,
+            filePath: filePath
+          )
+        }
+      }
+      """#
+    }
+  }
 }

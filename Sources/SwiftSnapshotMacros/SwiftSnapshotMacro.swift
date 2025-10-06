@@ -16,24 +16,36 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
     // Determine if this is a struct or enum
     let isEnum = declaration.is(EnumDeclSyntax.self)
 
+    // Check if this is a generic type
+    let isGeneric = isGenericType(declaration)
+
     // Collect property metadata
     let properties = collectProperties(from: declaration, context: context)
 
     var members: [DeclSyntax] = []
 
     // Generate __swiftSnapshot_folder if folder argument provided
-    if let folder = arguments.folder {
-      members.append(
-        """
-        internal static let __swiftSnapshot_folder: String? = \(literal: folder)
-        """
-      )
+    if isGeneric {
+      // Generic types cannot have static stored properties, use computed properties
+      if let folder = arguments.folder {
+        members.append("internal static var __swiftSnapshot_folder: String? { \(literal: folder) }")
+      } else {
+        members.append("internal static var __swiftSnapshot_folder: String? { nil }")
+      }
     } else {
-      members.append(
-        """
-        internal static let __swiftSnapshot_folder: String? = nil
-        """
-      )
+      if let folder = arguments.folder {
+        members.append(
+          """
+          internal static let __swiftSnapshot_folder: String? = \(literal: folder)
+          """
+        )
+      } else {
+        members.append(
+          """
+          internal static let __swiftSnapshot_folder: String? = nil
+          """
+        )
+      }
     }
 
     // Generate supporting types
@@ -41,7 +53,7 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
     members.append(generateRedactionEnum())
 
     // Generate property metadata array
-    members.append(generatePropertiesArray(properties: properties))
+    members.append(generatePropertiesArray(properties: properties, isGeneric: isGeneric))
 
     // Generate expression builder
     if isEnum {
@@ -143,6 +155,18 @@ extension SwiftSnapshotMacro {
       return stringLiteral.segments.trimmedDescription
     }
     return nil
+  }
+
+  /// Checks if a declaration has generic parameters
+  static func isGenericType(_ declaration: some DeclGroupSyntax) -> Bool {
+    if let structDecl = declaration.as(StructDeclSyntax.self) {
+      return structDecl.genericParameterClause != nil
+    } else if let classDecl = declaration.as(ClassDeclSyntax.self) {
+      return classDecl.genericParameterClause != nil
+    } else if let enumDecl = declaration.as(EnumDeclSyntax.self) {
+      return enumDecl.genericParameterClause != nil
+    }
+    return false
   }
 
   static func collectProperties(
@@ -268,29 +292,58 @@ extension SwiftSnapshotMacro {
     """
   }
 
-  static func generatePropertiesArray(properties: [PropertyInfo]) -> DeclSyntax {
-    let propertyElements = properties.enumerated().map { index, prop -> String in
-      let renamedStr = prop.renamedTo.map { "\"\($0)\"" } ?? "nil"
-      let redactionStr =
-        prop.redaction.map { redaction -> String in
-          switch redaction.mode {
-          case .mask(let value):
-            return ".mask(\"\(value)\")"
-          case .hash:
-            return ".hash"
-          }
-        } ?? "nil"
+  static func generatePropertiesArray(properties: [PropertyInfo], isGeneric: Bool) -> DeclSyntax {
+    if isGeneric {
+      // For generic types, use computed property with adjusted indentation
+      let propertyElements = properties.enumerated().map { index, prop -> String in
+        let renamedStr = prop.renamedTo.map { "\"\($0)\"" } ?? "nil"
+        let redactionStr =
+          prop.redaction.map { redaction -> String in
+            switch redaction.mode {
+            case .mask(let value):
+              return ".mask(\"\(value)\")"
+            case .hash:
+              return ".hash"
+            }
+          } ?? "nil"
 
-      let indent = index == 0 ? "" : "    "
-      return
-        "\(indent).init(original: \"\(prop.name)\", renamed: \(renamedStr), redaction: \(redactionStr), ignored: \(prop.isIgnored))"
-    }.joined(separator: ",\n")
+        let indent = index == 0 ? "" : "    "
+        return
+          "\(indent).init(original: \"\(prop.name)\", renamed: \(renamedStr), redaction: \(redactionStr), ignored: \(prop.isIgnored))"
+      }.joined(separator: ",\n")
 
-    return """
-      internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
-        \(raw: propertyElements)
-      ]
-      """
+      return """
+        internal static var __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] {
+          [
+            \(raw: propertyElements)
+          ]
+        }
+        """
+    } else {
+      // For non-generic types, use stored property
+      let propertyElements = properties.enumerated().map { index, prop -> String in
+        let renamedStr = prop.renamedTo.map { "\"\($0)\"" } ?? "nil"
+        let redactionStr =
+          prop.redaction.map { redaction -> String in
+            switch redaction.mode {
+            case .mask(let value):
+              return ".mask(\"\(value)\")"
+            case .hash:
+              return ".hash"
+            }
+          } ?? "nil"
+
+        let indent = index == 0 ? "" : "    "
+        return
+          "\(indent).init(original: \"\(prop.name)\", renamed: \(renamedStr), redaction: \(redactionStr), ignored: \(prop.isIgnored))"
+      }.joined(separator: ",\n")
+
+      return """
+        internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
+          \(raw: propertyElements)
+        ]
+        """
+    }
   }
 
   static func generateStructExpressionBuilder(
