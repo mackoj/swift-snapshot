@@ -292,7 +292,7 @@ let url = SwiftSnapshotRuntime.export(instance: custom, variableName: "myCustom"
 Some types transform their input during initialization, making the original value inaccessible. For these types, create an alternative initializer and use a custom renderer:
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct HashedValue {
     let hash: Int
     

@@ -154,7 +154,7 @@ SnapshotRendererRegistry.register(Address.self) { address, context in
 Some types transform their input during initialization, making it impossible to reconstruct them from the original value. In these cases, you must use a custom renderer that references an alternative initializer.
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct Bizarro {
     let transformed: Int
     

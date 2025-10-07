@@ -29,13 +29,13 @@ Group related fixtures together using folders to maintain clear organization as 
 ### Using the Macro
 
 ```swift
-@SwiftSnapshot(folder: "Fixtures/User")
+@Snapshot(folder: "Fixtures/User")
 struct User {
     let id: String
     let name: String
 }
 
-@SwiftSnapshot(
+@Snapshot(
     folder: "Fixtures/Orders",
     context: "Order fixtures for e-commerce flow testing"
 )
@@ -287,7 +287,7 @@ Never commit real credentials or sensitive data in fixtures. Use redaction featu
 ### Using @SnapshotRedact
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct APIConfig {
     let endpoint: URL
     

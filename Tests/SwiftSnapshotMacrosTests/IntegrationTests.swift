@@ -5,34 +5,34 @@ import SwiftSnapshotMacros
 
 // Test types at file level to support extension macros
 
-@SwiftSnapshot
+@Snapshot
 struct TestProduct {
   let id: String
   let name: String
 }
 
-@SwiftSnapshot
+@Snapshot
 struct TestUser {
   let id: String
   @SnapshotIgnore
   let cache: [String: Any]
 }
 
-@SwiftSnapshot
+@Snapshot
 struct TestItem {
   let id: String
   @SnapshotRename("displayName")
   let name: String
 }
 
-@SwiftSnapshot
+@Snapshot
 struct TestSecret {
   let id: String
   @SnapshotRedact(mask: "REDACTED")
   let apiKey: String
 }
 
-@SwiftSnapshot
+@Snapshot
 enum TestStatus {
   case active
   case inactive
@@ -40,18 +40,18 @@ enum TestStatus {
 }
 
 // Note: Folder parameter test requires full runtime, skipped in macro-only tests
-// @SwiftSnapshot(folder: "Fixtures/Test")
+// @Snapshot(folder: "Fixtures/Test")
 // struct TestConfig {
 //   let value: String
 // }
 
-@SwiftSnapshot
+@Snapshot
 enum TestResult {
   case success(value: Int)
   case failure(String)
 }
 
-@SwiftSnapshot
+@Snapshot
 struct TestGenericContainer<T: Codable> {
   let id: Int
   let items: [T]
