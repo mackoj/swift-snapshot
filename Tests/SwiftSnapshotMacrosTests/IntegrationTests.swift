@@ -33,6 +33,13 @@ struct TestSecret {
 }
 
 @SwiftSnapshot
+struct TestHashRedact {
+  let id: String
+  @SnapshotRedact(.hash)
+  let password: String
+}
+
+@SwiftSnapshot
 enum TestStatus {
   case active
   case inactive
@@ -109,6 +116,18 @@ extension SnapshotTests {
       assertInlineSnapshot(of: expr.description, as: .description) {
         """
         TestSecret(id: secret123, apiKey: "REDACTED")
+        """
+      }
+    }
+
+    @Test func macroWithHashRedact() throws {
+      let hashSecret = TestHashRedact(id: "hash123", password: "my-password")
+      let expr = TestHashRedact.__swiftSnapshot_makeExpr(from: hashSecret)
+
+      // Verify hashed placeholder appears instead of actual value
+      assertInlineSnapshot(of: expr.description, as: .description) {
+        """
+        TestHashRedact(id: hash123, password: "<hashed>")
         """
       }
     }
