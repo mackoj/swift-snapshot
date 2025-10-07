@@ -265,7 +265,7 @@ extension SnapshotTests {
       @SwiftSnapshot
       struct User {
         let id: String
-        @SnapshotRedact(mask: "SECRET")
+        @SnapshotRedact(.mask("SECRET"))
         let apiKey: String
       }
       """

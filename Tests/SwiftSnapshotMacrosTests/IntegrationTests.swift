@@ -28,7 +28,7 @@ struct TestItem {
 @SwiftSnapshot
 struct TestSecret {
   let id: String
-  @SnapshotRedact(mask: "REDACTED")
+  @SnapshotRedact(.mask("REDACTED"))
   let apiKey: String
 }
 
