@@ -382,5 +382,64 @@ extension SnapshotTests {
       """#
     }
     }
+    
+    // MARK: - Generic Types Test
+    
+    @Test func genericTypesWithValidFileName() throws {
+      struct Kakou: Codable {
+        let toto: String
+        let tata: Val
+        enum Val: Codable {
+          case a, b, c
+        }
+      }
+      
+      struct User<T: Codable>: Codable {
+        let id: Int
+        let name: String
+        let some: [T]
+      }
+      
+      let mockData = [
+        Kakou(toto: "hello", tata: .b),
+        Kakou(toto: "world", tata: .c),
+      ]
+      
+      let user = User(id: 42, name: "Alice", some: mockData)
+      
+      // Test that the file export works and creates a valid file name
+      let tempDir = FileManager.default.temporaryDirectory
+        .appendingPathComponent("SwiftSnapshotTests")
+        .appendingPathComponent(UUID().uuidString)
+      
+      let url = try SwiftSnapshotRuntime.export(
+        instance: user,
+        variableName: "mock",
+        outputBasePath: tempDir.path,
+        header: "/// Test HEADER",
+        context: "This is for testing."
+      )
+      
+      // Cleanup
+      defer { try? FileManager.default.removeItem(at: tempDir) }
+      
+      // Verify file exists
+      #expect(FileManager.default.fileExists(atPath: url.path))
+      
+      // Verify file name is sanitized (no < or > characters)
+      let fileName = url.lastPathComponent
+      #expect(!fileName.contains("<"))
+      #expect(!fileName.contains(">"))
+      
+      // The file name should be sanitized to User_Kakou_+mock.swift
+      #expect(fileName == "User_Kakou_+mock.swift")
+      
+      // Verify content is valid Swift code
+      let content = try String(contentsOf: url, encoding: .utf8)
+      #expect(content.contains("/// Test HEADER"))
+      #expect(content.contains("This is for testing."))
+      #expect(content.contains("static let mock"))
+      #expect(content.contains("id: 42"))
+    }
   }
 }

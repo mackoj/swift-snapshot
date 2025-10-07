@@ -135,7 +135,8 @@ extension SnapshotTests {
         outputDirectory: outputDir
       )
       
-      #expect(result1.lastPathComponent == "Array<String>+myArray.swift")
+      // Angle brackets should be sanitized
+      #expect(result1.lastPathComponent == "Array_String_+myArray.swift")
       
       let result2 = PathResolver.resolveFilePath(
         typeName: "Dictionary<String, Int>",
@@ -144,7 +145,56 @@ extension SnapshotTests {
         outputDirectory: outputDir
       )
       
-      #expect(result2.lastPathComponent == "Dictionary<String, Int>+myDict.swift")
+      // Angle brackets and commas should be sanitized
+      #expect(result2.lastPathComponent == "Dictionary_String__Int_+myDict.swift")
+    }
+    
+    /// Test that generic type names are properly sanitized
+    @Test func resolveFilePathWithGenericTypes() {
+      let outputDir = URL(fileURLWithPath: "/tmp/snapshots")
+      
+      // Test User<Kakou>
+      let result1 = PathResolver.resolveFilePath(
+        typeName: "User<Kakou>",
+        variableName: "mock",
+        fileName: nil,
+        outputDirectory: outputDir
+      )
+      #expect(result1.lastPathComponent == "User_Kakou_+mock.swift")
+      
+      // Test nested generics
+      let result2 = PathResolver.resolveFilePath(
+        typeName: "Array<Dictionary<String, Int>>",
+        variableName: "data",
+        fileName: nil,
+        outputDirectory: outputDir
+      )
+      #expect(result2.lastPathComponent == "Array_Dictionary_String__Int__+data.swift")
+      
+      // Test with spaces
+      let result3 = PathResolver.resolveFilePath(
+        typeName: "Optional<User Model>",
+        variableName: "user",
+        fileName: nil,
+        outputDirectory: outputDir
+      )
+      #expect(result3.lastPathComponent == "Optional_User_Model_+user.swift")
+    }
+    
+    /// Test that custom fileName is not sanitized (user provided)
+    @Test func customFileNameNotSanitized() {
+      let outputDir = URL(fileURLWithPath: "/tmp/snapshots")
+      
+      // When user provides custom fileName, it should be used as-is
+      let result = PathResolver.resolveFilePath(
+        typeName: "User<Kakou>",
+        variableName: "mock",
+        fileName: "CustomFixture",
+        outputDirectory: outputDir
+      )
+      
+      // Custom file name should not trigger sanitization
+      #expect(result.lastPathComponent == "CustomFixture.swift")
     }
     
     /// Test priority order: explicit > global > env > default
