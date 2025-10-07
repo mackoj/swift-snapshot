@@ -289,7 +289,7 @@ Contributions welcome! For major changes, please open an issue first.
 ## Acknowledgments
 
 Built with:
-- [SwiftSyntax](https://github.com/apple/swift-syntax) - Code generation
+- [swift-syntax](https://github.com/apple/swift-syntax) - Code generation
 - [swift-format](https://github.com/swiftlang/swift-format) - Formatting
 - [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - Dependency injection
 - [swift-issue-reporting](https://github.com/pointfreeco/swift-issue-reporting) - Error messages
