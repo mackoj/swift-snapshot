@@ -62,6 +62,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -143,6 +144,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -224,6 +226,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -305,6 +308,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -393,6 +397,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -470,6 +475,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -554,6 +560,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
@@ -637,6 +644,7 @@ extension SnapshotTests {
         ///
         /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
         /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
         public func exportSnapshot(
           variableName: String? = nil,
           testName: String? = nil,
