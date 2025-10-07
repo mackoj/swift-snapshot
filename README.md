@@ -27,6 +27,8 @@ user.exportSnapshot(variableName: "testUser")
 
 _This project was built with help of Copilot. I wanted to tests it's capabilities. This shows that, with proper guidance, it can create something that works._
 
+<img width="350" height="350" alt="logo" src="https://github.com/user-attachments/assets/ed0c0179-bcaa-4e80-8509-7cd024e203d2" />
+
 ---
 
 ## Installation
