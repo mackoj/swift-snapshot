@@ -136,9 +136,58 @@ enum PathResolver {
       finalFileName = fileName.hasSuffix(".swift") ? fileName : "\(fileName).swift"
     } else {
       // Default: TypeName+VariableName.swift
-      finalFileName = "\(typeName)+\(variableName).swift"
+      // Sanitize the type name to ensure it's a valid file name
+      let sanitizedTypeName = sanitizeFileName(typeName)
+      finalFileName = "\(sanitizedTypeName)+\(variableName).swift"
     }
 
     return outputDirectory.appendingPathComponent(finalFileName)
+  }
+  
+  /// Sanitize a string to be a valid file name component
+  ///
+  /// Replaces characters that are invalid in file names with underscores.
+  /// This is particularly important for generic types like `User<T>` or `Dictionary<String, Int>`.
+  ///
+  /// ## Invalid Characters
+  ///
+  /// The following characters are replaced with underscores:
+  /// - Angle brackets: `<` `>`
+  /// - Slashes: `/` `\`
+  /// - Colons: `:`
+  /// - Asterisks: `*`
+  /// - Question marks: `?`
+  /// - Quotes: `"` `'`
+  /// - Pipe: `|`
+  /// - Other special characters that might be invalid on some filesystems
+  ///
+  /// ## Examples
+  ///
+  /// ```swift
+  /// sanitizeFileName("User<Kakou>")
+  /// // Returns: "User_Kakou_"
+  ///
+  /// sanitizeFileName("Dictionary<String, Int>")
+  /// // Returns: "Dictionary_String__Int_"
+  ///
+  /// sanitizeFileName("Array<[String: Int]>")
+  /// // Returns: "Array__String__Int__"
+  /// ```
+  ///
+  /// - Parameter name: The string to sanitize for use as a file name
+  /// - Returns: A sanitized string safe for use in file names
+  private static func sanitizeFileName(_ name: String) -> String {
+    // Characters that are typically invalid or problematic in file names across platforms
+    let invalidChars: Set<Character> = ["<", ">", ":", "\"", "/", "\\", "|", "?", "*", ",", " "]
+    
+    let sanitized = name.map { char -> Character in
+      if invalidChars.contains(char) {
+        return "_"
+      } else {
+        return char
+      }
+    }
+    
+    return String(sanitized)
   }
 }
