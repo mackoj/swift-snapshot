@@ -2,6 +2,7 @@ import InlineSnapshotTesting
 import SwiftSnapshot
 import Testing
 import SwiftSnapshotMacros
+@testable import SwiftSnapshotCore
 
 // Test types at file level to support extension macros
 
@@ -62,6 +63,22 @@ enum TestResult {
 struct TestGenericContainer<T: Codable> {
   let id: Int
   let items: [T]
+}
+
+@SwiftSnapshot
+struct TestKakou: Codable {
+  @SnapshotRedact(.mask("1234"))
+  let toto: String
+  let tata: Val
+  enum Val: Codable {
+    case a, b, c
+  }
+}
+
+struct TestUserGeneric<T: Codable> {
+  let id: Int
+  let name: String
+  let some: [T]
 }
 
 extension SnapshotTests {
@@ -173,6 +190,51 @@ extension SnapshotTests {
       assertInlineSnapshot(of: expr.description, as: .description) {
         """
         TestGenericContainer(id: 1, items: [10, 20, 30])
+        """
+      }
+    }
+
+    @Test func nestedTypeWithRedaction() throws {
+      // This test verifies that when a type with @SwiftSnapshot and @SnapshotRedact
+      // is nested inside another type during export, the redaction is properly applied
+      
+      let mockData = [
+        TestKakou(toto: "hello", tata: .b),
+        TestKakou(toto: "world", tata: .c),
+      ]
+      
+      let user = TestUserGeneric(id: 42, name: "Mack", some: mockData)
+      
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: user,
+        variableName: "mock",
+        header: "/// Test HEADER",
+        context: "This is for testing."
+      )
+      
+      // Verify that the redacted values appear in the generated code
+      #expect(code.contains("toto: \"1234\""))
+      #expect(!code.contains("toto: \"hello\""))
+      #expect(!code.contains("toto: \"world\""))
+      
+      // Print for manual verification
+      print("Generated code:\n\(code)")
+      
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        /// Test HEADER
+        
+        import Foundation
+        
+        extension TestUserGeneric<TestKakou> {
+            /// This is for testing.
+            static let mock: TestUserGeneric<TestKakou> = TestUserGeneric<TestKakou>(
+                id: 42,
+                name: "Mack",
+                some: [TestKakou(toto: "1234", tata: b), TestKakou(toto: "1234", tata: c)]
+            )
+        }
+        
         """
       }
     }
