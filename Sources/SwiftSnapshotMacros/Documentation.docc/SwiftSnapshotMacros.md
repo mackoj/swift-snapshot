@@ -50,10 +50,10 @@ Redacts sensitive values with masks or hashes:
 ```swift
 @SwiftSnapshot
 struct SecureData {
-    @SnapshotRedact(mask: "***")
+    @SnapshotRedact(.mask("***"))
     let apiKey: String
     
-    @SnapshotRedact(hash: true)
+    @SnapshotRedact(.hash)
     let password: String
 }
 ```

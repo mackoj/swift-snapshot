@@ -291,10 +291,10 @@ Never commit real credentials or sensitive data in fixtures. Use redaction featu
 struct APIConfig {
     let endpoint: URL
     
-    @SnapshotRedact(mask: "***")
+    @SnapshotRedact(.mask("***"))
     let apiKey: String
     
-    @SnapshotRedact(hash: true)
+    @SnapshotRedact(.hash)
     let secret: String
 }
 ```

@@ -2,6 +2,14 @@ import SwiftSnapshotCore
 // Macro definitions for SwiftSnapshot
 // These are the public-facing macro attributes that users can apply to their types
 
+/// Defines how a property value should be redacted in snapshots.
+public enum RedactionStyle {
+  /// Replace the value with a custom string literal.
+  case mask(String)
+  /// Replace the value with a deterministic hash.
+  case hash
+}
+
 /// Marks a type for snapshot fixture export with compile-time metadata generation.
 ///
 /// This macro generates:
@@ -68,27 +76,21 @@ public macro SnapshotRename(_ name: String) =
 
 /// Redacts a property value in the generated snapshot.
 ///
-/// Two redaction modes are available (mutually exclusive):
-/// - `mask`: Replace value with a literal string (default: "•••")
-/// - `hash`: Replace with a deterministic hash of the value
-///
-/// - Parameters:
-///   - mask: String literal to use instead of the actual value
-///   - hash: If true, use a hash of the value
+/// - Parameter style: The redaction style to apply (`.mask(String)` or `.hash`)
 ///
 /// Example:
 /// ```swift
 /// @SwiftSnapshot
 /// struct User {
-///   @SnapshotRedact(mask: "SECRET")
+///   @SnapshotRedact(.mask("SECRET"))
 ///   let apiKey: String
 ///
-///   @SnapshotRedact(hash: true)
+///   @SnapshotRedact(.hash)
 ///   let password: String
 /// }
 /// ```
 @attached(peer)
-public macro SnapshotRedact(mask: String? = nil, hash: Bool = false) =
+public macro SnapshotRedact(_ style: RedactionStyle = .mask("•••")) =
   #externalMacro(module: "SwiftSnapshotMacros", type: "SnapshotRedactMacro")
 
 /// Protocol that marks types as exportable via macro-generated methods.

@@ -265,7 +265,7 @@ extension SnapshotTests {
       @SwiftSnapshot
       struct User {
         let id: String
-        @SnapshotRedact(mask: "SECRET")
+        @SnapshotRedact(.mask("SECRET"))
         let apiKey: String
       }
       """
@@ -320,6 +320,170 @@ extension SnapshotTests {
           filePath: StaticString = #filePath
         ) -> URL {
           let defaultVarName = "user"
+          let effectiveVarName = variableName ?? defaultVarName
+
+          return SwiftSnapshotRuntime.export(
+            instance: self,
+            variableName: effectiveVarName,
+            fileName: nil as String?,
+            outputBasePath: Self.__swiftSnapshot_folder,
+            allowOverwrite: allowOverwrite,
+            header: header,
+            context: context,
+            testName: testName,
+            line: line,
+            fileID: fileID,
+            filePath: filePath
+          )
+        }
+      }
+      """#
+    }
+  }
+
+    @Test func structWithRedactHash() {
+    assertMacro {
+      """
+      @SwiftSnapshot
+      struct Account {
+        let id: String
+        @SnapshotRedact(.hash)
+        let password: String
+      }
+      """
+    } expansion: {
+      #"""
+      struct Account {
+        let id: String
+        let password: String
+
+        internal static var __swiftSnapshot_folder: String? {
+          nil
+        }
+
+        internal struct __SwiftSnapshot_PropertyMetadata {
+          let original: String
+          let renamed: String?
+          let redaction: __SwiftSnapshot_Redaction?
+          let ignored: Bool
+        }
+
+        internal enum __SwiftSnapshot_Redaction {
+          case mask(String)
+          case hash
+        }
+
+        internal static var __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] {
+          [
+            .init(original: "id", renamed: nil, redaction: nil, ignored: false),
+            .init(original: "password", renamed: nil, redaction: .hash, ignored: false)
+          ]
+        }
+
+        internal static func __swiftSnapshot_makeExpr(from instance: Account) -> String {
+          return "Account(id: \(instance.id), password: \"<hashed>\")"
+        }
+      }
+
+      extension Account: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
+        public func exportSnapshot(
+          variableName: String? = nil,
+          testName: String? = nil,
+          header: String? = nil,
+          context: String? = nil,
+          allowOverwrite: Bool = true,
+          line: UInt = #line,
+          fileID: StaticString = #fileID,
+          filePath: StaticString = #filePath
+        ) -> URL {
+          let defaultVarName = "account"
+          let effectiveVarName = variableName ?? defaultVarName
+
+          return SwiftSnapshotRuntime.export(
+            instance: self,
+            variableName: effectiveVarName,
+            fileName: nil as String?,
+            outputBasePath: Self.__swiftSnapshot_folder,
+            allowOverwrite: allowOverwrite,
+            header: header,
+            context: context,
+            testName: testName,
+            line: line,
+            fileID: fileID,
+            filePath: filePath
+          )
+        }
+      }
+      """#
+    }
+  }
+
+    @Test func structWithRedactDefault() {
+    assertMacro {
+      """
+      @SwiftSnapshot
+      struct Config {
+        let id: String
+        @SnapshotRedact
+        let token: String
+      }
+      """
+    } expansion: {
+      #"""
+      struct Config {
+        let id: String
+        let token: String
+
+        internal static var __swiftSnapshot_folder: String? {
+          nil
+        }
+
+        internal struct __SwiftSnapshot_PropertyMetadata {
+          let original: String
+          let renamed: String?
+          let redaction: __SwiftSnapshot_Redaction?
+          let ignored: Bool
+        }
+
+        internal enum __SwiftSnapshot_Redaction {
+          case mask(String)
+          case hash
+        }
+
+        internal static var __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] {
+          [
+            .init(original: "id", renamed: nil, redaction: nil, ignored: false),
+            .init(original: "token", renamed: nil, redaction: .mask("•••"), ignored: false)
+          ]
+        }
+
+        internal static func __swiftSnapshot_makeExpr(from instance: Config) -> String {
+          return "Config(id: \(instance.id), token: \"•••\")"
+        }
+      }
+
+      extension Config: SwiftSnapshotExportable {
+        /// Export this instance as a Swift snapshot fixture.
+        ///
+        /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
+        /// it returns a placeholder URL and performs no file I/O.
+        @discardableResult
+        public func exportSnapshot(
+          variableName: String? = nil,
+          testName: String? = nil,
+          header: String? = nil,
+          context: String? = nil,
+          allowOverwrite: Bool = true,
+          line: UInt = #line,
+          fileID: StaticString = #fileID,
+          filePath: StaticString = #filePath
+        ) -> URL {
+          let defaultVarName = "config"
           let effectiveVarName = variableName ?? defaultVarName
 
           return SwiftSnapshotRuntime.export(

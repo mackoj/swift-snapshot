@@ -158,7 +158,7 @@ struct User {
     let id: String
     @SnapshotRename("displayName")
     let name: String
-    @SnapshotRedact(mask: "***")
+    @SnapshotRedact(.mask("***"))
     let apiKey: String
     @SnapshotIgnore
     let cache: [String: Any]

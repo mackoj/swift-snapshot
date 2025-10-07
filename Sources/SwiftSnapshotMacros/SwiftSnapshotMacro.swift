@@ -207,39 +207,38 @@ extension SwiftSnapshotMacro {
       return RedactionInfo(mode: .mask("•••"))
     }
 
-    var mask: String?
-    var hash = false
+    // The first argument should be the RedactionStyle enum
+    guard let firstArg = arguments.first else {
+      return RedactionInfo(mode: .mask("•••"))
+    }
 
-    for argument in arguments {
-      guard let label = argument.label?.text else { continue }
+    // Parse the enum case expression: .mask("...") or .hash
+    if let memberAccess = firstArg.expression.as(MemberAccessExprSyntax.self) {
+      let caseName = memberAccess.declName.baseName.text
 
-      if label == "mask" {
-        mask = extractStringLiteral(from: argument.expression)
-      } else if label == "hash" {
-        if let boolLiteral = argument.expression.as(BooleanLiteralExprSyntax.self) {
-          hash = boolLiteral.literal.text == "true"
+      if caseName == "hash" {
+        return RedactionInfo(mode: .hash)
+      } else if caseName == "mask" {
+        // For .mask("value"), we need to look for a function call with the string argument
+        return RedactionInfo(mode: .mask("•••"))
+      }
+    } else if let functionCall = firstArg.expression.as(FunctionCallExprSyntax.self) {
+      // Handle .mask("value") case
+      if let memberAccess = functionCall.calledExpression.as(MemberAccessExprSyntax.self) {
+        let caseName = memberAccess.declName.baseName.text
+        if caseName == "mask" {
+          // Extract the string argument
+          if let stringArg = functionCall.arguments.first?.expression,
+            let stringLiteral = extractStringLiteral(from: stringArg)
+          {
+            return RedactionInfo(mode: .mask(stringLiteral))
+          }
         }
       }
     }
 
-    // Validate mutually exclusive options
-    let activeCount = [mask != nil, hash].filter { $0 }.count
-    if activeCount > 1 {
-      context.diagnose(
-        Diagnostic(
-          node: attribute,
-          message: MacroDiagnostic.conflictingRedactionModes
-        ))
-      return nil
-    }
-
-    if hash {
-      return RedactionInfo(mode: .hash)
-    } else if let maskValue = mask {
-      return RedactionInfo(mode: .mask(maskValue))
-    } else {
-      return RedactionInfo(mode: .mask("•••"))
-    }
+    // Default fallback
+    return RedactionInfo(mode: .mask("•••"))
   }
 
   static func generatePropertyMetadataStruct() -> DeclSyntax {
