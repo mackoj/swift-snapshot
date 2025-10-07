@@ -83,7 +83,7 @@ Or in Xcode: **File → Add Packages** → Enter repository URL
 
 Optional compile-time macros add:
 
-- `@SwiftSnapshot` - Type-level fixture support
+- `@Snapshot` - Type-level fixture support
 - `@SnapshotIgnore` - Exclude properties
 - `@SnapshotRedact` - Mask sensitive values
 - `@SnapshotRename` - Change property names
@@ -153,7 +153,7 @@ SwiftSnapshotRuntime.export(
 ### With Macros
 
 ```swift
-@SwiftSnapshot(folder: "Fixtures")
+@Snapshot(folder: "Fixtures")
 struct User {
     let id: String
     @SnapshotRename("displayName")

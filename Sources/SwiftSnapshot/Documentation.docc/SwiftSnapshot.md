@@ -41,7 +41,7 @@ let url = try SwiftSnapshotRuntime.export(
 )
 
 // With macros - enhanced control
-@SwiftSnapshot
+@Snapshot
 struct Product {
     let id: String
     let name: String

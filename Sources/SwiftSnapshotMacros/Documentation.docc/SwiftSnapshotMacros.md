@@ -8,12 +8,12 @@ SwiftSnapshotMacros provides Swift macros that enhance SwiftSnapshot with compil
 
 ### Available Macros
 
-#### @SwiftSnapshot
+#### @Snapshot
 
 The main type-level macro that enables snapshot functionality:
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct User {
     let id: Int
     let name: String
@@ -29,12 +29,14 @@ try user.exportSnapshot(variableName: "testUser")
 - Enables property-level attributes
 - Supports folder organization hints
 
+> Note: `@SwiftSnapshot` is still supported but deprecated. Use `@Snapshot` instead.
+
 #### @SnapshotIgnore
 
 Excludes properties from snapshot generation:
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct User {
     let id: String
     let name: String
@@ -48,7 +50,7 @@ struct User {
 Redacts sensitive values with masks or hashes:
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct SecureData {
     @SnapshotRedact(mask: "***")
     let apiKey: String
@@ -63,7 +65,7 @@ struct SecureData {
 Renames properties in generated code:
 
 ```swift
-@SwiftSnapshot
+@Snapshot
 struct User {
     @SnapshotRename("displayName")
     let name: String  // Generated as displayName
@@ -95,6 +97,7 @@ The macros are purely optional enhancements.
 
 ### Type Attributes
 
+- ``Snapshot``
 - ``SwiftSnapshot``
 
 ### Property Attributes

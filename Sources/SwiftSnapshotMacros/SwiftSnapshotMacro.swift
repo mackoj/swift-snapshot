@@ -439,7 +439,7 @@ enum MacroError: Error, CustomStringConvertible {
   var description: String {
     switch self {
     case .notAnEnum:
-      return "@SwiftSnapshot applied to non-enum type but enum handling was requested"
+      return "@Snapshot applied to non-enum type but enum handling was requested"
     }
   }
 }

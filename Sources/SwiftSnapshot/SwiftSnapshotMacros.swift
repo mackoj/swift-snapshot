@@ -14,12 +14,24 @@ import SwiftSnapshotCore
 ///
 /// Example:
 /// ```swift
-/// @SwiftSnapshot(folder: "Fixtures/Users")
+/// @Snapshot(folder: "Fixtures/Users")
 /// struct User {
 ///   let id: String
 ///   let name: String
 /// }
 /// ```
+@attached(
+  member, names: named(__swiftSnapshot_folder), named(__swiftSnapshot_properties),
+  named(__swiftSnapshot_makeExpr), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata),
+  named(__SwiftSnapshot_Redaction))
+@attached(extension, conformances: SwiftSnapshotExportable, names: named(exportSnapshot))
+public macro Snapshot(folder: String? = nil) =
+  #externalMacro(module: "SwiftSnapshotMacros", type: "SwiftSnapshotMacro")
+
+/// Marks a type for snapshot fixture export with compile-time metadata generation.
+///
+/// - Deprecated: Use `@Snapshot` instead.
+@available(*, deprecated, renamed: "Snapshot", message: "Use @Snapshot instead of @SwiftSnapshot")
 @attached(
   member, names: named(__swiftSnapshot_folder), named(__swiftSnapshot_properties),
   named(__swiftSnapshot_makeExpr), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata),
@@ -35,7 +47,7 @@ public macro SwiftSnapshot(folder: String? = nil) =
 ///
 /// Example:
 /// ```swift
-/// @SwiftSnapshot
+/// @Snapshot
 /// struct User {
 ///   let id: String
 ///   @SnapshotIgnore
@@ -55,7 +67,7 @@ public macro SnapshotIgnore() =
 ///
 /// Example:
 /// ```swift
-/// @SwiftSnapshot
+/// @Snapshot
 /// struct User {
 ///   @SnapshotRename("displayName")
 ///   let name: String
@@ -78,7 +90,7 @@ public macro SnapshotRename(_ name: String) =
 ///
 /// Example:
 /// ```swift
-/// @SwiftSnapshot
+/// @Snapshot
 /// struct User {
 ///   @SnapshotRedact(mask: "SECRET")
 ///   let apiKey: String
@@ -92,5 +104,5 @@ public macro SnapshotRedact(mask: String? = nil, hash: Bool = false) =
   #externalMacro(module: "SwiftSnapshotMacros", type: "SnapshotRedactMacro")
 
 /// Protocol that marks types as exportable via macro-generated methods.
-/// This is automatically conformed to by types annotated with @SwiftSnapshot.
+/// This is automatically conformed to by types annotated with @Snapshot (or the deprecated @SwiftSnapshot).
 public protocol SwiftSnapshotExportable {}

@@ -6,6 +6,7 @@ extension SnapshotTests {
   @Suite(
     .macros(
       [
+        "Snapshot": SwiftSnapshotMacro.self,
         "SwiftSnapshot": SwiftSnapshotMacro.self,
         "SnapshotIgnore": SnapshotIgnoreMacro.self,
         "SnapshotRename": SnapshotRenameMacro.self,
