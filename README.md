@@ -13,7 +13,7 @@ SwiftSnapshot converts in-memory objects into compilable Swift code that you can
 
 ```swift
 let user = User(id: 42, name: "Alice", role: .admin)
-try user.exportSnapshot(variableName: "testUser")
+user.exportSnapshot(variableName: "testUser")
 
 // Creates: User+testUser.swift
 // extension User {
@@ -117,7 +117,7 @@ Traditional test fixtures have problems:
 ```swift
 let user = User(id: 42, name: "Alice", role: .admin)
 
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser"
 )
@@ -129,7 +129,7 @@ let reference = User.testUser
 ### With Documentation
 
 ```swift
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: product,
     variableName: "sampleProduct",
     header: "// Test Fixtures",
@@ -140,7 +140,7 @@ try SwiftSnapshotRuntime.export(
 ### Custom Output
 
 ```swift
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser",
     outputBasePath: "/path/to/fixtures",
@@ -162,7 +162,7 @@ struct User {
     let cache: [String: Any]
 }
 
-try user.exportSnapshot(variableName: "testUser")
+user.exportSnapshot(variableName: "testUser")
 ```
 
 ### Custom Renderers
@@ -179,7 +179,7 @@ SnapshotRendererRegistry.register(MyType.self) { value, context in
 class Tests: XCTestCase {
     func testFeature() {
         let state = captureState()
-        try state.exportSnapshot(variableName: "testState")
+        state.exportSnapshot(variableName: "testState")
         
         // Use in other tests
         XCTAssertEqual(State.testState.isValid, true)
@@ -275,7 +275,7 @@ SwiftSnapshot follows the same philosophy as [swift-dependencies](https://github
 
 ```swift
 // Safe to leave in codebase
-let url = try user.exportSnapshot()
+let url = user.exportSnapshot()
 // DEBUG: Creates file
 // RELEASE: Returns placeholder, no I/O
 ```
@@ -289,7 +289,7 @@ Contributions welcome! For major changes, please open an issue first.
 ## Acknowledgments
 
 Built with:
-- [SwiftSyntax](https://github.com/apple/swift-syntax) - Code generation
+- [swift-syntax](https://github.com/apple/swift-syntax) - Code generation
 - [swift-format](https://github.com/swiftlang/swift-format) - Formatting
 - [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - Dependency injection
 - [swift-issue-reporting](https://github.com/pointfreeco/swift-issue-reporting) - Error messages

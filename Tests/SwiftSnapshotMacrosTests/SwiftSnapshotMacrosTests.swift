@@ -71,11 +71,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -152,11 +152,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -233,11 +233,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -314,11 +314,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -402,11 +402,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -479,11 +479,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -563,11 +563,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "syncUpFormModel"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -646,11 +646,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,

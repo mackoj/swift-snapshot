@@ -77,11 +77,11 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) throws -> URL {
+        ) -> URL {
           let defaultVarName = "\(raw: typeName.prefix(1).lowercased() + typeName.dropFirst())"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return try SwiftSnapshotRuntime.export(
+          return SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,

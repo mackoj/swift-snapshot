@@ -101,14 +101,8 @@ public enum SwiftSnapshotRuntime {
   ///   - fileID: Source file identifier (automatically captured via `#fileID`)
   ///   - filePath: Source file path (automatically captured via `#filePath`)
   ///
-  /// - Returns: URL to the created `.swift` file. In release builds, returns a placeholder URL
-  ///
-  /// - Throws:
-  ///   - ``SwiftSnapshotError/unsupportedType(_:path:)`` if the type cannot be rendered
-  ///   - ``SwiftSnapshotError/overwriteDisallowed(_:)`` if file exists and `allowOverwrite` is `false`
-  ///   - ``SwiftSnapshotError/io(_:)`` if file writing fails
-  ///   - ``SwiftSnapshotError/formatting(_:)`` if code formatting fails
-  ///   - ``SwiftSnapshotError/reflection(_:path:)`` if reflection-based rendering fails
+  /// - Returns: URL to the created `.swift` file. In release builds, returns a placeholder URL.
+  ///   If an error occurs during export, it will be reported as an issue and a placeholder URL will be returned.
   ///
   /// **Debug Only**: This method only operates in DEBUG builds. In release builds,
   /// it returns a placeholder URL and performs no file I/O.
@@ -125,60 +119,67 @@ public enum SwiftSnapshotRuntime {
     line: UInt = #line,
     fileID: StaticString = #fileID,
     filePath: StaticString = #filePath
-  ) throws -> URL {
+  ) -> URL {
     #if DEBUG
-    // Sanitize the variable name to ensure it's a valid Swift identifier
-    let sanitizedVariableName = sanitizeVariableName(variableName)
-    
-    // Generate the Swift code
-    let code = try generateSwiftCode(
-      instance: instance,
-      variableName: sanitizedVariableName,
-      header: header,
-      context: context
-    )
-
-    // Resolve output directory
-    let outputDirectory = PathResolver.resolveOutputDirectory(
-      outputBasePath: outputBasePath,
+    return withErrorReporting(
+      "Failed to export snapshot",
       fileID: fileID,
-      filePath: filePath
-    )
-
-    // Resolve full file path
-    let typeName = String(describing: T.self)
-    let filePath = PathResolver.resolveFilePath(
-      typeName: typeName,
-      variableName: sanitizedVariableName,
-      fileName: fileName,
-      outputDirectory: outputDirectory
-    )
-
-    // Check if file exists and overwrite is disallowed
-    if !allowOverwrite && FileManager.default.fileExists(atPath: filePath.path) {
-      throw SwiftSnapshotError.overwriteDisallowed(filePath)
-    }
-
-    // Create directory if needed
-    let directory = filePath.deletingLastPathComponent()
-    do {
-      try FileManager.default.createDirectory(
-        at: directory,
-        withIntermediateDirectories: true,
-        attributes: nil
+      filePath: filePath,
+      line: line
+    ) {
+      // Sanitize the variable name to ensure it's a valid Swift identifier
+      let sanitizedVariableName = sanitizeVariableName(variableName)
+      
+      // Generate the Swift code
+      let code = try generateSwiftCode(
+        instance: instance,
+        variableName: sanitizedVariableName,
+        header: header,
+        context: context
       )
-    } catch {
-      throw SwiftSnapshotError.io("Failed to create directory: \(error.localizedDescription)")
-    }
 
-    // Write file
-    do {
-      try code.write(to: filePath, atomically: true, encoding: .utf8)
-    } catch {
-      throw SwiftSnapshotError.io("Failed to write file: \(error.localizedDescription)")
-    }
+      // Resolve output directory
+      let outputDirectory = PathResolver.resolveOutputDirectory(
+        outputBasePath: outputBasePath,
+        fileID: fileID,
+        filePath: filePath
+      )
 
-    return filePath
+      // Resolve full file path
+      let typeName = String(describing: T.self)
+      let filePath = PathResolver.resolveFilePath(
+        typeName: typeName,
+        variableName: sanitizedVariableName,
+        fileName: fileName,
+        outputDirectory: outputDirectory
+      )
+
+      // Check if file exists and overwrite is disallowed
+      if !allowOverwrite && FileManager.default.fileExists(atPath: filePath.path) {
+        throw SwiftSnapshotError.overwriteDisallowed(filePath)
+      }
+
+      // Create directory if needed
+      let directory = filePath.deletingLastPathComponent()
+      do {
+        try FileManager.default.createDirectory(
+          at: directory,
+          withIntermediateDirectories: true,
+          attributes: nil
+        )
+      } catch {
+        throw SwiftSnapshotError.io("Failed to create directory: \(error.localizedDescription)")
+      }
+
+      // Write file
+      do {
+        try code.write(to: filePath, atomically: true, encoding: .utf8)
+      } catch {
+        throw SwiftSnapshotError.io("Failed to write file: \(error.localizedDescription)")
+      }
+
+      return filePath
+    } ?? URL(fileURLWithPath: "/tmp/swift-snapshot-error")
     #else
     // In non-DEBUG builds, return a placeholder URL without performing any I/O
     reportIssue("SwiftSnapshot.export() called in release build. This method should only be used in DEBUG builds.")

@@ -28,11 +28,12 @@ enum FormatConfigLoader {
   /// Load format profile from configuration source.
   ///
   /// Parses the specified configuration file and returns a `FormatProfile`
-  /// with the extracted formatting settings.
+  /// with the extracted formatting settings. If the file does not exist,
+  /// falls back to library defaults instead of throwing.
   ///
   /// - Parameter source: The format configuration source, or `nil` for defaults
-  /// - Returns: A `FormatProfile` configured from the file, or defaults if `nil`
-  /// - Throws: `SwiftSnapshotError.formatting` if the file cannot be parsed
+  /// - Returns: A `FormatProfile` configured from the file, or defaults if `nil` or file not found
+  /// - Throws: `SwiftSnapshotError.formatting` if the file exists but cannot be parsed
   static func loadProfile(from source: FormatConfigSource?) throws -> FormatProfile {
     guard let source = source else {
       return SwiftSnapshotConfig.libraryDefaultFormatProfile()
@@ -40,9 +41,29 @@ enum FormatConfigLoader {
 
     switch source {
     case .editorconfig(let url):
-      return try loadFromEditorConfig(url)
+      do {
+        return try loadFromEditorConfig(url)
+      } catch let error as NSError {
+        // Check if this is a "file not found" error
+        if error.domain == NSCocoaErrorDomain && error.code == 260 {
+          // File doesn't exist - fall back to defaults
+          return SwiftSnapshotConfig.libraryDefaultFormatProfile()
+        }
+        // Re-throw other errors (e.g., malformed file)
+        throw error
+      }
     case .swiftFormat(let url):
-      return try loadFromSwiftFormat(url)
+      do {
+        return try loadFromSwiftFormat(url)
+      } catch let error as NSError {
+        // Check if this is a "file not found" error
+        if error.domain == NSCocoaErrorDomain && error.code == 260 {
+          // File doesn't exist - fall back to defaults
+          return SwiftSnapshotConfig.libraryDefaultFormatProfile()
+        }
+        // Re-throw other errors (e.g., malformed JSON)
+        throw error
+      }
     }
   }
 

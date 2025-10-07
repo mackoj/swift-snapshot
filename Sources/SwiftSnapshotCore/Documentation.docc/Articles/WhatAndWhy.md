@@ -127,7 +127,7 @@ SwiftSnapshot captures state automatically:
 let user = createTestUser()
 
 // Generate fixture automatically
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser"
 )
