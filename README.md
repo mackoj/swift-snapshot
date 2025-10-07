@@ -7,6 +7,8 @@
 > [!WARNING]
 > This is a work in progress everything is not ready yet some feature may be buggy or work in very limited use cases.
 
+<img width="400" height="400" alt="logo" src="https://github.com/user-attachments/assets/ed0c0179-bcaa-4e80-8509-7cd024e203d2" />
+
 **Generate type-safe Swift source fixtures from runtime values.**
 
 SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere: no JSON, no decoding, just Swift.
@@ -26,8 +28,6 @@ user.exportSnapshot(variableName: "testUser")
 ```
 
 _This project was built with help of Copilot. I wanted to tests it's capabilities. This shows that, with proper guidance, it can create something that works._
-
-<img width="350" height="350" alt="logo" src="https://github.com/user-attachments/assets/ed0c0179-bcaa-4e80-8509-7cd024e203d2" />
 
 ---
 
