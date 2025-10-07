@@ -22,18 +22,11 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
     var members: [DeclSyntax] = []
 
     // Generate __swiftSnapshot_folder if folder argument provided
+    // Use computed properties for all types (works for both generic and non-generic)
     if let folder = arguments.folder {
-      members.append(
-        """
-        internal static let __swiftSnapshot_folder: String? = \(literal: folder)
-        """
-      )
+      members.append("internal static var __swiftSnapshot_folder: String? { \(literal: folder) }")
     } else {
-      members.append(
-        """
-        internal static let __swiftSnapshot_folder: String? = nil
-        """
-      )
+      members.append("internal static var __swiftSnapshot_folder: String? { nil }")
     }
 
     // Generate supporting types
@@ -269,6 +262,7 @@ extension SwiftSnapshotMacro {
   }
 
   static func generatePropertiesArray(properties: [PropertyInfo]) -> DeclSyntax {
+    // Use computed properties for all types (works for both generic and non-generic)
     let propertyElements = properties.enumerated().map { index, prop -> String in
       let renamedStr = prop.renamedTo.map { "\"\($0)\"" } ?? "nil"
       let redactionStr =
@@ -287,9 +281,11 @@ extension SwiftSnapshotMacro {
     }.joined(separator: ",\n")
 
     return """
-      internal static let __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] = [
-        \(raw: propertyElements)
-      ]
+      internal static var __swiftSnapshot_properties: [__SwiftSnapshot_PropertyMetadata] {
+        [
+          \(raw: propertyElements)
+        ]
+      }
       """
   }
 

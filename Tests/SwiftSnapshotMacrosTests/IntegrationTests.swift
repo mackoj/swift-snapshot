@@ -51,6 +51,12 @@ enum TestResult {
   case failure(String)
 }
 
+@SwiftSnapshot
+struct TestGenericContainer<T: Codable> {
+  let id: Int
+  let items: [T]
+}
+
 extension SnapshotTests {
   @Suite struct MacroIntegrationTests {
     @Test func macroGeneratedCodeCompiles() throws {
@@ -132,6 +138,22 @@ extension SnapshotTests {
       assertInlineSnapshot(of: expr.description, as: .description) {
         """
         .success(value: 42)
+        """
+      }
+    }
+
+    @Test func macroWithGenericType() throws {
+      // Verify that generic types compile and have computed properties
+      #expect(TestGenericContainer<Int>.__swiftSnapshot_folder == nil)
+      #expect(!TestGenericContainer<Int>.__swiftSnapshot_properties.isEmpty)
+
+      let container = TestGenericContainer(id: 1, items: [10, 20, 30])
+      let expr = TestGenericContainer<Int>.__swiftSnapshot_makeExpr(from: container)
+
+      // Verify expression is generated correctly
+      assertInlineSnapshot(of: expr.description, as: .description) {
+        """
+        TestGenericContainer(id: 1, items: [10, 20, 30])
         """
       }
     }
