@@ -245,6 +245,11 @@ enum CodeFormatter {
     // Set maximum blank lines
     configuration.maximumBlankLines = 1
 
+    configuration.indentSwitchCaseLabels = true
+    configuration.lineBreakAroundMultilineExpressionChainComponents = true
+    configuration.lineBreakBeforeEachArgument = true
+    configuration.tabWidth = 2
+
     return configuration
   }
 
