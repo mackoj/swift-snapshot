@@ -400,6 +400,75 @@ extension SnapshotTests {
       }
     }
     
+    // MARK: - Missing File Fallback Tests
+    
+    /// Test that missing .swift-format file falls back to defaults
+    @Test func missingSwiftFormatFallback() throws {
+      let tempDir = FileManager.default.temporaryDirectory
+      let configURL = tempDir.appendingPathComponent("nonexistent-\(UUID()).swift-format")
+      
+      // Ensure file doesn't exist
+      #expect(!FileManager.default.fileExists(atPath: configURL.path))
+      
+      // Should not throw, should return defaults
+      let profile = try FormatConfigLoader.loadProfile(from: .swiftFormat(configURL))
+      
+      // Verify we got library defaults
+      let defaults = SwiftSnapshotConfig.libraryDefaultFormatProfile()
+      #expect(profile.indentSize == defaults.indentSize)
+      #expect(profile.indentStyle == defaults.indentStyle)
+      #expect(profile.endOfLine == defaults.endOfLine)
+      #expect(profile.insertFinalNewline == defaults.insertFinalNewline)
+      #expect(profile.trimTrailingWhitespace == defaults.trimTrailingWhitespace)
+    }
+    
+    /// Test that missing .editorconfig file falls back to defaults
+    @Test func missingEditorConfigFallback() throws {
+      let tempDir = FileManager.default.temporaryDirectory
+      let configURL = tempDir.appendingPathComponent("nonexistent-\(UUID()).editorconfig")
+      
+      // Ensure file doesn't exist
+      #expect(!FileManager.default.fileExists(atPath: configURL.path))
+      
+      // Should not throw, should return defaults
+      let profile = try FormatConfigLoader.loadProfile(from: .editorconfig(configURL))
+      
+      // Verify we got library defaults
+      let defaults = SwiftSnapshotConfig.libraryDefaultFormatProfile()
+      #expect(profile.indentSize == defaults.indentSize)
+      #expect(profile.indentStyle == defaults.indentStyle)
+      #expect(profile.endOfLine == defaults.endOfLine)
+      #expect(profile.insertFinalNewline == defaults.insertFinalNewline)
+      #expect(profile.trimTrailingWhitespace == defaults.trimTrailingWhitespace)
+    }
+    
+    /// Test that snapshot export with missing .swift-format file still generates files
+    @Test func snapshotExportWithMissingConfigFile() throws {
+      let tempDir = FileManager.default.temporaryDirectory
+      let configURL = tempDir.appendingPathComponent("nonexistent-\(UUID()).swift-format")
+      
+      // Ensure file doesn't exist
+      #expect(!FileManager.default.fileExists(atPath: configURL.path))
+      
+      // Set the config source to the missing file
+      SwiftSnapshotConfig.setFormatConfigSource(.swiftFormat(configURL))
+      defer { SwiftSnapshotConfig.resetToLibraryDefaults() }
+      
+      // Try to generate Swift code - should not throw
+      struct TestStruct {
+        let value: Int
+      }
+      
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: TestStruct(value: 42),
+        variableName: "test"
+      )
+      
+      // Verify code was generated
+      #expect(code.contains("extension TestStruct"))
+      #expect(code.contains("static let test"))
+    }
+    
     /// Test loading profile with nil source returns defaults
     @Test func loadProfileWithNilSource() throws {
       let profile = try FormatConfigLoader.loadProfile(from: nil)
