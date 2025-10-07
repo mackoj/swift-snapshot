@@ -24,3 +24,6 @@
 
 // Context types
 // public struct SnapshotRenderContext - defined in SnapshotRenderContext.swift
+
+// Protocol types
+// public protocol SwiftSnapshotExportable - defined in SwiftSnapshotExportable.swift

@@ -92,6 +92,11 @@ enum ValueRenderer {
       return try customRenderer(value, context)
     }
 
+    // Check if type conforms to SwiftSnapshotExportable and use its makeExpr method
+    if let exportable = value as? any SwiftSnapshotExportable {
+      return try renderSwiftSnapshotExportable(exportable, context: context)
+    }
+
     // Handle primitives
     switch value {
     case let v as String:
@@ -510,6 +515,38 @@ enum ValueRenderer {
 
     let argsStr = args.joined(separator: ", ")
     return ExprSyntax(stringLiteral: "\(typeName)(\(argsStr))")
+  }
+
+  // MARK: - SwiftSnapshotExportable Renderer
+
+  /// Render a type conforming to SwiftSnapshotExportable using its makeExpr method
+  ///
+  /// Types annotated with @SwiftSnapshot generate a `__swiftSnapshot_makeExpr` method
+  /// that properly applies redactions and other transformations. This method uses
+  /// that generated code to render the value correctly.
+  ///
+  /// - Parameters:
+  ///   - exportable: The value conforming to SwiftSnapshotExportable
+  ///   - context: Rendering context with formatting and path information
+  ///
+  /// - Returns: SwiftSyntax expression representing the value with redactions applied
+  ///
+  /// - Throws: ``SwiftSnapshotError`` if rendering fails
+  static func renderSwiftSnapshotExportable(
+    _ exportable: any SwiftSnapshotExportable,
+    context: SnapshotRenderContext
+  ) throws -> ExprSyntax {
+    // Use a helper function to call the static method with the correct type
+    func callMakeExpr<T: SwiftSnapshotExportable>(_ value: T) -> String {
+      return T.__swiftSnapshot_makeExpr(from: value)
+    }
+    
+    // Call the helper with the exportable value
+    // This works because Swift will infer T from the runtime type
+    let exprString = _openExistential(exportable, do: callMakeExpr)
+    
+    // Convert the string expression to ExprSyntax
+    return ExprSyntax(stringLiteral: exprString)
   }
 
   // MARK: - String Escaping

@@ -93,6 +93,5 @@ public macro SnapshotRename(_ name: String) =
 public macro SnapshotRedact(_ style: RedactionStyle = .mask("•••")) =
   #externalMacro(module: "SwiftSnapshotMacros", type: "SnapshotRedactMacro")
 
-/// Protocol that marks types as exportable via macro-generated methods.
-/// This is automatically conformed to by types annotated with @SwiftSnapshot.
-public protocol SwiftSnapshotExportable {}
+// SwiftSnapshotExportable protocol is now defined in SwiftSnapshotCore
+// and re-exported here for backwards compatibility
