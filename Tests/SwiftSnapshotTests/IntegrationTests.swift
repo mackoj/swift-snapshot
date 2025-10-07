@@ -260,7 +260,7 @@ extension SnapshotTests {
       .appendingPathComponent("SwiftSnapshotTests")
       .appendingPathComponent(UUID().uuidString)
 
-    let url = try SwiftSnapshotRuntime.export(
+    let url = SwiftSnapshotRuntime.export(
       instance: response,
       variableName: "successResponse",
       fileName: "APIResponse+Fixtures",
@@ -412,7 +412,7 @@ extension SnapshotTests {
         .appendingPathComponent("SwiftSnapshotTests")
         .appendingPathComponent(UUID().uuidString)
       
-      let url = try SwiftSnapshotRuntime.export(
+      let url = SwiftSnapshotRuntime.export(
         instance: user,
         variableName: "mock",
         outputBasePath: tempDir.path,

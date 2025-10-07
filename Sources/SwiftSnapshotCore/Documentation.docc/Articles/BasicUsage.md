@@ -11,17 +11,17 @@ import SwiftSnapshot
 
 // Integer
 let count = 42
-try SwiftSnapshotRuntime.export(instance: count, variableName: "testCount")
+SwiftSnapshotRuntime.export(instance: count, variableName: "testCount")
 // Generates: extension Int { static let testCount: Int = 42 }
 
 // String
 let message = "Hello, World!"
-try SwiftSnapshotRuntime.export(instance: message, variableName: "greeting")
+SwiftSnapshotRuntime.export(instance: message, variableName: "greeting")
 // Generates: extension String { static let greeting: String = "Hello, World!" }
 
 // Boolean
 let isEnabled = true
-try SwiftSnapshotRuntime.export(instance: isEnabled, variableName: "featureFlag")
+SwiftSnapshotRuntime.export(instance: isEnabled, variableName: "featureFlag")
 // Generates: extension Bool { static let featureFlag: Bool = true }
 ```
 
@@ -33,17 +33,17 @@ import SwiftSnapshot
 
 // Date
 let timestamp = Date(timeIntervalSince1970: 1234567890)
-try SwiftSnapshotRuntime.export(instance: timestamp, variableName: "launchDate")
+SwiftSnapshotRuntime.export(instance: timestamp, variableName: "launchDate")
 // Generates: extension Date { static let launchDate: Date = Date(timeIntervalSince1970: 1234567890.0) }
 
 // UUID
 let identifier = UUID(uuidString: "12345678-1234-1234-1234-123456789012")!
-try SwiftSnapshotRuntime.export(instance: identifier, variableName: "sessionId")
+SwiftSnapshotRuntime.export(instance: identifier, variableName: "sessionId")
 // Generates: extension UUID { static let sessionId: UUID = UUID(uuidString: "12345678-1234-1234-1234-123456789012")! }
 
 // URL
 let endpoint = URL(string: "https://api.example.com/v1/users")!
-try SwiftSnapshotRuntime.export(instance: endpoint, variableName: "apiEndpoint")
+SwiftSnapshotRuntime.export(instance: endpoint, variableName: "apiEndpoint")
 // Generates: extension URL { static let apiEndpoint: URL = URL(string: "https://api.example.com/v1/users")! }
 ```
 
@@ -53,18 +53,18 @@ try SwiftSnapshotRuntime.export(instance: endpoint, variableName: "apiEndpoint")
 
 ```swift
 let numbers = [1, 2, 3, 4, 5]
-try SwiftSnapshotRuntime.export(instance: numbers, variableName: "fibonacci")
+SwiftSnapshotRuntime.export(instance: numbers, variableName: "fibonacci")
 // Generates: extension Array { static let fibonacci: Array<Int> = [1,2,3,4,5] }
 
 let names = ["Alice", "Bob", "Charlie"]
-try SwiftSnapshotRuntime.export(instance: names, variableName: "teamMembers")
+SwiftSnapshotRuntime.export(instance: names, variableName: "teamMembers")
 ```
 
 ### Dictionaries
 
 ```swift
 let config = ["timeout": "30", "retry": "3", "cache": "enabled"]
-try SwiftSnapshotRuntime.export(instance: config, variableName: "defaultConfig")
+SwiftSnapshotRuntime.export(instance: config, variableName: "defaultConfig")
 // Generates: extension Dictionary { 
 //   static let defaultConfig: Dictionary<String, String> = 
 //     ["cache":"enabled","retry":"3","timeout":"30"]
@@ -75,7 +75,7 @@ try SwiftSnapshotRuntime.export(instance: config, variableName: "defaultConfig")
 
 ```swift
 let tags: Set<String> = ["swift", "ios", "testing"]
-try SwiftSnapshotRuntime.export(instance: tags, variableName: "supportedTags")
+SwiftSnapshotRuntime.export(instance: tags, variableName: "supportedTags")
 // Generates: extension Set { static let supportedTags: Set<String> = Set(["ios","swift","testing"]) }
 ```
 
@@ -92,7 +92,7 @@ struct User {
 }
 
 let user = User(id: 42, name: "Alice", email: "alice@example.com", isActive: true)
-try SwiftSnapshotRuntime.export(instance: user, variableName: "testUser")
+SwiftSnapshotRuntime.export(instance: user, variableName: "testUser")
 // Generates:
 // extension User {
 //   static let testUser: User = User(id: 42, name: "Alice", email: "alice@example.com", isActive: true)
@@ -109,7 +109,7 @@ enum Status {
 }
 
 let currentStatus = Status.active
-try SwiftSnapshotRuntime.export(instance: currentStatus, variableName: "userStatus")
+SwiftSnapshotRuntime.export(instance: currentStatus, variableName: "userStatus")
 // Generates: extension Status { static let userStatus: Status = .active }
 ```
 
@@ -134,7 +134,7 @@ let person = Person(
     address: Address(street: "123 Main St", city: "Springfield", zip: "12345")
 )
 
-try SwiftSnapshotRuntime.export(instance: person, variableName: "testPerson")
+SwiftSnapshotRuntime.export(instance: person, variableName: "testPerson")
 // Generates:
 // extension Person {
 //   static let testPerson: Person = Person(
@@ -150,7 +150,7 @@ try SwiftSnapshotRuntime.export(instance: person, variableName: "testPerson")
 ### Adding Headers
 
 ```swift
-let url = try SwiftSnapshotRuntime.export(
+let url = SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser",
     header: """
@@ -164,7 +164,7 @@ let url = try SwiftSnapshotRuntime.export(
 ### Adding Documentation Context
 
 ```swift
-let url = try SwiftSnapshotRuntime.export(
+let url = SwiftSnapshotRuntime.export(
     instance: product,
     variableName: "sampleProduct",
     context: """
@@ -185,7 +185,7 @@ let url = try SwiftSnapshotRuntime.export(
 ### Custom Output Directory
 
 ```swift
-let url = try SwiftSnapshotRuntime.export(
+let url = SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "testUser",
     outputBasePath: "/path/to/fixtures"
@@ -196,7 +196,7 @@ print("Exported to: \(url.path)")
 ### Custom File Name
 
 ```swift
-let url = try SwiftSnapshotRuntime.export(
+let url = SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "adminUser",
     fileName: "User+AdminFixtures"
@@ -255,7 +255,7 @@ class UserTests: XCTestCase {
         let user = User(id: 1, name: "Test User", email: "test@example.com", isActive: true)
         
         // Export for use in other tests
-        let url = try SwiftSnapshotRuntime.export(
+        let url = SwiftSnapshotRuntime.export(
             instance: user,
             variableName: "testUserCreation",
             testName: #function
@@ -283,7 +283,7 @@ SnapshotRendererRegistry.register(CustomType.self) { value, context in
 }
 
 let custom = CustomType(value: "test")
-let url = try SwiftSnapshotRuntime.export(instance: custom, variableName: "myCustom")
+let url = SwiftSnapshotRuntime.export(instance: custom, variableName: "myCustom")
 // Uses your custom renderer and exports to file
 ```
 

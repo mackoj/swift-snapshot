@@ -395,7 +395,7 @@ extension SnapshotTests {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)
 
-    let url = try SwiftSnapshotRuntime.export(
+    let url = SwiftSnapshotRuntime.export(
       instance: 42,
       variableName: "testInt",
       outputBasePath: tempDir.path
@@ -420,23 +420,32 @@ extension SnapshotTests {
       .appendingPathComponent(UUID().uuidString)
 
     // First export
-    _ = try SwiftSnapshotRuntime.export(
+    let url1 = SwiftSnapshotRuntime.export(
       instance: 42,
       variableName: "testInt",
       outputBasePath: tempDir.path
     )
     // Cleanup
     defer { try? FileManager.default.removeItem(at: tempDir) }
+    
+    // Verify first export succeeded
+    #expect(FileManager.default.fileExists(atPath: url1.path))
 
-    // Second export with overwrite disallowed should throw
-    #expect(throws: (any Error).self) {
-      try SwiftSnapshotRuntime.export(
-        instance: 43,
-        variableName: "testInt",
-        outputBasePath: tempDir.path,
-        allowOverwrite: false
-      )
-    }
+    // Second export with overwrite disallowed should report an issue and return placeholder URL
+    let url2 = SwiftSnapshotRuntime.export(
+      instance: 43,
+      variableName: "testInt",
+      outputBasePath: tempDir.path,
+      allowOverwrite: false
+    )
+    
+    // The URL should be the error placeholder
+    #expect(url2.path.contains("swift-snapshot-error"))
+    
+    // Verify the original file wasn't overwritten
+    let content = try String(contentsOf: url1, encoding: .utf8)
+    #expect(content.contains("42"))
+    #expect(!content.contains("43"))
   }
 
     // MARK: - Configuration Tests

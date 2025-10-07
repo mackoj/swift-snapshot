@@ -48,7 +48,7 @@ struct Order {
 ### Using the Runtime API
 
 ```swift
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: user,
     variableName: "adminUser",
     outputBasePath: "Fixtures/User"
@@ -228,7 +228,7 @@ This keeps your production app size minimal while preserving valuable test data 
 Use the `context` parameter to add documentation to your fixtures, making them self-explanatory.
 
 ```swift
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: order,
     variableName: "standardOrder",
     context: """
@@ -338,13 +338,13 @@ Product.sampleProduct_OutOfStock
 
 ```swift
 // Group related fixtures in same file
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: admin,
     variableName: "adminUser",
     fileName: "User+Fixtures"
 )
 
-try SwiftSnapshotRuntime.export(
+SwiftSnapshotRuntime.export(
     instance: guest,
     variableName: "guestUser",
     fileName: "User+Fixtures"  // Same file

@@ -38,7 +38,7 @@ SnapshotRendererRegistry.register(MyCustomType.self) { instance, context in
 
 // Now use it
 let custom = MyCustomType(value: "test", count: 42)
-let url = try SwiftSnapshotRuntime.export(
+let url = SwiftSnapshotRuntime.export(
     instance: custom,
     variableName: "myCustom"
 )
@@ -226,7 +226,7 @@ SnapshotRendererRegistry.register(MyType.self) { value, ctx in
 }
 
 // Then use
-let url = try SwiftSnapshotRuntime.export(
+let url = SwiftSnapshotRuntime.export(
     instance: myInstance,
     variableName: "myVar"
 )
