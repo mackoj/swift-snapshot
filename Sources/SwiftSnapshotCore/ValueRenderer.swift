@@ -1,6 +1,7 @@
 import Foundation
 import SwiftSyntax
 import SwiftSyntaxBuilder
+import IssueReporting
 
 /// Core value renderer that converts Swift values to ExprSyntax
 ///
@@ -480,8 +481,21 @@ enum ValueRenderer {
       }
 
       // Fallback to rawValue initializer
-      let rawExpr = try render(rawValue, context: context)
-      return ExprSyntax(stringLiteral: "\(typeName)(rawValue: \(rawExpr))!")
+      do {
+        let rawExpr = try render(rawValue, context: context)
+        return ExprSyntax(stringLiteral: "\(typeName)(rawValue: \(rawExpr))!")
+      } catch {
+        // If we can't render the raw value, report and use a simple representation
+        reportIssue(
+          "Failed to render raw value for enum '\(typeName)': \(error). Using simple case representation.",
+          fileID: #fileID,
+          filePath: #filePath,
+          line: #line,
+          column: #column
+        )
+        let caseName = "\(value)"
+        return ExprSyntax(stringLiteral: ".\(caseName)")
+      }
     }
 
     // Associated values - best effort
@@ -490,11 +504,32 @@ enum ValueRenderer {
       var args: [String] = []
       for (index, child) in mirror.children.enumerated() {
         let childContext = context.appending(path: ".\(caseName)[\(index)]")
-        let childExpr = try render(child.value, context: childContext)
-        if let label = child.label {
-          args.append("\(label): \(childExpr)")
-        } else {
-          args.append("\(childExpr)")
+        
+        // Try to render the associated value, use nil as default if it fails
+        do {
+          let childExpr = try render(child.value, context: childContext)
+          if let label = child.label {
+            args.append("\(label): \(childExpr)")
+          } else {
+            args.append("\(childExpr)")
+          }
+        } catch {
+          // Only report issues for shallow paths (not deep internal structures)
+          if childContext.path.count <= 2 {
+            reportIssue(
+              "Failed to render associated value at index \(index) for enum case '\(caseName)'. Using nil.",
+              fileID: #fileID,
+              filePath: #filePath,
+              line: #line,
+              column: #column
+            )
+          }
+          
+          if let label = child.label {
+            args.append("\(label): nil")
+          } else {
+            args.append("nil")
+          }
         }
       }
       let argsStr = args.joined(separator: ", ")
@@ -520,7 +555,36 @@ enum ValueRenderer {
       let (propertyName, propertyValue) = extractPropertyWrapperValue(label: label, value: child.value)
       
       let childContext = context.appending(path: propertyName)
-      let childExpr = try render(propertyValue, context: childContext)
+      
+      // Try to render the property value, but if it fails, use a default value and report the issue
+      let childExpr: ExprSyntax
+      do {
+        childExpr = try render(propertyValue, context: childContext)
+      } catch {
+        // Check if we're deep in an internal structure (like Combine publishers)
+        // If so, reduce the verbosity of error reporting
+        let pathString = childContext.path.joined(separator: " → ")
+        let isDeepInternalPath = pathString.contains("publisher") || 
+                                  pathString.contains("subject") || 
+                                  pathString.contains("subscriber") ||
+                                  childContext.path.count > 3
+        
+        if !isDeepInternalPath {
+          // Only report issues for top-level or user-facing properties
+          let propertyTypeName = String(describing: type(of: propertyValue))
+          reportIssue(
+            "Failed to render property '\(propertyName)' of type '\(propertyTypeName)' in '\(typeName)'. Using nil as default.",
+            fileID: #fileID,
+            filePath: #filePath,
+            line: #line,
+            column: #column
+          )
+        }
+        
+        // Use nil as the default value when rendering fails
+        childExpr = ExprSyntax(NilLiteralExprSyntax())
+      }
+      
       args.append("\(propertyName): \(childExpr)")
     }
 
@@ -565,7 +629,7 @@ enum ValueRenderer {
   /// attempts to dereference the pointer to access the actual wrapped value.
   ///
   /// - Parameter wrapper: The property wrapper instance
-  /// - Returns: The wrapped value if found, otherwise the wrapper itself
+  /// - Returns: The wrapped value if found, otherwise nil as a safe fallback
   static func extractWrappedValueFromWrapper(_ wrapper: Any) -> Any {
     let mirror = Mirror(reflecting: wrapper)
     
@@ -575,9 +639,9 @@ enum ValueRenderer {
     // contains the actual stored value
     if let firstChild = mirror.children.first {
       let childValue = firstChild.value
+      let childTypeName = String(describing: type(of: childValue))
       
       // Check if the child is an unsafe pointer - try to dereference it
-      let childTypeName = String(describing: type(of: childValue))
       if childTypeName.hasPrefix("Unsafe") && childTypeName.contains("Pointer") {
         // Try to dereference the pointer to get the wrapped value
         // This is common with @Published and other Combine property wrappers
@@ -589,12 +653,24 @@ enum ValueRenderer {
         return Optional<Any>.none as Any
       }
       
+      // Check if the child looks like internal Combine implementation
+      // For these types, we can't safely extract the value, so use nil
+      if childTypeName.contains("Publisher") || 
+         childTypeName.contains("Subject") || 
+         childTypeName.contains("Subscriber") ||
+         childTypeName.contains("Subscription") {
+        // This is internal Combine infrastructure that we can't serialize
+        // Return nil instead of trying to render it
+        return Optional<Any>.none as Any
+      }
+      
+      // For regular types, return the child value for recursive rendering
       return childValue
     }
     
-    // If no children found, return the wrapper itself
-    // This allows custom renderers to still work if registered
-    return wrapper
+    // If no children found, we can't extract a value
+    // Return nil as a safe fallback
+    return Optional<Any>.none as Any
   }
   
   /// Attempts to dereference an UnsafeMutablePointer or UnsafePointer to access the pointee

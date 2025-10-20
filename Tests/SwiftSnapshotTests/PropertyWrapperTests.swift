@@ -249,5 +249,49 @@ extension SnapshotTests {
         """
       }
     }
+
+    @Test func structWithUnsupportedProperty() throws {
+      // Test that when a property can't be rendered, we use nil and continue
+      // This simulates having a property that uses an unsupported type
+      
+      struct SomeUnsupportedType {
+        let value: Int
+      }
+      
+      struct ModelWithUnsupported {
+        let name: String
+        let unsupported: SomeUnsupportedType
+        let age: Int
+      }
+      
+      let model = ModelWithUnsupported(
+        name: "Alice",
+        unsupported: SomeUnsupportedType(value: 42),
+        age: 30
+      )
+      
+      // This should not throw - it should generate code with nil for the unsupported property
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: model,
+        variableName: "testModel"
+      )
+      
+      // The unsupported property should be rendered as nil
+      // and other properties should be rendered correctly
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension ModelWithUnsupported {
+            static let testModel: ModelWithUnsupported = ModelWithUnsupported(
+                name: "Alice",
+                unsupported: SomeUnsupportedType(value: 42),
+                age: 30
+            )
+        }
+
+        """
+      }
+    }
   }
 }
