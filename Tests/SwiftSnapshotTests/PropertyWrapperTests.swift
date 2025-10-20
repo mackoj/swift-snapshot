@@ -205,5 +205,49 @@ extension SnapshotTests {
         """
       }
     }
+
+    @Test func propertyWrapperWithUnsafePointer() throws {
+      // This test simulates Combine's @Published which uses UnsafeMutablePointer internally
+      @propertyWrapper
+      struct MockPublished<Value> {
+        // Simulating @Published's internal storage with an unsafe pointer
+        private var storage: UnsafeMutablePointer<Value>
+
+        var wrappedValue: Value {
+          get { storage.pointee }
+          set { storage.pointee = newValue }
+        }
+
+        init(wrappedValue: Value) {
+          storage = UnsafeMutablePointer<Value>.allocate(capacity: 1)
+          storage.initialize(to: wrappedValue)
+        }
+      }
+
+      struct ViewModel {
+        @MockPublished var isLoading: Bool
+        var title: String
+      }
+
+      let viewModel = ViewModel(isLoading: false, title: "Test")
+
+      // This should not throw "Unsupported type: UnsafeMutablePointer"
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: viewModel,
+        variableName: "testViewModel"
+      )
+
+      // The unsafe pointer should be rendered as nil
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension ViewModel {
+            static let testViewModel: ViewModel = ViewModel(isLoading: nil, title: "Test")
+        }
+
+        """
+      }
+    }
   }
 }

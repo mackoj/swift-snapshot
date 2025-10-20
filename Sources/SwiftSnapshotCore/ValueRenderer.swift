@@ -179,6 +179,14 @@ enum ValueRenderer {
       return try renderCollection(collection, context: context)
     }
 
+    // Check for unsafe pointer types - these cannot be serialized
+    let typeName = String(describing: type(of: value))
+    if typeName.hasPrefix("Unsafe") && typeName.contains("Pointer") {
+      // Unsafe pointers are runtime memory addresses and cannot be meaningfully serialized
+      // Return nil as a safe fallback
+      return ExprSyntax(NilLiteralExprSyntax())
+    }
+
     // Fallback to reflection
     return try renderViaReflection(value, context: context)
   }
@@ -563,7 +571,17 @@ enum ValueRenderer {
     // For many property wrappers (like @State, @Published, etc.), the first child
     // contains the actual stored value
     if let firstChild = mirror.children.first {
-      return firstChild.value
+      let childValue = firstChild.value
+      
+      // Check if the child is an unsafe pointer - these can't be serialized
+      let childTypeName = String(describing: type(of: childValue))
+      if childTypeName.hasPrefix("Unsafe") && childTypeName.contains("Pointer") {
+        // Return nil as a safe fallback for unsafe pointers
+        // This commonly occurs with @Published and other Combine property wrappers
+        return Optional<Any>.none as Any
+      }
+      
+      return childValue
     }
     
     // If no children found, return the wrapper itself
