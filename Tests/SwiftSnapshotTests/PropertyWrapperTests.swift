@@ -211,7 +211,7 @@ extension SnapshotTests {
       @propertyWrapper
       struct MockPublished<Value> {
         // Simulating @Published's internal storage with an unsafe pointer
-        private var storage: UnsafeMutablePointer<Value>
+        var storage: UnsafeMutablePointer<Value>
 
         var wrappedValue: Value {
           get { storage.pointee }
@@ -237,13 +237,13 @@ extension SnapshotTests {
         variableName: "testViewModel"
       )
 
-      // The unsafe pointer should be rendered as nil
+      // The unsafe pointer should be dereferenced to get the actual value
       assertInlineSnapshot(of: code, as: .description) {
         """
         import Foundation
 
         extension ViewModel {
-            static let testViewModel: ViewModel = ViewModel(isLoading: nil, title: "Test")
+            static let testViewModel: ViewModel = ViewModel(isLoading: false, title: "Test")
         }
 
         """

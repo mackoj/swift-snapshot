@@ -561,6 +561,9 @@ enum ValueRenderer {
   /// the wrapped value. For most property wrappers, the actual value is stored in an
   /// internal storage property (often the first child in the Mirror).
   ///
+  /// For property wrappers that use UnsafeMutablePointer (like @Published), this function
+  /// attempts to dereference the pointer to access the actual wrapped value.
+  ///
   /// - Parameter wrapper: The property wrapper instance
   /// - Returns: The wrapped value if found, otherwise the wrapper itself
   static func extractWrappedValueFromWrapper(_ wrapper: Any) -> Any {
@@ -573,11 +576,16 @@ enum ValueRenderer {
     if let firstChild = mirror.children.first {
       let childValue = firstChild.value
       
-      // Check if the child is an unsafe pointer - these can't be serialized
+      // Check if the child is an unsafe pointer - try to dereference it
       let childTypeName = String(describing: type(of: childValue))
       if childTypeName.hasPrefix("Unsafe") && childTypeName.contains("Pointer") {
-        // Return nil as a safe fallback for unsafe pointers
-        // This commonly occurs with @Published and other Combine property wrappers
+        // Try to dereference the pointer to get the wrapped value
+        // This is common with @Published and other Combine property wrappers
+        if let dereferencedValue = tryDereferencePointer(childValue) {
+          return dereferencedValue
+        }
+        
+        // If dereferencing fails, return nil as a safe fallback
         return Optional<Any>.none as Any
       }
       
@@ -587,6 +595,113 @@ enum ValueRenderer {
     // If no children found, return the wrapper itself
     // This allows custom renderers to still work if registered
     return wrapper
+  }
+  
+  /// Attempts to dereference an UnsafeMutablePointer or UnsafePointer to access the pointee
+  ///
+  /// Since we don't know the generic type parameter at compile time, this function
+  /// tries to cast to common types and dereference them.
+  ///
+  /// - Parameter pointer: The unsafe pointer (as Any)
+  /// - Returns: The dereferenced value if successful, nil otherwise
+  static func tryDereferencePointer(_ pointer: Any) -> Any? {
+    // Try to dereference using _openExistential
+    func attemptDeref<P>(_ ptr: P) -> Any? {
+      // Try casting to known pointer types and dereference
+      // Common types used in SwiftUI/Combine property wrappers
+      
+      // String
+      if let stringPtr = ptr as? UnsafeMutablePointer<String> {
+        return stringPtr.pointee
+      }
+      if let stringPtr = ptr as? UnsafePointer<String> {
+        return stringPtr.pointee
+      }
+      
+      // Int variants
+      if let intPtr = ptr as? UnsafeMutablePointer<Int> {
+        return intPtr.pointee
+      }
+      if let intPtr = ptr as? UnsafePointer<Int> {
+        return intPtr.pointee
+      }
+      if let int8Ptr = ptr as? UnsafeMutablePointer<Int8> {
+        return int8Ptr.pointee
+      }
+      if let int16Ptr = ptr as? UnsafeMutablePointer<Int16> {
+        return int16Ptr.pointee
+      }
+      if let int32Ptr = ptr as? UnsafeMutablePointer<Int32> {
+        return int32Ptr.pointee
+      }
+      if let int64Ptr = ptr as? UnsafeMutablePointer<Int64> {
+        return int64Ptr.pointee
+      }
+      
+      // UInt variants
+      if let uintPtr = ptr as? UnsafeMutablePointer<UInt> {
+        return uintPtr.pointee
+      }
+      if let uint8Ptr = ptr as? UnsafeMutablePointer<UInt8> {
+        return uint8Ptr.pointee
+      }
+      if let uint16Ptr = ptr as? UnsafeMutablePointer<UInt16> {
+        return uint16Ptr.pointee
+      }
+      if let uint32Ptr = ptr as? UnsafeMutablePointer<UInt32> {
+        return uint32Ptr.pointee
+      }
+      if let uint64Ptr = ptr as? UnsafeMutablePointer<UInt64> {
+        return uint64Ptr.pointee
+      }
+      
+      // Bool
+      if let boolPtr = ptr as? UnsafeMutablePointer<Bool> {
+        return boolPtr.pointee
+      }
+      if let boolPtr = ptr as? UnsafePointer<Bool> {
+        return boolPtr.pointee
+      }
+      
+      // Double and Float
+      if let doublePtr = ptr as? UnsafeMutablePointer<Double> {
+        return doublePtr.pointee
+      }
+      if let floatPtr = ptr as? UnsafeMutablePointer<Float> {
+        return floatPtr.pointee
+      }
+      
+      // Character
+      if let charPtr = ptr as? UnsafeMutablePointer<Character> {
+        return charPtr.pointee
+      }
+      
+      // Arrays (common in SwiftUI)
+      if let arrayPtr = ptr as? UnsafeMutablePointer<[Any]> {
+        return arrayPtr.pointee
+      }
+      
+      // Dictionary
+      if let dictPtr = ptr as? UnsafeMutablePointer<[AnyHashable: Any]> {
+        return dictPtr.pointee
+      }
+      
+      // Optional types
+      if let optStringPtr = ptr as? UnsafeMutablePointer<String?> {
+        return optStringPtr.pointee
+      }
+      if let optIntPtr = ptr as? UnsafeMutablePointer<Int?> {
+        return optIntPtr.pointee
+      }
+      if let optBoolPtr = ptr as? UnsafeMutablePointer<Bool?> {
+        return optBoolPtr.pointee
+      }
+      
+      // If we can't dereference, return nil
+      return nil
+    }
+    
+    return _openExistential(pointer, do: attemptDeref)
   }
 
   // MARK: - SwiftSnapshotExportable Renderer
