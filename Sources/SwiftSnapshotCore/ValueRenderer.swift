@@ -508,13 +508,67 @@ enum ValueRenderer {
         continue
       }
 
-      let childContext = context.appending(path: label)
-      let childExpr = try render(child.value, context: childContext)
-      args.append("\(label): \(childExpr)")
+      // Check if this is a property wrapper (backing storage starts with "_")
+      let (propertyName, propertyValue) = extractPropertyWrapperValue(label: label, value: child.value)
+      
+      let childContext = context.appending(path: propertyName)
+      let childExpr = try render(propertyValue, context: childContext)
+      args.append("\(propertyName): \(childExpr)")
     }
 
     let argsStr = args.joined(separator: ", ")
     return ExprSyntax(stringLiteral: "\(typeName)(\(argsStr))")
+  }
+  
+  /// Extract the wrapped value from a property wrapper if detected
+  ///
+  /// Property wrappers in Swift use a backing storage property that starts with "_".
+  /// For example, `@State var name: String` becomes `_name: State<String>`.
+  /// This function detects property wrappers and attempts to extract the wrapped value.
+  ///
+  /// - Parameters:
+  ///   - label: The property label from Mirror reflection
+  ///   - value: The property value from Mirror reflection
+  ///
+  /// - Returns: A tuple of (propertyName, propertyValue) where the name has the underscore
+  ///   prefix removed if it was a property wrapper, and the value is the wrapped value if available
+  static func extractPropertyWrapperValue(label: String, value: Any) -> (String, Any) {
+    // Check if this looks like a property wrapper backing storage
+    guard label.hasPrefix("_") else {
+      return (label, value)
+    }
+    
+    // Remove the underscore prefix to get the actual property name
+    let propertyName = String(label.dropFirst())
+    
+    // Try to extract the wrapped value using reflection
+    let wrappedValue = extractWrappedValueFromWrapper(value)
+    
+    return (propertyName, wrappedValue)
+  }
+  
+  /// Helper function to extract wrapped value from a property wrapper
+  ///
+  /// This function uses Mirror reflection to inspect the property wrapper and extract
+  /// the wrapped value. For most property wrappers, the actual value is stored in an
+  /// internal storage property (often the first child in the Mirror).
+  ///
+  /// - Parameter wrapper: The property wrapper instance
+  /// - Returns: The wrapped value if found, otherwise the wrapper itself
+  static func extractWrappedValueFromWrapper(_ wrapper: Any) -> Any {
+    let mirror = Mirror(reflecting: wrapper)
+    
+    // Property wrappers typically have internal storage properties
+    // Try to find the actual value by inspecting the mirror's children
+    // For many property wrappers (like @State, @Published, etc.), the first child
+    // contains the actual stored value
+    if let firstChild = mirror.children.first {
+      return firstChild.value
+    }
+    
+    // If no children found, return the wrapper itself
+    // This allows custom renderers to still work if registered
+    return wrapper
   }
 
   // MARK: - SwiftSnapshotExportable Renderer
