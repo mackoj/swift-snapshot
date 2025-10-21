@@ -654,13 +654,20 @@ enum ValueRenderer {
       }
       
       // Check if the child looks like internal Combine implementation
-      // For these types, we can't safely extract the value, so use nil
-      if childTypeName.contains("Publisher") || 
-         childTypeName.contains("Subject") || 
-         childTypeName.contains("Subscriber") ||
-         childTypeName.contains("Subscription") {
-        // This is internal Combine infrastructure that we can't serialize
-        // Return nil instead of trying to render it
+      // For @Published, we need to navigate: publisher -> subject -> currentValue
+      if childTypeName.contains("Publisher") || childTypeName.contains("Subject") {
+        // Try to extract currentValue from Combine publishers/subjects
+        if let currentValue = extractCurrentValueFromPublisher(childValue) {
+          return currentValue
+        }
+        
+        // If we can't extract currentValue, return nil as a safe fallback
+        return Optional<Any>.none as Any
+      }
+      
+      // Check for other Combine infrastructure types that we can't extract from
+      if childTypeName.contains("Subscriber") || childTypeName.contains("Subscription") {
+        // These types don't have a currentValue we can extract
         return Optional<Any>.none as Any
       }
       
@@ -671,6 +678,45 @@ enum ValueRenderer {
     // If no children found, we can't extract a value
     // Return nil as a safe fallback
     return Optional<Any>.none as Any
+  }
+  
+  /// Extracts the current value from a Combine Publisher or Subject
+  ///
+  /// For @Published properties, the structure is:
+  /// - publisher (first child of wrapper)
+  ///   - subject (child of publisher)
+  ///     - currentValue (child of subject) ← This is what we want
+  ///
+  /// - Parameter publisherOrSubject: The publisher or subject instance
+  /// - Returns: The current value if found, nil otherwise
+  static func extractCurrentValueFromPublisher(_ publisherOrSubject: Any) -> Any? {
+    // Try to find currentValue directly in this level
+    let mirror = Mirror(reflecting: publisherOrSubject)
+    
+    // Check if this level has a currentValue property
+    for child in mirror.children {
+      if child.label == "currentValue" {
+        return child.value
+      }
+    }
+    
+    // If not found, navigate deeper through publisher/subject hierarchy
+    // Look for: publisher -> subject -> currentValue
+    for child in mirror.children {
+      let childTypeName = String(describing: type(of: child.value))
+      
+      // Navigate through publisher or subject children
+      if child.label == "publisher" || child.label == "subject" || 
+         childTypeName.contains("Publisher") || childTypeName.contains("Subject") {
+        
+        // Recursively search for currentValue in this child
+        if let currentValue = extractCurrentValueFromPublisher(child.value) {
+          return currentValue
+        }
+      }
+    }
+    
+    return nil
   }
   
   /// Attempts to dereference an UnsafeMutablePointer or UnsafePointer to access the pointee
