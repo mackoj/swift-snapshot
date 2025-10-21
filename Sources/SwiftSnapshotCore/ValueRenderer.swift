@@ -1053,6 +1053,22 @@ enum ValueRenderer {
         return Optional<Any>.none as Any
       }
       
+      // Check if this looks like a property wrapper struct we shouldn't render
+      // (e.g., Published.Publisher, SwiftUI property wrapper types, etc.)
+      // These often have internal structure that shouldn't be exposed
+      if childTypeName.contains("Published.Publisher") || 
+         childTypeName.contains(".Storage") ||
+         childTypeName.contains("Binding<") ||
+         childTypeName.contains("State<") {
+        // This is likely an internal property wrapper structure
+        // Try to extract value more deeply before giving up
+        if let extracted = extractCurrentValueFromPublisher(childValue) {
+          return extracted
+        }
+        // If we can't extract, return nil rather than the wrapper structure
+        return Optional<Any>.none as Any
+      }
+      
       // For regular types, return the child value for recursive rendering
       return childValue
     }
