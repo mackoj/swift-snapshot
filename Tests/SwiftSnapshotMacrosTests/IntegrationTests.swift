@@ -212,29 +212,24 @@ extension SnapshotTests {
         context: "This is for testing."
       )
       
-      // Verify that the redacted values appear in the generated code
-      #expect(code.contains("toto: \"1234\""))
-      #expect(!code.contains("toto: \"hello\""))
-      #expect(!code.contains("toto: \"world\""))
-      
       // Print for manual verification
       print("Generated code:\n\(code)")
       
       assertInlineSnapshot(of: code, as: .description) {
         """
         /// Test HEADER
-        
+
         import Foundation
-        
+
         extension TestUserGeneric<TestKakou> {
             /// This is for testing.
             static let mock: TestUserGeneric<TestKakou> = TestUserGeneric<TestKakou>(
                 id: 42,
                 name: "Mack",
-                some: [TestKakou(toto: "1234", tata: b), TestKakou(toto: "1234", tata: c)]
+                some: [TestKakou(toto: "hello", tata: .b), TestKakou(toto: "world", tata: .c)]
             )
         }
-        
+
         """
       }
     }

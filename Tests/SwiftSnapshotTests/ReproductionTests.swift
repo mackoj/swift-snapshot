@@ -25,13 +25,23 @@ extension SnapshotTests {
         instance: viewModel,
         variableName: "testViewModel"
       )
+      
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension AddReviewViewModel {
+            static let testViewModel: AddReviewViewModel = AddReviewViewModel(
+                productId: "ig_169380 ~ dm_8402040 ~ sku_0cebe88a - 32e1 - 49df - a17e - 150bb155f0fc",
+                reviewsLegalNoticeUrl: URL(string: "https://reviews.decathlon.com/fr_FR/review/terms")!
+            )
+        }
+
+        """
+      }
 
       print("Generated code:")
       print(code)
-      
-      // This should compile without errors
-      // The productId should be a string literal with quotes
-      // The URL should be properly initialized
     }
     
     @Test func testComplexNestedStruct() throws {
@@ -67,22 +77,31 @@ extension SnapshotTests {
         variableName: "ig_169380_dm_8402040_sku_0cebe88a_32e1_49df_a17e_150bb155f0fc"
       )
 
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension AddReviewViewModel {
+            static let ig_169380_dm_8402040_sku_0cebe88a_32e1_49df_a17e_150bb155f0fc: AddReviewViewModel =
+                AddReviewViewModel(
+                    productId: "ig_169380 ~ dm_8402040 ~ sku_0cebe88a - 32e1 - 49df - a17e - 150bb155f0fc",
+                    reviewsLegalNoticeUrl: URL(string: "https://reviews.decathlon.com/fr_FR/review/terms")!,
+                    isPostingReview: false,
+                    shouldDismissView: false,
+                    fields: [
+                        ReviewField(id: "0", title: "Lorem ipsum", value: ""),
+                        ReviewField(id: "1", title: "Lorem ipsum", value: ""),
+                        ReviewField(id: "2", title: "Lorem ipsum", value: ""),
+                    ]
+                )
+        }
+
+        """
+      }
+      
       print("\n\nGenerated code for complex struct:")
       print(code)
       print("\n\n")
-      
-      // Verify that the generated code has proper syntax structure
-      // Check for key elements:
-      // 1. String values should be in quotes
-      #expect(code.contains("productId: \"ig_169380"))
-      
-      // 2. URL should be properly initialized
-      #expect(code.contains("URL(string: \"https://reviews.decathlon.com"))
-      
-      // 3. All labeled arguments should have commas (except the last one before closing paren)
-      // Count commas - should have at least 4 (for productId, reviewsLegalNoticeUrl, isPostingReview, shouldDismissView)
-      let commaCount = code.filter { $0 == "," }.count
-      #expect(commaCount >= 4)
     }
   }
 }

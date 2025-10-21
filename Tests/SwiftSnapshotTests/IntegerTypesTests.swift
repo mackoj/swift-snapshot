@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import InlineSnapshotTesting
 
 @testable import SwiftSnapshotCore
 
@@ -119,10 +120,20 @@ extension SnapshotTests {
         variableName: "mixedInts"
       )
       
-      // The formatter may add underscores for readability, so check types and partial values
-      #expect(code.contains("Int8") && code.contains("10"))
-      #expect(code.contains("UInt64") && code.contains("123"))
-      #expect(code.contains("Int32") && code.contains("-500"))
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension MixedIntegers {
+            static let mixedInts: MixedIntegers = MixedIntegers(
+                int8Val: Int8(10),
+                uint64Val: UInt64(123_456_789),
+                int32Val: Int32(-500)
+            )
+        }
+
+        """
+      }
     }
     
     // MARK: - Arrays with Integer Types

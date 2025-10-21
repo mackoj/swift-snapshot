@@ -114,7 +114,6 @@ enum ValueRenderer {
           line: #line,
           column: #column
         )
-        // Continue to use reflection-based rendering below
       }
     }
 
