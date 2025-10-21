@@ -70,6 +70,19 @@ extension SnapshotTests {
       print("\n\nGenerated code for complex struct:")
       print(code)
       print("\n\n")
+      
+      // Verify that the generated code has proper syntax structure
+      // Check for key elements:
+      // 1. String values should be in quotes
+      #expect(code.contains("productId: \"ig_169380"))
+      
+      // 2. URL should be properly initialized
+      #expect(code.contains("URL(string: \"https://reviews.decathlon.com"))
+      
+      // 3. All labeled arguments should have commas (except the last one before closing paren)
+      // Count commas - should have at least 4 (for productId, reviewsLegalNoticeUrl, isPostingReview, shouldDismissView)
+      let commaCount = code.filter { $0 == "," }.count
+      #expect(commaCount >= 4)
     }
   }
 }
