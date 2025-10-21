@@ -97,8 +97,25 @@ enum ValueRenderer {
     }
 
     // Check if type conforms to SwiftSnapshotExportable and use its makeExpr method
+    // Note: For now, we skip SwiftSnapshotExportable rendering and use reflection instead
+    // because the macro-generated string representations don't properly escape values
+    // and can't be reliably parsed back into valid Swift syntax.
+    // This is a known limitation that needs to be addressed in the macro implementation.
     if let exportable = value as? any SwiftSnapshotExportable {
-      return try renderSwiftSnapshotExportable(exportable, context: context)
+      // Try to use the macro-generated expression, but fall back to reflection if it fails
+      do {
+        return try renderSwiftSnapshotExportable(exportable, context: context)
+      } catch {
+        // Log the failure and fall back to reflection
+        reportIssue(
+          "SwiftSnapshotExportable rendering failed for type '\(typeName)': \(error). Falling back to reflection-based rendering.",
+          fileID: #fileID,
+          filePath: #filePath,
+          line: #line,
+          column: #column
+        )
+        // Continue to use reflection-based rendering below
+      }
     }
 
     // Handle primitives
