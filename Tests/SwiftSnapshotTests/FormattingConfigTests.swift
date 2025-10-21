@@ -464,9 +464,14 @@ extension SnapshotTests {
         variableName: "test"
       )
       
-      // Verify code was generated
-      #expect(code.contains("extension TestStruct"))
-      #expect(code.contains("static let test"))
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension TestStruct { static let test: TestStruct = TestStruct(value: 42) }
+
+        """
+      }
     }
     
     /// Test loading profile with nil source returns defaults

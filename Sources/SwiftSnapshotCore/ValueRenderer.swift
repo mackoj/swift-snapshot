@@ -1,6 +1,7 @@
 import Foundation
 import SwiftSyntax
 import SwiftSyntaxBuilder
+import SwiftParser
 import IssueReporting
 
 /// Core value renderer that converts Swift values to ExprSyntax
@@ -88,14 +89,32 @@ enum ValueRenderer {
   ///   - ``SwiftSnapshotError/unsupportedType(_:path:)`` if type cannot be rendered
   ///   - ``SwiftSnapshotError/reflection(_:path:)`` if reflection fails
   static func render(_ value: Any, context: SnapshotRenderContext) throws -> ExprSyntax {
+    let typeName = String(describing: type(of: value))
+    
     // Check custom renderers first
     if let customRenderer = SnapshotRendererRegistry.shared.renderer(for: value) {
       return try customRenderer(value, context)
     }
 
     // Check if type conforms to SwiftSnapshotExportable and use its makeExpr method
+    // Note: For now, we skip SwiftSnapshotExportable rendering and use reflection instead
+    // because the macro-generated string representations don't properly escape values
+    // and can't be reliably parsed back into valid Swift syntax.
+    // This is a known limitation that needs to be addressed in the macro implementation.
     if let exportable = value as? any SwiftSnapshotExportable {
-      return try renderSwiftSnapshotExportable(exportable, context: context)
+      // Try to use the macro-generated expression, but fall back to reflection if it fails
+      do {
+        return try renderSwiftSnapshotExportable(exportable, context: context)
+      } catch {
+        // Log the failure and fall back to reflection
+        reportIssue(
+          "SwiftSnapshotExportable rendering failed for type '\(typeName)': \(error). Falling back to reflection-based rendering.",
+          fileID: #fileID,
+          filePath: #filePath,
+          line: #line,
+          column: #column
+        )
+      }
     }
 
     // Handle primitives
@@ -136,6 +155,16 @@ enum ValueRenderer {
 
     // Handle Optional
     if let optional = value as? (any OptionalProtocol) {
+      // Log when we're rendering an Optional at the top level (path is empty)
+      if context.path.isEmpty {
+        reportIssue(
+          "Rendering top-level Optional of type '\(typeName)'. This will produce 'nil' if the optional is empty.",
+          fileID: #fileID,
+          filePath: #filePath,
+          line: #line,
+          column: #column
+        )
+      }
       return try renderOptional(optional, context: context)
     }
 
@@ -181,10 +210,15 @@ enum ValueRenderer {
     }
 
     // Check for unsafe pointer types - these cannot be serialized
-    let typeName = String(describing: type(of: value))
     if typeName.hasPrefix("Unsafe") && typeName.contains("Pointer") {
       // Unsafe pointers are runtime memory addresses and cannot be meaningfully serialized
-      // Return nil as a safe fallback
+      reportIssue(
+        "Cannot serialize unsafe pointer type '\(typeName)' at path '\(context.path.joined(separator: " → "))'. Using nil.",
+        fileID: #fileID,
+        filePath: #filePath,
+        line: #line,
+        column: #column
+      )
       return ExprSyntax(NilLiteralExprSyntax())
     }
 
@@ -204,39 +238,120 @@ enum ValueRenderer {
   }
 
   static func renderInt8(_ value: Int8) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "Int8(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int8")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderInt16(_ value: Int16) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "Int16(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int16")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderInt32(_ value: Int32) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "Int32(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int32")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderInt64(_ value: Int64) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "Int64(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int64")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderUInt(_ value: UInt) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "UInt(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderUInt8(_ value: UInt8) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "UInt8(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt8")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderUInt16(_ value: UInt16) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "UInt16(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt16")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderUInt32(_ value: UInt32) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "UInt32(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt32")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderUInt64(_ value: UInt64) -> ExprSyntax {
-    ExprSyntax(stringLiteral: "UInt64(\(value))")
+    ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt64")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderDouble(_ value: Double) -> ExprSyntax {
@@ -245,14 +360,29 @@ enum ValueRenderer {
         MemberAccessExprSyntax(
           base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Double"))),
           dot: .periodToken(),
-          name: .identifier("nan")
+          declName: DeclReferenceExprSyntax(baseName: .identifier("nan"))
         ))
     } else if value.isInfinite {
-      let sign = value > 0 ? "" : "-"
-      return ExprSyntax(stringLiteral: "\(sign)Double.infinity")
+      let infinityExpr = ExprSyntax(
+        MemberAccessExprSyntax(
+          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Double"))),
+          dot: .periodToken(),
+          declName: DeclReferenceExprSyntax(baseName: .identifier("infinity"))
+        ))
+      
+      if value > 0 {
+        return infinityExpr
+      } else {
+        return ExprSyntax(
+          PrefixOperatorExprSyntax(
+            operator: .prefixOperator("-"),
+            expression: infinityExpr
+          )
+        )
+      }
     } else {
       return ExprSyntax(
-        FloatLiteralExprSyntax(floatingDigits: .floatLiteral(String(format: "%.15g", value))))
+        FloatLiteralExprSyntax(literal: .floatLiteral(String(format: "%.15g", value))))
     }
   }
 
@@ -262,13 +392,28 @@ enum ValueRenderer {
         MemberAccessExprSyntax(
           base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Float"))),
           dot: .periodToken(),
-          name: .identifier("nan")
+          declName: DeclReferenceExprSyntax(baseName: .identifier("nan"))
         ))
     } else if value.isInfinite {
-      let sign = value > 0 ? "" : "-"
-      return ExprSyntax(stringLiteral: "\(sign)Float.infinity")
+      let infinityExpr = ExprSyntax(
+        MemberAccessExprSyntax(
+          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Float"))),
+          dot: .periodToken(),
+          declName: DeclReferenceExprSyntax(baseName: .identifier("infinity"))
+        ))
+      
+      if value > 0 {
+        return infinityExpr
+      } else {
+        return ExprSyntax(
+          PrefixOperatorExprSyntax(
+            operator: .prefixOperator("-"),
+            expression: infinityExpr
+          )
+        )
+      }
     } else {
-      return ExprSyntax(FloatLiteralExprSyntax(floatingDigits: .floatLiteral("\(value)")))
+      return ExprSyntax(FloatLiteralExprSyntax(literal: .floatLiteral("\(value)")))
     }
   }
 
@@ -278,42 +423,154 @@ enum ValueRenderer {
 
   static func renderCharacter(_ value: Character) throws -> ExprSyntax {
     let escaped = escapeString(String(value))
-    return ExprSyntax(stringLiteral: "Character(\"\(escaped)\")")
+    return ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Character")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: ExprSyntax(StringLiteralExprSyntax(content: escaped)))
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   // MARK: - Foundation Type Renderers
 
   static func renderDate(_ value: Date) -> ExprSyntax {
     let interval = value.timeIntervalSince1970
-    return ExprSyntax(stringLiteral: "Date(timeIntervalSince1970: \(interval))")
+    return ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Date")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(
+            label: .identifier("timeIntervalSince1970"),
+            colon: .colonToken(),
+            expression: ExprSyntax(FloatLiteralExprSyntax(literal: .floatLiteral(String(interval))))
+          )
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   static func renderUUID(_ value: UUID) -> ExprSyntax {
     let uuidString = value.uuidString
-    return ExprSyntax(stringLiteral: "UUID(uuidString: \"\(uuidString)\")!")
+    return ExprSyntax(
+      ForceUnwrapExprSyntax(
+        expression: FunctionCallExprSyntax(
+          calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UUID")),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax([
+            LabeledExprSyntax(
+              label: .identifier("uuidString"),
+              colon: .colonToken(),
+              expression: ExprSyntax(StringLiteralExprSyntax(content: uuidString))
+            )
+          ]),
+          rightParen: .rightParenToken()
+        ),
+        exclamationMark: .exclamationMarkToken()
+      )
+    )
   }
 
   static func renderURL(_ value: URL) throws -> ExprSyntax {
     let urlString = value.absoluteString
     let escaped = escapeString(urlString)
-    return ExprSyntax(stringLiteral: "URL(string: \"\(escaped)\")!")
+    return ExprSyntax(
+      ForceUnwrapExprSyntax(
+        expression: FunctionCallExprSyntax(
+          calledExpression: DeclReferenceExprSyntax(baseName: .identifier("URL")),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax([
+            LabeledExprSyntax(
+              label: .identifier("string"),
+              colon: .colonToken(),
+              expression: ExprSyntax(StringLiteralExprSyntax(content: escaped))
+            )
+          ]),
+          rightParen: .rightParenToken()
+        ),
+        exclamationMark: .exclamationMarkToken()
+      )
+    )
   }
 
   static func renderData(_ value: Data, context: SnapshotRenderContext) throws -> ExprSyntax {
     if value.count <= context.options.dataInlineThreshold {
       // Inline as hex array
-      let hexBytes = value.map { String(format: "0x%02X", $0) }.joined(separator: ", ")
-      return ExprSyntax(stringLiteral: "Data([\(hexBytes)])")
+      let hexElementsRaw = value.map { byte -> ArrayElementSyntax in
+        ArrayElementSyntax(
+          expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(format: "0x%02X", byte))))
+        )
+      }
+      
+      // Add trailing commas to array elements
+      var hexElements: [ArrayElementSyntax] = []
+      for (index, elem) in hexElementsRaw.enumerated() {
+        if index < hexElementsRaw.count - 1 {
+          hexElements.append(elem.with(\.trailingComma, .commaToken()))
+        } else {
+          hexElements.append(elem)
+        }
+      }
+      
+      return ExprSyntax(
+        FunctionCallExprSyntax(
+          calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Data")),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax([
+            LabeledExprSyntax(
+              expression: ArrayExprSyntax(elements: ArrayElementListSyntax(hexElements))
+            )
+          ]),
+          rightParen: .rightParenToken()
+        )
+      )
     } else {
       // Base64 encoded
       let base64 = value.base64EncodedString()
-      return ExprSyntax(stringLiteral: "Data(base64Encoded: \"\(base64)\")!")
+      return ExprSyntax(
+        ForceUnwrapExprSyntax(
+          expression: FunctionCallExprSyntax(
+            calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Data")),
+            leftParen: .leftParenToken(),
+            arguments: LabeledExprListSyntax([
+              LabeledExprSyntax(
+                label: .identifier("base64Encoded"),
+                colon: .colonToken(),
+                expression: ExprSyntax(StringLiteralExprSyntax(content: base64))
+              )
+            ]),
+            rightParen: .rightParenToken()
+          ),
+          exclamationMark: .exclamationMarkToken()
+        )
+      )
     }
   }
 
   static func renderDecimal(_ value: Decimal) -> ExprSyntax {
     let description = value.description
-    return ExprSyntax(stringLiteral: "Decimal(string: \"\(description)\")!")
+    return ExprSyntax(
+      ForceUnwrapExprSyntax(
+        expression: FunctionCallExprSyntax(
+          calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Decimal")),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax([
+            LabeledExprSyntax(
+              label: .identifier("string"),
+              colon: .colonToken(),
+              expression: ExprSyntax(StringLiteralExprSyntax(content: description))
+            )
+          ]),
+          rightParen: .rightParenToken()
+        ),
+        exclamationMark: .exclamationMarkToken()
+      )
+    )
   }
 
   // MARK: - Collection Renderers
@@ -393,7 +650,16 @@ enum ValueRenderer {
     }
 
     let arrayExpr = try renderArray(elements, context: context)
-    return ExprSyntax(stringLiteral: "Set(\(arrayExpr))")
+    return ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Set")),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: arrayExpr)
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   /// Render generic Collection types
@@ -438,8 +704,17 @@ enum ValueRenderer {
     // Get the type name for the collection
     let typeName = String(describing: type(of: collection))
     
-    // Return as TypeName(arrayLiteral: [...])
-    return ExprSyntax(stringLiteral: "\(typeName)(\(arrayExpr))")
+    // Return as TypeName([...])
+    return ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier(typeName)),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax([
+          LabeledExprSyntax(expression: arrayExpr)
+        ]),
+        rightParen: .rightParenToken()
+      )
+    )
   }
 
   // MARK: - Reflection Fallback
@@ -448,6 +723,17 @@ enum ValueRenderer {
   {
     let mirror = Mirror(reflecting: value)
     let typeName = String(describing: type(of: value))
+
+    // Log when we're at the top level to help diagnose issues
+    if context.path.isEmpty {
+      reportIssue(
+        "Starting reflection-based rendering for type '\(typeName)' with displayStyle '\(String(describing: mirror.displayStyle))' and \(mirror.children.count) children",
+        fileID: #fileID,
+        filePath: #filePath,
+        line: #line,
+        column: #column
+      )
+    }
 
     // Handle enums
     if mirror.displayStyle == .enum {
@@ -476,14 +762,35 @@ enum ValueRenderer {
         let caseName = "\(value)"
         // Simple heuristic: if description looks like a case name
         if caseName.first?.isLetter == true && !caseName.contains("(") {
-          return ExprSyntax(stringLiteral: ".\(caseName)")
+          return ExprSyntax(
+            MemberAccessExprSyntax(
+              dot: .periodToken(),
+              declName: DeclReferenceExprSyntax(baseName: .identifier(caseName))
+            )
+          )
         }
       }
 
       // Fallback to rawValue initializer
       do {
         let rawExpr = try render(rawValue, context: context)
-        return ExprSyntax(stringLiteral: "\(typeName)(rawValue: \(rawExpr))!")
+        return ExprSyntax(
+          ForceUnwrapExprSyntax(
+            expression: FunctionCallExprSyntax(
+              calledExpression: DeclReferenceExprSyntax(baseName: .identifier(typeName)),
+              leftParen: .leftParenToken(),
+              arguments: LabeledExprListSyntax([
+                LabeledExprSyntax(
+                  label: .identifier("rawValue"),
+                  colon: .colonToken(),
+                  expression: rawExpr
+                )
+              ]),
+              rightParen: .rightParenToken()
+            ),
+            exclamationMark: .exclamationMarkToken()
+          )
+        )
       } catch {
         // If we can't render the raw value, report and use a simple representation
         reportIssue(
@@ -494,25 +801,27 @@ enum ValueRenderer {
           column: #column
         )
         let caseName = "\(value)"
-        return ExprSyntax(stringLiteral: ".\(caseName)")
+        return ExprSyntax(
+          MemberAccessExprSyntax(
+            dot: .periodToken(),
+            declName: DeclReferenceExprSyntax(baseName: .identifier(caseName))
+          )
+        )
       }
     }
 
     // Associated values - best effort
     if mirror.children.count > 0 {
       let caseName = "\(value)".split(separator: "(").first ?? ""
-      var args: [String] = []
+      var labeledArgs: [LabeledExprSyntax] = []
+      
       for (index, child) in mirror.children.enumerated() {
         let childContext = context.appending(path: ".\(caseName)[\(index)]")
         
         // Try to render the associated value, use nil as default if it fails
+        let childExpr: ExprSyntax
         do {
-          let childExpr = try render(child.value, context: childContext)
-          if let label = child.label {
-            args.append("\(label): \(childExpr)")
-          } else {
-            args.append("\(childExpr)")
-          }
+          childExpr = try render(child.value, context: childContext)
         } catch {
           // Only report issues for shallow paths (not deep internal structures)
           if childContext.path.count <= 2 {
@@ -525,26 +834,75 @@ enum ValueRenderer {
             )
           }
           
-          if let label = child.label {
-            args.append("\(label): nil")
-          } else {
-            args.append("nil")
-          }
+          childExpr = ExprSyntax(NilLiteralExprSyntax())
+        }
+        
+        if let label = child.label {
+          labeledArgs.append(
+            LabeledExprSyntax(
+              label: .identifier(label),
+              colon: .colonToken(),
+              expression: childExpr
+            )
+          )
+        } else {
+          labeledArgs.append(
+            LabeledExprSyntax(
+              expression: childExpr
+            )
+          )
         }
       }
-      let argsStr = args.joined(separator: ", ")
-      return ExprSyntax(stringLiteral: ".\(caseName)(\(argsStr))")
+      
+      // Add trailing commas
+      var argsWithCommas: [LabeledExprSyntax] = []
+      for (index, arg) in labeledArgs.enumerated() {
+        if index < labeledArgs.count - 1 {
+          argsWithCommas.append(arg.with(\.trailingComma, .commaToken()))
+        } else {
+          argsWithCommas.append(arg)
+        }
+      }
+      
+      // Build proper member access with function call
+      return ExprSyntax(
+        FunctionCallExprSyntax(
+          calledExpression: MemberAccessExprSyntax(
+            dot: .periodToken(),
+            declName: DeclReferenceExprSyntax(baseName: .identifier(String(caseName)))
+          ),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax(argsWithCommas),
+          rightParen: .rightParenToken()
+        )
+      )
     }
 
     // Simple case with no associated values
     let caseName = "\(value)"
-    return ExprSyntax(stringLiteral: ".\(caseName)")
+    return ExprSyntax(
+      MemberAccessExprSyntax(
+        dot: .periodToken(),
+        declName: DeclReferenceExprSyntax(baseName: .identifier(caseName))
+      )
+    )
   }
 
   static func renderStructViaReflection(
     _ value: Any, typeName: String, mirror: Mirror, context: SnapshotRenderContext
   ) throws -> ExprSyntax {
-    var args: [String] = []
+    var labeledArgs: [LabeledExprSyntax] = []
+    
+    // Log at top level for debugging
+    if context.path.isEmpty {
+      reportIssue(
+        "Rendering struct/class '\(typeName)' with \(mirror.children.count) children",
+        fileID: #fileID,
+        filePath: #filePath,
+        line: #line,
+        column: #column
+      )
+    }
 
     for child in mirror.children {
       guard let label = child.label else {
@@ -585,11 +943,34 @@ enum ValueRenderer {
         childExpr = ExprSyntax(NilLiteralExprSyntax())
       }
       
-      args.append("\(propertyName): \(childExpr)")
+      labeledArgs.append(
+        LabeledExprSyntax(
+          label: .identifier(propertyName),
+          colon: .colonToken(),
+          expression: childExpr
+        )
+      )
     }
 
-    let argsStr = args.joined(separator: ", ")
-    return ExprSyntax(stringLiteral: "\(typeName)(\(argsStr))")
+    // Build proper FunctionCallExprSyntax with trailing commas added
+    var argsWithCommas: [LabeledExprSyntax] = []
+    for (index, arg) in labeledArgs.enumerated() {
+      if index < labeledArgs.count - 1 {
+        // Add comma for all but the last argument
+        argsWithCommas.append(arg.with(\.trailingComma, .commaToken()))
+      } else {
+        argsWithCommas.append(arg)
+      }
+    }
+
+    return ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier(typeName)),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax(argsWithCommas),
+        rightParen: .rightParenToken()
+      )
+    )
   }
   
   /// Extract the wrapped value from a property wrapper if detected
@@ -668,6 +1049,22 @@ enum ValueRenderer {
       // Check for other Combine infrastructure types that we can't extract from
       if childTypeName.contains("Subscriber") || childTypeName.contains("Subscription") {
         // These types don't have a currentValue we can extract
+        return Optional<Any>.none as Any
+      }
+      
+      // Check if this looks like a property wrapper struct we shouldn't render
+      // (e.g., Published.Publisher, SwiftUI property wrapper types, etc.)
+      // These often have internal structure that shouldn't be exposed
+      if childTypeName.contains("Published.Publisher") || 
+         childTypeName.contains(".Storage") ||
+         childTypeName.contains("Binding<") ||
+         childTypeName.contains("State<") {
+        // This is likely an internal property wrapper structure
+        // Try to extract value more deeply before giving up
+        if let extracted = extractCurrentValueFromPublisher(childValue) {
+          return extracted
+        }
+        // If we can't extract, return nil rather than the wrapper structure
         return Optional<Any>.none as Any
       }
       
@@ -854,8 +1251,29 @@ enum ValueRenderer {
     // This works because Swift will infer T from the runtime type
     let exprString = _openExistential(exportable, do: callMakeExpr)
     
-    // Convert the string expression to ExprSyntax
-    return ExprSyntax(stringLiteral: exprString)
+    // Parse the string expression to proper ExprSyntax
+    // The string should be valid Swift code generated by the macro
+    let sourceFile = Parser.parse(source: exprString)
+    
+    // Extract the first expression from the parsed source
+    if let firstStatement = sourceFile.statements.first,
+       let exprStatement = firstStatement.item.as(ExpressionStmtSyntax.self) {
+      return exprStatement.expression
+    }
+    
+    // Fallback: if parsing fails, throw an error instead of silently returning nil
+    let typeName = String(describing: type(of: exportable))
+    reportIssue(
+      "Failed to parse SwiftSnapshotExportable expression for type '\(typeName)'. Generated string was: '\(exprString)'",
+      fileID: #fileID,
+      filePath: #filePath,
+      line: #line,
+      column: #column
+    )
+    throw SwiftSnapshotError.reflection(
+      "SwiftSnapshotExportable parsing failed for type '\(typeName)'. Check macro-generated code.",
+      path: context.path
+    )
   }
 
   // MARK: - String Escaping

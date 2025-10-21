@@ -52,7 +52,12 @@ extension SnapshotTests {
       extension User {
           /// Test user with admin role
           static let testUserCreation: User = User(
-              id: 42, name: "Alice", role: .admin, isActive: true, tags: ["admin", "beta"])
+              id: 42,
+              name: "Alice",
+              role: .admin,
+              isActive: true,
+              tags: ["admin", "beta"]
+          )
       }
 
       """
@@ -93,8 +98,10 @@ extension SnapshotTests {
 
       extension Person {
           static let testPerson: Person = Person(
-              name: "Bob", age: 35,
-              address: Address(street: "123 Main St", city: "Springfield", zip: "12345"))
+              name: "Bob",
+              age: 35,
+              address: Address(street: "123 Main St", city: "Springfield", zip: "12345")
+          )
       }
 
       """
@@ -137,8 +144,13 @@ extension SnapshotTests {
           /// Standard product fixture used across pricing tests.
           /// Represents typical e-commerce product with complete metadata.
           static let testProduct: Product = Product(
-              id: "PROD-001", name: "Widget", price: 29.99, categories: ["Electronics", "Gadgets"],
-              isAvailable: true, metadata: ["manufacturer": "ACME Corp", "sku": "WDG-001"])
+              id: "PROD-001",
+              name: "Widget",
+              price: 29.99,
+              categories: ["Electronics", "Gadgets"],
+              isAvailable: true,
+              metadata: ["manufacturer": "ACME Corp", "sku": "WDG-001"]
+          )
       }
 
       """
@@ -235,8 +247,11 @@ extension SnapshotTests {
 
       extension Task {
           static let testTask: Task = Task(
-              id: 1, title: "Complete project", description: "Finish the implementation",
-              dueDate: Date(timeIntervalSince1970: 1234567890.0))
+              id: 1,
+              title: "Complete project",
+              description: "Finish the implementation",
+              dueDate: Date(timeIntervalSince1970: 1234567890.0)
+          )
       }
 
       """
@@ -288,8 +303,10 @@ extension SnapshotTests {
       extension APIResponse {
           /// Successful API response fixture
           static let successResponse: APIResponse = APIResponse(
-              success: true, timestamp: Date(timeIntervalSince1970: 1609459200.0),
-              data: ["token": "abc123", "userId": "12345"])
+              success: true,
+              timestamp: Date(timeIntervalSince1970: 1609459200.0),
+              data: ["token": "abc123", "userId": "12345"]
+          )
       }
 
       """
@@ -375,8 +392,10 @@ extension SnapshotTests {
 
       extension Message {
           static let testMessage: Message = Message(
-              text: #"Hello\nWorld\t\"quoted\""#, emoji: #"\u{1F389}\u{1F680}"#,
-              code: #"let x = \"test\""#)
+              text: #"Hello\nWorld\t\"quoted\""#,
+              emoji: #"\u{1F389}\u{1F680}"#,
+              code: #"let x = \"test\""#
+          )
       }
 
       """#
@@ -436,10 +455,23 @@ extension SnapshotTests {
       
       // Verify content is valid Swift code
       let content = try String(contentsOf: url, encoding: .utf8)
-      #expect(content.contains("/// Test HEADER"))
-      #expect(content.contains("This is for testing."))
-      #expect(content.contains("static let mock"))
-      #expect(content.contains("id: 42"))
+      assertInlineSnapshot(of: content, as: .description) {
+        """
+        /// Test HEADER
+
+        import Foundation
+
+        extension User<Kakou> {
+            /// This is for testing.
+            static let mock: User<Kakou> = User<Kakou>(
+                id: 42,
+                name: "Alice",
+                some: [Kakou(toto: "hello", tata: .b), Kakou(toto: "world", tata: .c)]
+            )
+        }
+
+        """
+      }
     }
   }
 }

@@ -1,0 +1,107 @@
+import InlineSnapshotTesting
+import Testing
+
+@testable import SwiftSnapshotCore
+
+extension SnapshotTests {
+  @Suite struct ReproductionTests {
+    init() {
+      // Reset configuration between tests
+      SwiftSnapshotConfig.resetToLibraryDefaults()
+    }
+
+    @Test func testStringInStruct() throws {
+      struct AddReviewViewModel {
+        let productId: String
+        let reviewsLegalNoticeUrl: URL?
+      }
+
+      let viewModel = AddReviewViewModel(
+        productId: "ig_169380 ~ dm_8402040 ~ sku_0cebe88a - 32e1 - 49df - a17e - 150bb155f0fc",
+        reviewsLegalNoticeUrl: URL(string: "https://reviews.decathlon.com/fr_FR/review/terms")
+      )
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: viewModel,
+        variableName: "testViewModel"
+      )
+      
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension AddReviewViewModel {
+            static let testViewModel: AddReviewViewModel = AddReviewViewModel(
+                productId: "ig_169380 ~ dm_8402040 ~ sku_0cebe88a - 32e1 - 49df - a17e - 150bb155f0fc",
+                reviewsLegalNoticeUrl: URL(string: "https://reviews.decathlon.com/fr_FR/review/terms")!
+            )
+        }
+
+        """
+      }
+
+      print("Generated code:")
+      print(code)
+    }
+    
+    @Test func testComplexNestedStruct() throws {
+      // Create a more complex structure that might trigger the issue
+      struct ReviewField {
+        let id: String
+        let title: String
+        let value: String
+      }
+      
+      struct AddReviewViewModel {
+        let productId: String
+        let reviewsLegalNoticeUrl: URL?
+        let isPostingReview: Bool
+        let shouldDismissView: Bool
+        let fields: [ReviewField]
+      }
+
+      let viewModel = AddReviewViewModel(
+        productId: "ig_169380 ~ dm_8402040 ~ sku_0cebe88a - 32e1 - 49df - a17e - 150bb155f0fc",
+        reviewsLegalNoticeUrl: URL(string: "https://reviews.decathlon.com/fr_FR/review/terms"),
+        isPostingReview: false,
+        shouldDismissView: false,
+        fields: [
+          ReviewField(id: "0", title: "Lorem ipsum", value: ""),
+          ReviewField(id: "1", title: "Lorem ipsum", value: ""),
+          ReviewField(id: "2", title: "Lorem ipsum", value: "")
+        ]
+      )
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: viewModel,
+        variableName: "ig_169380_dm_8402040_sku_0cebe88a_32e1_49df_a17e_150bb155f0fc"
+      )
+
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension AddReviewViewModel {
+            static let ig_169380_dm_8402040_sku_0cebe88a_32e1_49df_a17e_150bb155f0fc: AddReviewViewModel =
+                AddReviewViewModel(
+                    productId: "ig_169380 ~ dm_8402040 ~ sku_0cebe88a - 32e1 - 49df - a17e - 150bb155f0fc",
+                    reviewsLegalNoticeUrl: URL(string: "https://reviews.decathlon.com/fr_FR/review/terms")!,
+                    isPostingReview: false,
+                    shouldDismissView: false,
+                    fields: [
+                        ReviewField(id: "0", title: "Lorem ipsum", value: ""),
+                        ReviewField(id: "1", title: "Lorem ipsum", value: ""),
+                        ReviewField(id: "2", title: "Lorem ipsum", value: ""),
+                    ]
+                )
+        }
+
+        """
+      }
+      
+      print("\n\nGenerated code for complex struct:")
+      print(code)
+      print("\n\n")
+    }
+  }
+}
