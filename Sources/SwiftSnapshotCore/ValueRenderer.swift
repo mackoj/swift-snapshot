@@ -185,7 +185,13 @@ enum ValueRenderer {
     let typeName = String(describing: type(of: value))
     if typeName.hasPrefix("Unsafe") && typeName.contains("Pointer") {
       // Unsafe pointers are runtime memory addresses and cannot be meaningfully serialized
-      // Return nil as a safe fallback
+      reportIssue(
+        "Cannot serialize unsafe pointer type '\(typeName)' at path '\(context.path.joined(separator: " → "))'. Using nil.",
+        fileID: #fileID,
+        filePath: #filePath,
+        line: #line,
+        column: #column
+      )
       return ExprSyntax(NilLiteralExprSyntax())
     }
 
@@ -1190,15 +1196,19 @@ enum ValueRenderer {
       return exprStatement.expression
     }
     
-    // Fallback: if parsing fails, report an issue and return a placeholder
+    // Fallback: if parsing fails, throw an error instead of silently returning nil
+    let typeName = String(describing: type(of: exportable))
     reportIssue(
-      "Failed to parse SwiftSnapshotExportable expression: \(exprString)",
+      "Failed to parse SwiftSnapshotExportable expression for type '\(typeName)'. Generated string was: '\(exprString)'",
       fileID: #fileID,
       filePath: #filePath,
       line: #line,
       column: #column
     )
-    return ExprSyntax(NilLiteralExprSyntax())
+    throw SwiftSnapshotError.reflection(
+      "SwiftSnapshotExportable parsing failed for type '\(typeName)'. Check macro-generated code.",
+      path: context.path
+    )
   }
 
   // MARK: - String Escaping
