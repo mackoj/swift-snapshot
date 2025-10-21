@@ -52,7 +52,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
           return "Product(id: \(instance.id), name: \(instance.name))"
         }
       }
@@ -134,7 +134,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: User) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
           return "User(id: \(instance.id))"
         }
       }
@@ -216,7 +216,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
           return "Product(id: \(instance.id), displayName: \(instance.name))"
         }
       }
@@ -298,7 +298,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: User) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
           return "User(id: \(instance.id), apiKey: \"SECRET\")"
         }
       }
@@ -380,7 +380,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: Account) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: Account) -> String {
           return "Account(id: \(instance.id), password: \"<hashed>\")"
         }
       }
@@ -462,7 +462,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: Config) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: Config) -> String {
           return "Config(id: \(instance.id), token: \"•••\")"
         }
       }
@@ -544,7 +544,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: Status) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: Status) -> String {
           switch instance {
           case .active:
               return ".active"
@@ -629,7 +629,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
           return "Product(id: \(instance.id))"
         }
       }
@@ -714,7 +714,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: SyncUpFormModel) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: SyncUpFormModel) -> String {
           return "SyncUpFormModel(focus: \(instance.focus), syncUp: \(instance.syncUp), uuid: \(instance.uuid))"
         }
       }
@@ -798,7 +798,7 @@ extension SnapshotTests {
           ]
         }
 
-        internal static func __swiftSnapshot_makeExpr(from instance: User) -> String {
+        public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
           return "User(id: \(instance.id), name: \(instance.name), some: \(instance.some))"
         }
       }

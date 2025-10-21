@@ -1,6 +1,7 @@
 import Foundation
 import SwiftSyntax
 import SwiftSyntaxBuilder
+import IssueReporting
 
 /// Core value renderer that converts Swift values to ExprSyntax
 ///
@@ -177,6 +178,14 @@ enum ValueRenderer {
     // Data conforms to Collection but has its own specialized handler above
     if let collection = value as? any Collection {
       return try renderCollection(collection, context: context)
+    }
+
+    // Check for unsafe pointer types - these cannot be serialized
+    let typeName = String(describing: type(of: value))
+    if typeName.hasPrefix("Unsafe") && typeName.contains("Pointer") {
+      // Unsafe pointers are runtime memory addresses and cannot be meaningfully serialized
+      // Return nil as a safe fallback
+      return ExprSyntax(NilLiteralExprSyntax())
     }
 
     // Fallback to reflection
@@ -472,8 +481,21 @@ enum ValueRenderer {
       }
 
       // Fallback to rawValue initializer
-      let rawExpr = try render(rawValue, context: context)
-      return ExprSyntax(stringLiteral: "\(typeName)(rawValue: \(rawExpr))!")
+      do {
+        let rawExpr = try render(rawValue, context: context)
+        return ExprSyntax(stringLiteral: "\(typeName)(rawValue: \(rawExpr))!")
+      } catch {
+        // If we can't render the raw value, report and use a simple representation
+        reportIssue(
+          "Failed to render raw value for enum '\(typeName)': \(error). Using simple case representation.",
+          fileID: #fileID,
+          filePath: #filePath,
+          line: #line,
+          column: #column
+        )
+        let caseName = "\(value)"
+        return ExprSyntax(stringLiteral: ".\(caseName)")
+      }
     }
 
     // Associated values - best effort
@@ -482,11 +504,32 @@ enum ValueRenderer {
       var args: [String] = []
       for (index, child) in mirror.children.enumerated() {
         let childContext = context.appending(path: ".\(caseName)[\(index)]")
-        let childExpr = try render(child.value, context: childContext)
-        if let label = child.label {
-          args.append("\(label): \(childExpr)")
-        } else {
-          args.append("\(childExpr)")
+        
+        // Try to render the associated value, use nil as default if it fails
+        do {
+          let childExpr = try render(child.value, context: childContext)
+          if let label = child.label {
+            args.append("\(label): \(childExpr)")
+          } else {
+            args.append("\(childExpr)")
+          }
+        } catch {
+          // Only report issues for shallow paths (not deep internal structures)
+          if childContext.path.count <= 2 {
+            reportIssue(
+              "Failed to render associated value at index \(index) for enum case '\(caseName)'. Using nil.",
+              fileID: #fileID,
+              filePath: #filePath,
+              line: #line,
+              column: #column
+            )
+          }
+          
+          if let label = child.label {
+            args.append("\(label): nil")
+          } else {
+            args.append("nil")
+          }
         }
       }
       let argsStr = args.joined(separator: ", ")
@@ -508,13 +551,279 @@ enum ValueRenderer {
         continue
       }
 
-      let childContext = context.appending(path: label)
-      let childExpr = try render(child.value, context: childContext)
-      args.append("\(label): \(childExpr)")
+      // Check if this is a property wrapper (backing storage starts with "_")
+      let (propertyName, propertyValue) = extractPropertyWrapperValue(label: label, value: child.value)
+      
+      let childContext = context.appending(path: propertyName)
+      
+      // Try to render the property value, but if it fails, use a default value and report the issue
+      let childExpr: ExprSyntax
+      do {
+        childExpr = try render(propertyValue, context: childContext)
+      } catch {
+        // Check if we're deep in an internal structure (like Combine publishers)
+        // If so, reduce the verbosity of error reporting
+        let pathString = childContext.path.joined(separator: " → ")
+        let isDeepInternalPath = pathString.contains("publisher") || 
+                                  pathString.contains("subject") || 
+                                  pathString.contains("subscriber") ||
+                                  childContext.path.count > 3
+        
+        if !isDeepInternalPath {
+          // Only report issues for top-level or user-facing properties
+          let propertyTypeName = String(describing: type(of: propertyValue))
+          reportIssue(
+            "Failed to render property '\(propertyName)' of type '\(propertyTypeName)' in '\(typeName)'. Using nil as default.",
+            fileID: #fileID,
+            filePath: #filePath,
+            line: #line,
+            column: #column
+          )
+        }
+        
+        // Use nil as the default value when rendering fails
+        childExpr = ExprSyntax(NilLiteralExprSyntax())
+      }
+      
+      args.append("\(propertyName): \(childExpr)")
     }
 
     let argsStr = args.joined(separator: ", ")
     return ExprSyntax(stringLiteral: "\(typeName)(\(argsStr))")
+  }
+  
+  /// Extract the wrapped value from a property wrapper if detected
+  ///
+  /// Property wrappers in Swift use a backing storage property that starts with "_".
+  /// For example, `@State var name: String` becomes `_name: State<String>`.
+  /// This function detects property wrappers and attempts to extract the wrapped value.
+  ///
+  /// - Parameters:
+  ///   - label: The property label from Mirror reflection
+  ///   - value: The property value from Mirror reflection
+  ///
+  /// - Returns: A tuple of (propertyName, propertyValue) where the name has the underscore
+  ///   prefix removed if it was a property wrapper, and the value is the wrapped value if available
+  static func extractPropertyWrapperValue(label: String, value: Any) -> (String, Any) {
+    // Check if this looks like a property wrapper backing storage
+    guard label.hasPrefix("_") else {
+      return (label, value)
+    }
+    
+    // Remove the underscore prefix to get the actual property name
+    let propertyName = String(label.dropFirst())
+    
+    // Try to extract the wrapped value using reflection
+    let wrappedValue = extractWrappedValueFromWrapper(value)
+    
+    return (propertyName, wrappedValue)
+  }
+  
+  /// Helper function to extract wrapped value from a property wrapper
+  ///
+  /// This function uses Mirror reflection to inspect the property wrapper and extract
+  /// the wrapped value. For most property wrappers, the actual value is stored in an
+  /// internal storage property (often the first child in the Mirror).
+  ///
+  /// For property wrappers that use UnsafeMutablePointer (like @Published), this function
+  /// attempts to dereference the pointer to access the actual wrapped value.
+  ///
+  /// - Parameter wrapper: The property wrapper instance
+  /// - Returns: The wrapped value if found, otherwise nil as a safe fallback
+  static func extractWrappedValueFromWrapper(_ wrapper: Any) -> Any {
+    let mirror = Mirror(reflecting: wrapper)
+    
+    // Property wrappers typically have internal storage properties
+    // Try to find the actual value by inspecting the mirror's children
+    // For many property wrappers (like @State, @Published, etc.), the first child
+    // contains the actual stored value
+    if let firstChild = mirror.children.first {
+      let childValue = firstChild.value
+      let childTypeName = String(describing: type(of: childValue))
+      
+      // Check if the child is an unsafe pointer - try to dereference it
+      if childTypeName.hasPrefix("Unsafe") && childTypeName.contains("Pointer") {
+        // Try to dereference the pointer to get the wrapped value
+        // This is common with @Published and other Combine property wrappers
+        if let dereferencedValue = tryDereferencePointer(childValue) {
+          return dereferencedValue
+        }
+        
+        // If dereferencing fails, return nil as a safe fallback
+        return Optional<Any>.none as Any
+      }
+      
+      // Check if the child looks like internal Combine implementation
+      // For @Published, we need to navigate: publisher -> subject -> currentValue
+      if childTypeName.contains("Publisher") || childTypeName.contains("Subject") {
+        // Try to extract currentValue from Combine publishers/subjects
+        if let currentValue = extractCurrentValueFromPublisher(childValue) {
+          return currentValue
+        }
+        
+        // If we can't extract currentValue, return nil as a safe fallback
+        return Optional<Any>.none as Any
+      }
+      
+      // Check for other Combine infrastructure types that we can't extract from
+      if childTypeName.contains("Subscriber") || childTypeName.contains("Subscription") {
+        // These types don't have a currentValue we can extract
+        return Optional<Any>.none as Any
+      }
+      
+      // For regular types, return the child value for recursive rendering
+      return childValue
+    }
+    
+    // If no children found, we can't extract a value
+    // Return nil as a safe fallback
+    return Optional<Any>.none as Any
+  }
+  
+  /// Extracts the current value from a Combine Publisher or Subject
+  ///
+  /// For @Published properties, the structure is:
+  /// - publisher (first child of wrapper)
+  ///   - subject (child of publisher)
+  ///     - currentValue (child of subject) ← This is what we want
+  ///
+  /// - Parameter publisherOrSubject: The publisher or subject instance
+  /// - Returns: The current value if found, nil otherwise
+  static func extractCurrentValueFromPublisher(_ publisherOrSubject: Any) -> Any? {
+    // Try to find currentValue directly in this level
+    let mirror = Mirror(reflecting: publisherOrSubject)
+    
+    // Check if this level has a currentValue property
+    for child in mirror.children {
+      if child.label == "currentValue" {
+        return child.value
+      }
+    }
+    
+    // If not found, navigate deeper through publisher/subject hierarchy
+    // Look for: publisher -> subject -> currentValue
+    for child in mirror.children {
+      let childTypeName = String(describing: type(of: child.value))
+      
+      // Navigate through publisher or subject children
+      if child.label == "publisher" || child.label == "subject" || 
+         childTypeName.contains("Publisher") || childTypeName.contains("Subject") {
+        
+        // Recursively search for currentValue in this child
+        if let currentValue = extractCurrentValueFromPublisher(child.value) {
+          return currentValue
+        }
+      }
+    }
+    
+    return nil
+  }
+  
+  /// Attempts to dereference an UnsafeMutablePointer or UnsafePointer to access the pointee
+  ///
+  /// Since we don't know the generic type parameter at compile time, this function
+  /// tries to cast to common types and dereference them.
+  ///
+  /// - Parameter pointer: The unsafe pointer (as Any)
+  /// - Returns: The dereferenced value if successful, nil otherwise
+  static func tryDereferencePointer(_ pointer: Any) -> Any? {
+    // Try to dereference using _openExistential
+    func attemptDeref<P>(_ ptr: P) -> Any? {
+      // Try casting to known pointer types and dereference
+      // Common types used in SwiftUI/Combine property wrappers
+      
+      // String
+      if let stringPtr = ptr as? UnsafeMutablePointer<String> {
+        return stringPtr.pointee
+      }
+      if let stringPtr = ptr as? UnsafePointer<String> {
+        return stringPtr.pointee
+      }
+      
+      // Int variants
+      if let intPtr = ptr as? UnsafeMutablePointer<Int> {
+        return intPtr.pointee
+      }
+      if let intPtr = ptr as? UnsafePointer<Int> {
+        return intPtr.pointee
+      }
+      if let int8Ptr = ptr as? UnsafeMutablePointer<Int8> {
+        return int8Ptr.pointee
+      }
+      if let int16Ptr = ptr as? UnsafeMutablePointer<Int16> {
+        return int16Ptr.pointee
+      }
+      if let int32Ptr = ptr as? UnsafeMutablePointer<Int32> {
+        return int32Ptr.pointee
+      }
+      if let int64Ptr = ptr as? UnsafeMutablePointer<Int64> {
+        return int64Ptr.pointee
+      }
+      
+      // UInt variants
+      if let uintPtr = ptr as? UnsafeMutablePointer<UInt> {
+        return uintPtr.pointee
+      }
+      if let uint8Ptr = ptr as? UnsafeMutablePointer<UInt8> {
+        return uint8Ptr.pointee
+      }
+      if let uint16Ptr = ptr as? UnsafeMutablePointer<UInt16> {
+        return uint16Ptr.pointee
+      }
+      if let uint32Ptr = ptr as? UnsafeMutablePointer<UInt32> {
+        return uint32Ptr.pointee
+      }
+      if let uint64Ptr = ptr as? UnsafeMutablePointer<UInt64> {
+        return uint64Ptr.pointee
+      }
+      
+      // Bool
+      if let boolPtr = ptr as? UnsafeMutablePointer<Bool> {
+        return boolPtr.pointee
+      }
+      if let boolPtr = ptr as? UnsafePointer<Bool> {
+        return boolPtr.pointee
+      }
+      
+      // Double and Float
+      if let doublePtr = ptr as? UnsafeMutablePointer<Double> {
+        return doublePtr.pointee
+      }
+      if let floatPtr = ptr as? UnsafeMutablePointer<Float> {
+        return floatPtr.pointee
+      }
+      
+      // Character
+      if let charPtr = ptr as? UnsafeMutablePointer<Character> {
+        return charPtr.pointee
+      }
+      
+      // Arrays (common in SwiftUI)
+      if let arrayPtr = ptr as? UnsafeMutablePointer<[Any]> {
+        return arrayPtr.pointee
+      }
+      
+      // Dictionary
+      if let dictPtr = ptr as? UnsafeMutablePointer<[AnyHashable: Any]> {
+        return dictPtr.pointee
+      }
+      
+      // Optional types
+      if let optStringPtr = ptr as? UnsafeMutablePointer<String?> {
+        return optStringPtr.pointee
+      }
+      if let optIntPtr = ptr as? UnsafeMutablePointer<Int?> {
+        return optIntPtr.pointee
+      }
+      if let optBoolPtr = ptr as? UnsafeMutablePointer<Bool?> {
+        return optBoolPtr.pointee
+      }
+      
+      // If we can't dereference, return nil
+      return nil
+    }
+    
+    return _openExistential(pointer, do: attemptDeref)
   }
 
   // MARK: - SwiftSnapshotExportable Renderer
