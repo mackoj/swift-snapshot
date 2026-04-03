@@ -155,16 +155,6 @@ enum ValueRenderer {
 
     // Handle Optional
     if let optional = value as? (any OptionalProtocol) {
-      // Log when we're rendering an Optional at the top level (path is empty)
-      if context.path.isEmpty {
-        reportIssue(
-          "Rendering top-level Optional of type '\(typeName)'. This will produce 'nil' if the optional is empty.",
-          fileID: #fileID,
-          filePath: #filePath,
-          line: #line,
-          column: #column
-        )
-      }
       return try renderOptional(optional, context: context)
     }
 
@@ -724,17 +714,6 @@ enum ValueRenderer {
     let mirror = Mirror(reflecting: value)
     let typeName = String(describing: type(of: value))
 
-    // Log when we're at the top level to help diagnose issues
-    if context.path.isEmpty {
-      reportIssue(
-        "Starting reflection-based rendering for type '\(typeName)' with displayStyle '\(String(describing: mirror.displayStyle))' and \(mirror.children.count) children",
-        fileID: #fileID,
-        filePath: #filePath,
-        line: #line,
-        column: #column
-      )
-    }
-
     // Handle enums
     if mirror.displayStyle == .enum {
       return try renderEnumViaReflection(value, mirror: mirror, context: context)
@@ -892,17 +871,6 @@ enum ValueRenderer {
     _ value: Any, typeName: String, mirror: Mirror, context: SnapshotRenderContext
   ) throws -> ExprSyntax {
     var labeledArgs: [LabeledExprSyntax] = []
-    
-    // Log at top level for debugging
-    if context.path.isEmpty {
-      reportIssue(
-        "Rendering struct/class '\(typeName)' with \(mirror.children.count) children",
-        fileID: #fileID,
-        filePath: #filePath,
-        line: #line,
-        column: #column
-      )
-    }
 
     for child in mirror.children {
       guard let label = child.label else {
