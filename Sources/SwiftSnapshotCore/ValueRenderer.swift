@@ -4,6 +4,47 @@ import SwiftSyntaxBuilder
 import SwiftParser
 import IssueReporting
 
+// MARK: - Result protocol bridge (US-6)
+
+/// Private protocol that allows rendering `Result<Success, Failure>` values without
+/// resorting to fragile Mirror-based reflection of its internal storage.
+private protocol _ResultRenderable {
+  func renderToExpr(context: SnapshotRenderContext) throws -> ExprSyntax
+}
+
+extension Result: _ResultRenderable {
+  func renderToExpr(context: SnapshotRenderContext) throws -> ExprSyntax {
+    switch self {
+    case .success(let value):
+      let valueExpr = try ValueRenderer.render(value as Any, context: context)
+      return ExprSyntax(
+        FunctionCallExprSyntax(
+          calledExpression: MemberAccessExprSyntax(
+            period: .periodToken(),
+            declName: DeclReferenceExprSyntax(baseName: .identifier("success"))
+          ),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax([LabeledExprSyntax(expression: valueExpr)]),
+          rightParen: .rightParenToken()
+        )
+      )
+    case .failure(let error):
+      let errorExpr = try ValueRenderer.render(error as Any, context: context)
+      return ExprSyntax(
+        FunctionCallExprSyntax(
+          calledExpression: MemberAccessExprSyntax(
+            period: .periodToken(),
+            declName: DeclReferenceExprSyntax(baseName: .identifier("failure"))
+          ),
+          leftParen: .leftParenToken(),
+          arguments: LabeledExprListSyntax([LabeledExprSyntax(expression: errorExpr)]),
+          rightParen: .rightParenToken()
+        )
+      )
+    }
+  }
+}
+
 /// Core value renderer that converts Swift values to ExprSyntax
 ///
 /// `ValueRenderer` is the heart of SwiftSnapshot's code generation. It traverses values
@@ -194,7 +235,17 @@ enum ValueRenderer {
 
     // Handle generic Collection types (e.g., IdentifiedArray)
     // This must come after specific Array/Dictionary/Set/Data checks to avoid false matches
-    // Data conforms to Collection but has its own specialized handler above
+    // Data conforms to Collection but has its own specialized handler above.
+    // Range<Bound> and ClosedRange<Bound> also conform to Collection; check them first.
+    if let range = value as? Range<Int>             { return try renderRange(range, context: context) }
+    if let range = value as? ClosedRange<Int>       { return try renderClosedRange(range, context: context) }
+    if let range = value as? Range<Double>          { return try renderRange(range, context: context) }
+    if let range = value as? ClosedRange<Double>    { return try renderClosedRange(range, context: context) }
+    if let range = value as? Range<String>          { return try renderRange(range, context: context) }
+    if let range = value as? ClosedRange<String>    { return try renderClosedRange(range, context: context) }
+    if let range = value as? Range<Character>       { return try renderRange(range, context: context) }
+    if let range = value as? ClosedRange<Character> { return try renderClosedRange(range, context: context) }
+
     if let collection = value as? any Collection {
       return try renderCollection(collection, context: context)
     }
@@ -210,6 +261,11 @@ enum ValueRenderer {
         column: #column
       )
       return ExprSyntax(NilLiteralExprSyntax())
+    }
+
+    // Handle Result<Success, Failure> before generic reflection to get proper .success/.failure
+    if let result = value as? any _ResultRenderable {
+      return try result.renderToExpr(context: context)
     }
 
     // Fallback to reflection
@@ -600,20 +656,23 @@ enum ValueRenderer {
       return ExprSyntax(DictionaryExprSyntax(content: .colon(.colonToken())))
     }
 
-    var pairs: [(key: String, value: Any)] = []
+    // Store the original AnyHashable key alongside its string representation for sorting.
+    // Rendering pair.originalKey.base preserves the actual key type (Int, UUID, etc.)
+    // instead of always producing a String literal.
+    var pairs: [(sortKey: String, originalKey: AnyHashable, value: Any)] = []
     for (key, value) in dict {
-      pairs.append((key: "\(key)", value: value))
+      pairs.append((sortKey: "\(key)", originalKey: key, value: value))
     }
 
-    // Sort if requested
+    // Sort by string representation of key for determinism
     if context.options.sortDictionaryKeys {
-      pairs.sort { $0.key < $1.key }
+      pairs.sort { $0.sortKey < $1.sortKey }
     }
 
     var elements: [DictionaryElementSyntax] = []
     for (index, pair) in pairs.enumerated() {
-      let keyContext = context.appending(path: "[\(pair.key)]")
-      let keyExpr = try render(pair.key, context: keyContext)
+      let keyContext = context.appending(path: "[\(pair.sortKey)]")
+      let keyExpr = try render(pair.originalKey.base, context: keyContext)
       let valueExpr = try render(pair.value, context: keyContext)
       elements.append(
         DictionaryElementSyntax(
@@ -632,14 +691,30 @@ enum ValueRenderer {
   static func renderSet(_ set: Set<AnyHashable>, context: SnapshotRenderContext) throws
     -> ExprSyntax
   {
-    var elements = Array(set)
-
-    // Sort for determinism if requested
-    if context.options.setDeterminism {
-      elements.sort { "\($0)" < "\($1)" }
+    // Render each element first, then sort by the rendered expression string.
+    // Sorting by rendered output (rather than String(describing:)) is more robust
+    // across Swift versions for complex types whose descriptions may change.
+    var rendered: [(expr: ExprSyntax, sortKey: String)] = []
+    for element in set {
+      let expr = try render(element, context: context)
+      rendered.append((expr, expr.description))
     }
 
-    let arrayExpr = try renderArray(elements, context: context)
+    if context.options.setDeterminism {
+      rendered.sort { $0.sortKey < $1.sortKey }
+    }
+
+    var arrayElements: [ArrayElementSyntax] = []
+    for (index, item) in rendered.enumerated() {
+      arrayElements.append(
+        ArrayElementSyntax(
+          expression: item.expr,
+          trailingComma: index < rendered.count - 1 ? .commaToken() : nil
+        )
+      )
+    }
+
+    let arrayExpr = ExprSyntax(ArrayExprSyntax(elements: ArrayElementListSyntax(arrayElements)))
     return ExprSyntax(
       FunctionCallExprSyntax(
         calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Set")),
@@ -704,6 +779,38 @@ enum ValueRenderer {
         ]),
         rightParen: .rightParenToken()
       )
+    )
+  }
+
+  // MARK: - Range Renderers (US-3)
+
+  /// Render a half-open range as `lower..<upper`
+  static func renderRange<Bound: Comparable>(
+    _ range: Range<Bound>, context: SnapshotRenderContext
+  ) throws -> ExprSyntax {
+    let lowerExpr = try render(range.lowerBound, context: context)
+    let upperExpr = try render(range.upperBound, context: context)
+    return ExprSyntax(
+      SequenceExprSyntax(elements: ExprListSyntax([
+        lowerExpr,
+        ExprSyntax(BinaryOperatorExprSyntax(text: "..<")),
+        upperExpr,
+      ]))
+    )
+  }
+
+  /// Render a closed range as `lower...upper`
+  static func renderClosedRange<Bound: Comparable>(
+    _ range: ClosedRange<Bound>, context: SnapshotRenderContext
+  ) throws -> ExprSyntax {
+    let lowerExpr = try render(range.lowerBound, context: context)
+    let upperExpr = try render(range.upperBound, context: context)
+    return ExprSyntax(
+      SequenceExprSyntax(elements: ExprListSyntax([
+        lowerExpr,
+        ExprSyntax(BinaryOperatorExprSyntax(text: "...")),
+        upperExpr,
+      ]))
     )
   }
 
@@ -870,6 +977,17 @@ enum ValueRenderer {
   static func renderStructViaReflection(
     _ value: Any, typeName: String, mirror: Mirror, context: SnapshotRenderContext
   ) throws -> ExprSyntax {
+    // For class instances, detect circular references by tracking visited object identities.
+    // Structs are value types and cannot form reference cycles.
+    var renderContext = context
+    if mirror.displayStyle == .class {
+      let objectID = ObjectIdentifier(value as AnyObject)
+      guard !renderContext.visitedObjectIDs.contains(objectID) else {
+        throw SwiftSnapshotError.circularReference(typeName, path: renderContext.path)
+      }
+      renderContext = renderContext.addingVisitedID(objectID)
+    }
+
     var labeledArgs: [LabeledExprSyntax] = []
 
     for child in mirror.children {
@@ -879,9 +997,9 @@ enum ValueRenderer {
 
       // Check if this is a property wrapper (backing storage starts with "_")
       let (propertyName, propertyValue) = extractPropertyWrapperValue(label: label, value: child.value)
-      
-      let childContext = context.appending(path: propertyName)
-      
+
+      let childContext = renderContext.appending(path: propertyName)
+
       // Try to render the property value, but if it fails, use a default value and report the issue
       let childExpr: ExprSyntax
       do {
@@ -890,11 +1008,11 @@ enum ValueRenderer {
         // Check if we're deep in an internal structure (like Combine publishers)
         // If so, reduce the verbosity of error reporting
         let pathString = childContext.path.joined(separator: " → ")
-        let isDeepInternalPath = pathString.contains("publisher") || 
-                                  pathString.contains("subject") || 
+        let isDeepInternalPath = pathString.contains("publisher") ||
+                                  pathString.contains("subject") ||
                                   pathString.contains("subscriber") ||
                                   childContext.path.count > 3
-        
+
         if !isDeepInternalPath {
           // Only report issues for top-level or user-facing properties
           let propertyTypeName = String(describing: type(of: propertyValue))

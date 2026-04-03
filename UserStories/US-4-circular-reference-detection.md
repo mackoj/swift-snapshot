@@ -2,7 +2,7 @@
 
 **Epic**: C – Safety & Robustness  
 **Priority**: P1  
-**Status**: 🔲 Not implemented
+**Status**: ✅ Implemented
 
 ---
 

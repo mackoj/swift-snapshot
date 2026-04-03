@@ -51,39 +51,21 @@ import Dependencies
 /// - ``SnapshotRendererRegistry`` for custom renderer registration
 public struct SnapshotRenderContext {
   /// Breadcrumb path within the object graph
-  ///
-  /// Tracks the property names traversed to reach the current value.
-  /// Used for error reporting and debugging.
-  ///
-  /// ## Example
-  ///
-  /// When rendering `user.profile.address.city`, the path would be:
-  /// ```swift
-  /// ["profile", "address", "city"]
-  /// ```
   public let path: [String]
 
   /// Formatting profile to use
-  ///
-  /// Contains code formatting settings like indentation, line endings, and whitespace rules.
-  /// See ``FormatProfile`` for available options.
   public let formatting: FormatProfile
 
   /// Render options
-  ///
-  /// Controls rendering behavior like dictionary key sorting, set ordering, and Data thresholds.
-  /// See ``RenderOptions`` for available options.
   public let options: RenderOptions
 
+  /// Object identities already visited on this rendering path.
+  ///
+  /// Used by ``ValueRenderer`` to detect circular references in class hierarchies.
+  /// Structs are value types and cannot form cycles; only class instances are tracked.
+  let visitedObjectIDs: Set<ObjectIdentifier>
+
   /// Creates a render context with specified configuration
-  ///
-  /// If `formatting` or `options` are not provided, values are loaded from
-  /// ``SwiftSnapshotConfig`` via dependency injection.
-  ///
-  /// - Parameters:
-  ///   - path: Breadcrumb path (default: empty array)
-  ///   - formatting: Optional format profile (default: from config)
-  ///   - options: Optional render options (default: from config)
   public init(
     path: [String] = [],
     formatting: FormatProfile? = nil,
@@ -93,28 +75,41 @@ public struct SnapshotRenderContext {
     self.path = path
     self.formatting = formatting ?? snapshotConfig.getFormatProfile()
     self.options = options ?? snapshotConfig.getRenderOptions()
+    self.visitedObjectIDs = []
+  }
+
+  /// Internal memberwise init used when constructing child contexts.
+  init(
+    path: [String],
+    formatting: FormatProfile,
+    options: RenderOptions,
+    visitedObjectIDs: Set<ObjectIdentifier>
+  ) {
+    self.path = path
+    self.formatting = formatting
+    self.options = options
+    self.visitedObjectIDs = visitedObjectIDs
   }
 
   /// Create a new context with an additional path component
-  ///
-  /// Used internally by ``ValueRenderer`` when traversing nested structures.
-  /// Each level of nesting adds a component to track the full path.
-  ///
-  /// - Parameter component: The property or index name to append
-  /// - Returns: New context with extended path
-  ///
-  /// ## Example
-  ///
-  /// ```swift
-  /// let parentContext = SnapshotRenderContext(path: ["user", "profile"])
-  /// let childContext = parentContext.appending(path: "address")
-  /// // childContext.path == ["user", "profile", "address"]
-  /// ```
   func appending(path component: String) -> SnapshotRenderContext {
     SnapshotRenderContext(
       path: path + [component],
       formatting: formatting,
-      options: options
+      options: options,
+      visitedObjectIDs: visitedObjectIDs
+    )
+  }
+
+  /// Create a new context that records a visited class object identity.
+  func addingVisitedID(_ id: ObjectIdentifier) -> SnapshotRenderContext {
+    var newIDs = visitedObjectIDs
+    newIDs.insert(id)
+    return SnapshotRenderContext(
+      path: path,
+      formatting: formatting,
+      options: options,
+      visitedObjectIDs: newIDs
     )
   }
 }

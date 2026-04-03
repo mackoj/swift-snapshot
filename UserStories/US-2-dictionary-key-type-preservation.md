@@ -2,7 +2,7 @@
 
 **Epic**: A – Correctness Fixes  
 **Priority**: P0  
-**Status**: 🔲 Not implemented
+**Status**: ✅ Implemented
 
 ---
 

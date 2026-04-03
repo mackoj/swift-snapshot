@@ -89,6 +89,17 @@ public enum SwiftSnapshotError: Error, CustomStringConvertible {
   ///   - path: Array of property names showing where in the object graph the error occurred
   case reflection(String, path: [String])
 
+  /// A circular reference was detected in a class object graph
+  ///
+  /// Thrown when ``ValueRenderer`` encounters a class instance that has already been
+  /// visited on the current rendering path, indicating a reference cycle.
+  /// Only class (reference type) instances can form cycles; struct values cannot.
+  ///
+  /// - Parameters:
+  ///   - String: The name of the type forming the cycle
+  ///   - path: Array of property names showing where the cycle was detected
+  case circularReference(String, path: [String])
+
   public var description: String {
     switch self {
     case .unsupportedType(let typeName, let path):
@@ -107,6 +118,10 @@ public enum SwiftSnapshotError: Error, CustomStringConvertible {
     case .reflection(let message, let path):
       let pathStr = path.isEmpty ? "" : " at path: \(path.joined(separator: " → "))"
       return "Reflection error: \(message)\(pathStr)"
+
+    case .circularReference(let typeName, let path):
+      let pathStr = path.isEmpty ? "" : " at path: \(path.joined(separator: " → "))"
+      return "Circular reference detected for type: \(typeName)\(pathStr)"
     }
   }
 }

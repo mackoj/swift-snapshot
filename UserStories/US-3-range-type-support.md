@@ -2,7 +2,7 @@
 
 **Epic**: B – Type Coverage  
 **Priority**: P1  
-**Status**: 🔲 Not implemented
+**Status**: ✅ Implemented
 
 ---
 
