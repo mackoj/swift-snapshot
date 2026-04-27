@@ -124,23 +124,23 @@ enum ValueRenderer {
     case let v as Int:
       return renderInt(v)
     case let v as Int8:
-      return renderInt8(v)
+      return renderFixedWidthInteger(v)
     case let v as Int16:
-      return renderInt16(v)
+      return renderFixedWidthInteger(v)
     case let v as Int32:
-      return renderInt32(v)
+      return renderFixedWidthInteger(v)
     case let v as Int64:
-      return renderInt64(v)
+      return renderFixedWidthInteger(v)
     case let v as UInt:
-      return renderUInt(v)
+      return renderFixedWidthInteger(v)
     case let v as UInt8:
-      return renderUInt8(v)
+      return renderFixedWidthInteger(v)
     case let v as UInt16:
-      return renderUInt16(v)
+      return renderFixedWidthInteger(v)
     case let v as UInt32:
-      return renderUInt32(v)
+      return renderFixedWidthInteger(v)
     case let v as UInt64:
-      return renderUInt64(v)
+      return renderFixedWidthInteger(v)
     case let v as Double:
       return renderDouble(v)
     case let v as Float:
@@ -155,16 +155,6 @@ enum ValueRenderer {
 
     // Handle Optional
     if let optional = value as? (any OptionalProtocol) {
-      // Log when we're rendering an Optional at the top level (path is empty)
-      if context.path.isEmpty {
-        reportIssue(
-          "Rendering top-level Optional of type '\(typeName)'. This will produce 'nil' if the optional is empty.",
-          fileID: #fileID,
-          filePath: #filePath,
-          line: #line,
-          column: #column
-        )
-      }
       return try renderOptional(optional, context: context)
     }
 
@@ -237,10 +227,14 @@ enum ValueRenderer {
     ExprSyntax(IntegerLiteralExprSyntax(integerLiteral: value))
   }
 
-  static func renderInt8(_ value: Int8) -> ExprSyntax {
-    ExprSyntax(
+  /// Generic renderer for fixed-width integer types other than `Int`.
+  ///
+  /// Produces `TypeName(value)` syntax, e.g. `Int8(42)`, `UInt16(7)`.
+  private static func renderFixedWidthInteger<T: FixedWidthInteger>(_ value: T) -> ExprSyntax {
+    let typeName = String(describing: T.self)
+    return ExprSyntax(
       FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int8")),
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier(typeName)),
         leftParen: .leftParenToken(),
         arguments: LabeledExprListSyntax([
           LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
@@ -250,171 +244,48 @@ enum ValueRenderer {
     )
   }
 
-  static func renderInt16(_ value: Int16) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int16")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderInt32(_ value: Int32) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int32")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderInt64(_ value: Int64) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("Int64")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderUInt(_ value: UInt) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderUInt8(_ value: UInt8) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt8")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderUInt16(_ value: UInt16) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt16")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderUInt32(_ value: UInt32) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt32")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
-  }
-
-  static func renderUInt64(_ value: UInt64) -> ExprSyntax {
-    ExprSyntax(
-      FunctionCallExprSyntax(
-        calledExpression: DeclReferenceExprSyntax(baseName: .identifier("UInt64")),
-        leftParen: .leftParenToken(),
-        arguments: LabeledExprListSyntax([
-          LabeledExprSyntax(expression: ExprSyntax(IntegerLiteralExprSyntax(literal: .integerLiteral(String(value)))))
-        ]),
-        rightParen: .rightParenToken()
-      )
-    )
+  /// Generic renderer for floating-point types (`Double`, `Float`).
+  ///
+  /// Handles NaN, ±infinity, and normal values with appropriate precision.
+  private static func renderFloatingPoint<T: FloatingPoint & CVarArg>(_ value: T, format: String) -> ExprSyntax {
+    let typeName = String(describing: T.self)
+    if value.isNaN {
+      return ExprSyntax(
+        MemberAccessExprSyntax(
+          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier(typeName))),
+          dot: .periodToken(),
+          declName: DeclReferenceExprSyntax(baseName: .identifier("nan"))
+        ))
+    } else if value.isInfinite {
+      let infinityExpr = ExprSyntax(
+        MemberAccessExprSyntax(
+          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier(typeName))),
+          dot: .periodToken(),
+          declName: DeclReferenceExprSyntax(baseName: .identifier("infinity"))
+        ))
+      
+      if value > 0 {
+        return infinityExpr
+      } else {
+        return ExprSyntax(
+          PrefixOperatorExprSyntax(
+            operator: .prefixOperator("-"),
+            expression: infinityExpr
+          )
+        )
+      }
+    } else {
+      let formatted = String(format: format, value)
+      return ExprSyntax(FloatLiteralExprSyntax(literal: .floatLiteral(formatted)))
+    }
   }
 
   static func renderDouble(_ value: Double) -> ExprSyntax {
-    if value.isNaN {
-      return ExprSyntax(
-        MemberAccessExprSyntax(
-          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Double"))),
-          dot: .periodToken(),
-          declName: DeclReferenceExprSyntax(baseName: .identifier("nan"))
-        ))
-    } else if value.isInfinite {
-      let infinityExpr = ExprSyntax(
-        MemberAccessExprSyntax(
-          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Double"))),
-          dot: .periodToken(),
-          declName: DeclReferenceExprSyntax(baseName: .identifier("infinity"))
-        ))
-      
-      if value > 0 {
-        return infinityExpr
-      } else {
-        return ExprSyntax(
-          PrefixOperatorExprSyntax(
-            operator: .prefixOperator("-"),
-            expression: infinityExpr
-          )
-        )
-      }
-    } else {
-      return ExprSyntax(
-        FloatLiteralExprSyntax(literal: .floatLiteral(String(format: "%.15g", value))))
-    }
+    renderFloatingPoint(value, format: "%.15g")
   }
 
   static func renderFloat(_ value: Float) -> ExprSyntax {
-    if value.isNaN {
-      return ExprSyntax(
-        MemberAccessExprSyntax(
-          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Float"))),
-          dot: .periodToken(),
-          declName: DeclReferenceExprSyntax(baseName: .identifier("nan"))
-        ))
-    } else if value.isInfinite {
-      let infinityExpr = ExprSyntax(
-        MemberAccessExprSyntax(
-          base: ExprSyntax(DeclReferenceExprSyntax(baseName: .identifier("Float"))),
-          dot: .periodToken(),
-          declName: DeclReferenceExprSyntax(baseName: .identifier("infinity"))
-        ))
-      
-      if value > 0 {
-        return infinityExpr
-      } else {
-        return ExprSyntax(
-          PrefixOperatorExprSyntax(
-            operator: .prefixOperator("-"),
-            expression: infinityExpr
-          )
-        )
-      }
-    } else {
-      return ExprSyntax(FloatLiteralExprSyntax(literal: .floatLiteral("\(value)")))
-    }
+    renderFloatingPoint(value, format: "%g")
   }
 
   static func renderBool(_ value: Bool) -> ExprSyntax {
@@ -725,6 +596,8 @@ enum ValueRenderer {
     let typeName = String(describing: type(of: value))
 
     // Log when we're at the top level to help diagnose issues
+    // Note: This is diagnostic information, not an issue - only log in verbose mode
+    #if SWIFT_SNAPSHOT_VERBOSE
     if context.path.isEmpty {
       reportIssue(
         "Starting reflection-based rendering for type '\(typeName)' with displayStyle '\(String(describing: mirror.displayStyle))' and \(mirror.children.count) children",
@@ -734,6 +607,7 @@ enum ValueRenderer {
         column: #column
       )
     }
+    #endif
 
     // Handle enums
     if mirror.displayStyle == .enum {
@@ -742,8 +616,23 @@ enum ValueRenderer {
 
     // Handle structs and classes
     if mirror.displayStyle == .struct || mirror.displayStyle == .class {
+      // Cycle detection for reference types (classes)
+      var renderContext = context
+      if mirror.displayStyle == .class, let object = value as? AnyObject {
+        if context.hasVisited(object) {
+          reportIssue(
+            "Circular reference detected for type '\(typeName)' at path '\(context.path.joined(separator: " → "))'. Using nil.",
+            fileID: #fileID,
+            filePath: #filePath,
+            line: #line,
+            column: #column
+          )
+          return ExprSyntax(NilLiteralExprSyntax())
+        }
+        renderContext = context.visiting(object)
+      }
       return try renderStructViaReflection(
-        value, typeName: typeName, mirror: mirror, context: context)
+        value, typeName: typeName, mirror: mirror, context: renderContext)
     }
 
     throw SwiftSnapshotError.unsupportedType(typeName, path: context.path)
@@ -894,6 +783,8 @@ enum ValueRenderer {
     var labeledArgs: [LabeledExprSyntax] = []
     
     // Log at top level for debugging
+    // Note: This is diagnostic information, not an issue - only log in verbose mode
+    #if SWIFT_SNAPSHOT_VERBOSE
     if context.path.isEmpty {
       reportIssue(
         "Rendering struct/class '\(typeName)' with \(mirror.children.count) children",
@@ -903,8 +794,33 @@ enum ValueRenderer {
         column: #column
       )
     }
+    #endif
 
+    // Collect all children including superclass properties for classes
+    var allChildren: [(label: String?, value: Any)] = []
+    
+    // First, gather superclass properties (they come first in init order)
+    if mirror.displayStyle == .class {
+      var superMirrors: [Mirror] = []
+      var current = mirror.superclassMirror
+      while let superMirror = current {
+        superMirrors.append(superMirror)
+        current = superMirror.superclassMirror
+      }
+      // Process from most-ancestor to least-ancestor
+      for superMirror in superMirrors.reversed() {
+        for child in superMirror.children {
+          allChildren.append((label: child.label, value: child.value))
+        }
+      }
+    }
+    
+    // Then add the current type's own properties
     for child in mirror.children {
+      allChildren.append((label: child.label, value: child.value))
+    }
+
+    for child in allChildren {
       guard let label = child.label else {
         continue
       }

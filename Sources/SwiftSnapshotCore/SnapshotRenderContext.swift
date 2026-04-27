@@ -75,6 +75,12 @@ public struct SnapshotRenderContext {
   /// See ``RenderOptions`` for available options.
   public let options: RenderOptions
 
+  /// Set of object identifiers already visited during rendering.
+  ///
+  /// Used to detect circular references and prevent stack overflows
+  /// when rendering recursive object graphs.
+  let visitedObjects: Set<ObjectIdentifier>
+
   /// Creates a render context with specified configuration
   ///
   /// If `formatting` or `options` are not provided, values are loaded from
@@ -93,6 +99,7 @@ public struct SnapshotRenderContext {
     self.path = path
     self.formatting = formatting ?? snapshotConfig.getFormatProfile()
     self.options = options ?? snapshotConfig.getRenderOptions()
+    self.visitedObjects = []
   }
 
   /// Create a new context with an additional path component
@@ -102,19 +109,49 @@ public struct SnapshotRenderContext {
   ///
   /// - Parameter component: The property or index name to append
   /// - Returns: New context with extended path
-  ///
-  /// ## Example
-  ///
-  /// ```swift
-  /// let parentContext = SnapshotRenderContext(path: ["user", "profile"])
-  /// let childContext = parentContext.appending(path: "address")
-  /// // childContext.path == ["user", "profile", "address"]
-  /// ```
   func appending(path component: String) -> SnapshotRenderContext {
-    SnapshotRenderContext(
+    var ctx = SnapshotRenderContext(
       path: path + [component],
       formatting: formatting,
-      options: options
+      options: options,
+      visitedObjects: visitedObjects
     )
+    return ctx
+  }
+
+  /// Check if an object has already been visited (cycle detection).
+  ///
+  /// - Parameter object: The reference-type object to check.
+  /// - Returns: `true` if this object was already seen in the current render tree.
+  func hasVisited(_ object: AnyObject) -> Bool {
+    visitedObjects.contains(ObjectIdentifier(object))
+  }
+
+  /// Create a new context that records `object` as visited.
+  ///
+  /// - Parameter object: The reference-type object being rendered.
+  /// - Returns: New context with the object recorded.
+  func visiting(_ object: AnyObject) -> SnapshotRenderContext {
+    var newVisited = visitedObjects
+    newVisited.insert(ObjectIdentifier(object))
+    return SnapshotRenderContext(
+      path: path,
+      formatting: formatting,
+      options: options,
+      visitedObjects: newVisited
+    )
+  }
+
+  /// Internal initializer that carries forward visited objects.
+  private init(
+    path: [String],
+    formatting: FormatProfile,
+    options: RenderOptions,
+    visitedObjects: Set<ObjectIdentifier>
+  ) {
+    self.path = path
+    self.formatting = formatting
+    self.options = options
+    self.visitedObjects = visitedObjects
   }
 }

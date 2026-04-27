@@ -76,6 +76,7 @@ enum CodeFormatter {
     expression: ExprSyntax,
     header: String?,
     context: String?,
+    additionalImports: [String] = [],
     profile: FormatProfile
   ) -> String {
     // Build the complete syntax tree
@@ -84,7 +85,8 @@ enum CodeFormatter {
       variableName: variableName,
       expression: expression,
       header: header,
-      context: context
+      context: context,
+      additionalImports: additionalImports
     )
 
     // Convert to string for formatting
@@ -105,7 +107,8 @@ enum CodeFormatter {
     variableName: String,
     expression: ExprSyntax,
     header: String?,
-    context: String?
+    context: String?,
+    additionalImports: [String] = []
   ) -> SourceFileSyntax {
     var statements: [CodeBlockItemSyntax] = []
 
@@ -125,6 +128,14 @@ enum CodeFormatter {
       path: [ImportPathComponentSyntax(name: .identifier("Foundation"))]
     )
     statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(importDecl))))
+
+    // Add additional import declarations
+    for moduleName in additionalImports {
+      let additionalImport = ImportDeclSyntax(
+        path: [ImportPathComponentSyntax(name: .identifier(moduleName))]
+      )
+      statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(additionalImport))))
+    }
 
     // Build context documentation as leading trivia for the variable declaration
     var variableLeadingTrivia: Trivia = []

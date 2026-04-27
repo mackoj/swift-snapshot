@@ -115,6 +115,7 @@ public enum SwiftSnapshotRuntime {
     allowOverwrite: Bool = true,
     header: String? = nil,
     context: String? = nil,
+    additionalImports: [String] = [],
     testName: String? = nil,
     line: UInt = #line,
     fileID: StaticString = #fileID,
@@ -135,7 +136,8 @@ public enum SwiftSnapshotRuntime {
         instance: instance,
         variableName: sanitizedVariableName,
         header: header,
-        context: context
+        context: context,
+        additionalImports: additionalImports
       )
 
       // Resolve output directory
@@ -187,21 +189,68 @@ public enum SwiftSnapshotRuntime {
     #endif
   }
 
-  /// Generate Swift code for a value without writing to disk
+  /// Generate Swift code for a value without writing to disk.
   ///
-  /// Internal method used by ``export(instance:variableName:fileName:outputBasePath:allowOverwrite:header:context:testName:line:fileID:filePath:)``
-  /// and available for testing. Converts a value to formatted Swift source code without performing file I/O.
+  /// Returns formatted Swift source code as a string containing an extension
+  /// with a static property. This is useful when you want to inspect or process
+  /// the generated code without performing file I/O.
   ///
   /// ## Process
   ///
   /// 1. Loads format configuration from ``SwiftSnapshotConfig`` or configured source
   /// 2. Creates a ``SnapshotRenderContext`` with formatting and render options
   /// 3. Renders the value using ``ValueRenderer/render(_:context:)``
-  /// 4. Formats the complete file using ``CodeFormatter/formatFile(typeName:variableName:expression:header:context:profile:)``
+  /// 4. Formats the complete file using ``CodeFormatter``
+  ///
+  /// ## Example
+  ///
+  /// ```swift
+  /// let user = User(id: 42, name: "Alice")
+  /// let code = try SwiftSnapshotRuntime.renderToString(
+  ///     instance: user,
+  ///     variableName: "testUser"
+  /// )
+  /// print(code)
+  /// // extension User {
+  /// //     static let testUser: User = User(id: 42, name: "Alice")
+  /// // }
+  /// ```
   ///
   /// - Parameters:
   ///   - instance: The value to render
   ///   - variableName: Name for the static property
+  ///   - header: Optional header comment for the file
+  ///   - context: Optional documentation for the property
+  ///   - additionalImports: Additional import statements to include (e.g. `["UIKit", "SwiftUI"]`)
+  ///
+  /// - Returns: Formatted Swift source code as a string
+  ///
+  /// - Throws: ``SwiftSnapshotError`` if rendering or formatting fails
+  public static func renderToString<T>(
+    instance: T,
+    variableName: String,
+    header: String? = nil,
+    context: String? = nil,
+    additionalImports: [String] = []
+  ) throws -> String {
+    try generateSwiftCode(
+      instance: instance,
+      variableName: sanitizeVariableName(variableName),
+      header: header,
+      context: context,
+      additionalImports: additionalImports
+    )
+  }
+  
+  /// Generate Swift code for a value without writing to disk
+  ///
+  /// Internal method used by ``export(instance:variableName:fileName:outputBasePath:allowOverwrite:header:context:testName:line:fileID:filePath:)``
+  /// and ``renderToString(instance:variableName:header:context:)``.
+  /// Converts a value to formatted Swift source code without performing file I/O.
+  ///
+  /// - Parameters:
+  ///   - instance: The value to render
+  ///   - variableName: Name for the static property (must already be sanitized)
   ///   - header: Optional header comment for the file
   ///   - context: Optional documentation for the property
   ///
@@ -212,7 +261,8 @@ public enum SwiftSnapshotRuntime {
     instance: T,
     variableName: String,
     header: String? = nil,
-    context: String? = nil
+    context: String? = nil,
+    additionalImports: [String] = []
   ) throws -> String {
     @Dependency(\.swiftSnapshotConfig) var snapshotConfig
     
@@ -265,6 +315,7 @@ public enum SwiftSnapshotRuntime {
       expression: expression,
       header: effectiveHeader,
       context: context,
+      additionalImports: additionalImports,
       profile: formatting
     )
 

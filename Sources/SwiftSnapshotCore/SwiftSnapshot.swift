@@ -1,7 +1,8 @@
 // SwiftSnapshot - Generate type-safe Swift source fixtures from runtime values
 
 @_exported import Foundation
-@_exported import SwiftSyntax
+// Note: SwiftSyntax is intentionally NOT re-exported to avoid leaking
+// implementation details into consumer namespaces.
 
 // Main runtime API
 // public enum SwiftSnapshotRuntime - defined in SwiftSnapshotRuntime.swift

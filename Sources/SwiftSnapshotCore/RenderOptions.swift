@@ -105,10 +105,10 @@ public struct RenderOptions: Sendable {
   ///   - dataInlineThreshold: Byte threshold for Data rendering (default: `16`)
   ///   - forceEnumDotSyntax: Whether to use dot syntax for enums (default: `true`)
   public init(
-    sortDictionaryKeys: Bool,
-    setDeterminism: Bool,
-    dataInlineThreshold: Int,
-    forceEnumDotSyntax: Bool
+    sortDictionaryKeys: Bool = true,
+    setDeterminism: Bool = true,
+    dataInlineThreshold: Int = 16,
+    forceEnumDotSyntax: Bool = true
   ) {
     self.sortDictionaryKeys = sortDictionaryKeys
     self.setDeterminism = setDeterminism
@@ -230,11 +230,11 @@ public struct FormatProfile: Sendable {
   ///   - insertFinalNewline: Whether to add final newline (default: `true`)
   ///   - trimTrailingWhitespace: Whether to trim trailing whitespace (default: `true`)
   public init(
-    indentStyle: IndentStyle,
-    indentSize: Int,
-    endOfLine: EndOfLine,
-    insertFinalNewline: Bool,
-    trimTrailingWhitespace: Bool
+    indentStyle: IndentStyle = .space,
+    indentSize: Int = 4,
+    endOfLine: EndOfLine = .lf,
+    insertFinalNewline: Bool = true,
+    trimTrailingWhitespace: Bool = true
   ) {
     self.indentStyle = indentStyle
     self.indentSize = indentSize
