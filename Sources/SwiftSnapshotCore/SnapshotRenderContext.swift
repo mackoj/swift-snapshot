@@ -110,13 +110,12 @@ public struct SnapshotRenderContext {
   /// - Parameter component: The property or index name to append
   /// - Returns: New context with extended path
   func appending(path component: String) -> SnapshotRenderContext {
-    var ctx = SnapshotRenderContext(
+    return SnapshotRenderContext(
       path: path + [component],
       formatting: formatting,
       options: options,
       visitedObjects: visitedObjects
     )
-    return ctx
   }
 
   /// Check if an object has already been visited (cycle detection).

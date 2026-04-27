@@ -796,28 +796,28 @@ enum ValueRenderer {
     }
     #endif
 
-    // Collect all children including superclass properties for classes
+    // Build a sequence of all children, including superclass properties for classes.
+    // Superclass properties come first (from most-ancestor to least-ancestor),
+    // followed by the current type's own properties.
     var allChildren: [(label: String?, value: Any)] = []
-    
-    // First, gather superclass properties (they come first in init order)
-    if mirror.displayStyle == .class {
+    if mirror.displayStyle == .class, mirror.superclassMirror != nil {
       var superMirrors: [Mirror] = []
       var current = mirror.superclassMirror
       while let superMirror = current {
         superMirrors.append(superMirror)
         current = superMirror.superclassMirror
       }
-      // Process from most-ancestor to least-ancestor
       for superMirror in superMirrors.reversed() {
         for child in superMirror.children {
           allChildren.append((label: child.label, value: child.value))
         }
       }
-    }
-    
-    // Then add the current type's own properties
-    for child in mirror.children {
-      allChildren.append((label: child.label, value: child.value))
+      for child in mirror.children {
+        allChildren.append((label: child.label, value: child.value))
+      }
+    } else {
+      // For structs and classes without superclass, use mirror.children directly
+      allChildren = mirror.children.map { (label: $0.label, value: $0.value) }
     }
 
     for child in allChildren {
