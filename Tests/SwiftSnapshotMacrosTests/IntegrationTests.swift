@@ -194,6 +194,26 @@ extension SnapshotTests {
       }
     }
 
+    @Test func targetLevelReflectionExtractionAppliesRedaction() throws {
+      let secret = TestSecret(id: "secret123", apiKey: "super-secret-key")
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: secret,
+        variableName: "testSecret"
+      )
+
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension TestSecret {
+            static let testSecret: TestSecret = TestSecret(id: "secret123", apiKey: "REDACTED")
+        }
+
+        """
+      }
+    }
+
     @Test func nestedTypeWithRedaction() throws {
       // This test verifies that when a type with @SwiftSnapshot and @SnapshotRedact
       // is nested inside another type during export, the redaction is properly applied
