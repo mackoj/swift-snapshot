@@ -46,4 +46,23 @@ public protocol SwiftSnapshotExportable {
   /// - Parameter instance: The instance to render
   /// - Returns: A Swift expression string (e.g., "User(id: 42, apiKey: \"***\")")
   static func __swiftSnapshot_makeExpr(from instance: Self) -> String
+
+  /// Provides target-level field extraction for stable reflection-based rendering.
+  ///
+  /// The macro can apply attribute-driven transforms (for example, redaction) while
+  /// keeping runtime rendering on the reflection/built-ins path.
+  ///
+  /// - Returns: Ordered fields used for top-level reflection rendering.
+  func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField]
+}
+
+/// A single extracted field for reflection-based rendering.
+public struct SwiftSnapshotReflectionField {
+  public let label: String
+  public let value: Any
+
+  public init(label: String, value: Any) {
+    self.label = label
+    self.value = value
+  }
 }

@@ -327,10 +327,28 @@ extension SwiftSnapshotMacro {
     }
 
     let arguments = argumentParts.joined(separator: ", ")
+    let reflectionFields = activeProperties.map { prop -> String in
+      if let redaction = prop.redaction {
+        switch redaction.mode {
+        case .mask(let maskValue):
+          return "SwiftSnapshotReflectionField(label: \"\(prop.name)\", value: \"\(maskValue)\")"
+        case .hash:
+          return "SwiftSnapshotReflectionField(label: \"\(prop.name)\", value: \"<hashed>\")"
+        }
+      }
+
+      return "SwiftSnapshotReflectionField(label: \"\(prop.name)\", value: self.\(prop.name))"
+    }.joined(separator: ", ")
 
     return """
       public static func __swiftSnapshot_makeExpr(from instance: \(raw: typeName)) -> String {
         return "\(raw: typeName)(\(raw: arguments))"
+      }
+
+      public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+        [
+          \(raw: reflectionFields)
+        ]
       }
       """
   }
@@ -409,6 +427,10 @@ extension SwiftSnapshotMacro {
         switch instance {
         \(raw: switchBody)
         }
+      }
+
+      public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+        []
       }
       """
   }
