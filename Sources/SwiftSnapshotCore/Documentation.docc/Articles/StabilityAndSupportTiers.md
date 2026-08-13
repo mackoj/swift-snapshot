@@ -9,6 +9,7 @@ These areas are the default path and should be preferred:
 - Built-in primitives and Foundation rendering
 - Collection rendering with deterministic ordering
 - Reflection fallback for custom model types
+- Top-level `@SwiftSnapshot` field extraction via `__swiftSnapshot_reflectionFields()` (ordered fields, deterministic transforms)
 - File export workflow and formatting integration
 
 ## Experimental

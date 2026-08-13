@@ -14,9 +14,12 @@ import Foundation
 ///
 /// ## Rendering Integration
 ///
-/// When ``ValueRenderer`` encounters a type conforming to this protocol during
-/// nested rendering, it will use the `__swiftSnapshot_makeExpr` method to ensure
-/// redactions and other macro-generated configurations are properly applied.
+/// When ``RenderOptions/useMacroGeneratedExpressions`` is enabled, ``ValueRenderer``
+/// may use `__swiftSnapshot_makeExpr(from:)` for expression-string rendering.
+///
+/// For stable/default rendering, `__swiftSnapshot_reflectionFields()` is used only for
+/// top-level values when field extraction is available. Nested values continue to render
+/// through standard reflection/built-ins.
 ///
 /// ## Example
 ///
@@ -51,6 +54,7 @@ public protocol SwiftSnapshotExportable {
   ///
   /// The macro can apply attribute-driven transforms (for example, redaction) while
   /// keeping runtime rendering on the reflection/built-ins path.
+  /// The returned fields must be deterministic and ordered by declaration order.
   ///
   /// - Returns: Ordered fields used for top-level reflection rendering.
   func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField]

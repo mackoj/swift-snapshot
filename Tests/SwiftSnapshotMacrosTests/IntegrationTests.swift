@@ -41,6 +41,16 @@ struct TestHashRedact {
 }
 
 @SwiftSnapshot
+struct TestOrderedTransforms {
+  let id: String
+  @SnapshotIgnore
+  let cache: [String: String]
+  @SnapshotRedact(.mask("REDACTED"))
+  let token: String
+  let note: String?
+}
+
+@SwiftSnapshot
 enum TestStatus {
   case active
   case inactive
@@ -79,6 +89,19 @@ struct TestUserGeneric<T: Codable> {
   let id: Int
   let name: String
   let some: [T]
+}
+
+struct EmptyReflectionFieldsExportable: SwiftSnapshotExportable {
+  let id: String
+  let alias: String?
+
+  static func __swiftSnapshot_makeExpr(from instance: EmptyReflectionFieldsExportable) -> String {
+    "EmptyReflectionFieldsExportable(id: \(instance.id), alias: \(instance.alias ?? "nil"))"
+  }
+
+  func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+    []
+  }
 }
 
 extension SnapshotTests {
@@ -212,6 +235,101 @@ extension SnapshotTests {
 
         """
       }
+    }
+
+    @Test func emptyExtractedFieldsFallbackToMirrorAtTopLevel() throws {
+      let value = EmptyReflectionFieldsExportable(id: "abc", alias: nil)
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: value,
+        variableName: "fixture"
+      )
+
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension EmptyReflectionFieldsExportable {
+            static let fixture: EmptyReflectionFieldsExportable = EmptyReflectionFieldsExportable(id: "abc", alias: nil)
+        }
+
+        """
+      }
+    }
+
+    @Test func topLevelUsesExtractedFieldsButNestedUsesMirrorFallback() throws {
+      struct SecretContainer {
+        let secret: TestSecret
+      }
+
+      let secret = TestSecret(id: "secret123", apiKey: "super-secret-key")
+
+      let topLevelCode = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: secret,
+        variableName: "topLevelSecret"
+      )
+
+      assertInlineSnapshot(of: topLevelCode, as: .description) {
+        """
+        import Foundation
+
+        extension TestSecret {
+            static let topLevelSecret: TestSecret = TestSecret(id: "secret123", apiKey: "REDACTED")
+        }
+
+        """
+      }
+
+      let nestedCode = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: SecretContainer(secret: secret),
+        variableName: "nestedSecret"
+      )
+
+      assertInlineSnapshot(of: nestedCode, as: .description) {
+        """
+        import Foundation
+
+        extension SecretContainer {
+            static let nestedSecret: SecretContainer = SecretContainer(secret: TestSecret(id: "secret123", apiKey: "super-secret-key"))
+        }
+
+        """
+      }
+    }
+
+    @Test func topLevelEnumWithAssociatedValuesRendersViaRuntime() throws {
+      let value = TestResult.success(value: 42)
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: value,
+        variableName: "enumFixture"
+      )
+
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension TestResult {
+            static let enumFixture: TestResult = .success(value: 42)
+        }
+
+        """
+      }
+    }
+
+    @Test func extractedFieldsApplyTransformsInDeterministicOrder() {
+      let value = TestOrderedTransforms(
+        id: "user-1",
+        cache: ["session": "live"],
+        token: "secret-token",
+        note: nil
+      )
+
+      let fields = value.__swiftSnapshot_reflectionFields()
+      #expect(fields.map(\.label) == ["id", "token", "note"])
+      #expect(fields[0].value as? String == "user-1")
+      #expect(fields[1].value as? String == "REDACTED")
+      #expect(fields[2].value as? String == nil)
     }
 
     @Test func nestedTypeWithRedaction() throws {
