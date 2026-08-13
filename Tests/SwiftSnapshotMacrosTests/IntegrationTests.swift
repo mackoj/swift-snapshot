@@ -217,6 +217,22 @@ extension SnapshotTests {
     @Test func nestedTypeWithRedaction() throws {
       // This test verifies that when a type with @SwiftSnapshot and @SnapshotRedact
       // is nested inside another type during export, the redaction is properly applied
+      let originalFormatConfigSource = SwiftSnapshotConfig.getFormatConfigSource()
+      let originalFormatProfile = SwiftSnapshotConfig.formattingProfile()
+      defer {
+        SwiftSnapshotConfig.setFormatConfigSource(originalFormatConfigSource)
+        SwiftSnapshotConfig.setFormattingProfile(originalFormatProfile)
+      }
+      SwiftSnapshotConfig.setFormatConfigSource(nil)
+      SwiftSnapshotConfig.setFormattingProfile(
+        FormatProfile(
+          indentStyle: .space,
+          indentSize: 4,
+          endOfLine: .lf,
+          insertFinalNewline: true,
+          trimTrailingWhitespace: true
+        )
+      )
       
       let mockData = [
         TestKakou(toto: "hello", tata: .b),
