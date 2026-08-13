@@ -43,6 +43,7 @@ extension SnapshotTests {
       #expect(renderOpts.setDeterminism == true)
       #expect(renderOpts.dataInlineThreshold == 16)
       #expect(renderOpts.forceEnumDotSyntax == true)
+      #expect(renderOpts.useMacroGeneratedExpressions == false)
 
       let formatProfile = client.libraryDefaultFormatProfile()
       #expect(formatProfile.indentStyle == .space)
@@ -95,6 +96,7 @@ extension SnapshotTests {
       #expect(restoredRenderOpts.setDeterminism == true)
       #expect(restoredRenderOpts.dataInlineThreshold == 16)
       #expect(restoredRenderOpts.forceEnumDotSyntax == true)
+      #expect(restoredRenderOpts.useMacroGeneratedExpressions == false)
       
       let restoredProfile = client.getFormatProfile()
       #expect(restoredProfile.indentStyle == .space)

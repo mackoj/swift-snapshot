@@ -101,7 +101,9 @@ enum ValueRenderer {
     // because the macro-generated string representations don't properly escape values
     // and can't be reliably parsed back into valid Swift syntax.
     // This is a known limitation that needs to be addressed in the macro implementation.
-    if let exportable = value as? any SwiftSnapshotExportable {
+    if context.options.useMacroGeneratedExpressions,
+      let exportable = value as? any SwiftSnapshotExportable
+    {
       // Try to use the macro-generated expression, but fall back to reflection if it fails
       do {
         return try renderSwiftSnapshotExportable(exportable, context: context)

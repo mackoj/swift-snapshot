@@ -54,7 +54,8 @@ public enum SwiftSnapshotConfig {
     sortDictionaryKeys: true,
     setDeterminism: true,
     dataInlineThreshold: 16,
-    forceEnumDotSyntax: true
+    forceEnumDotSyntax: true,
+    useMacroGeneratedExpressions: false
   )
   
   private static let baselineFormatProfile = FormatProfile(

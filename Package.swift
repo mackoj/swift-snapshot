@@ -64,6 +64,8 @@ let package = Package(
         "SwiftSnapshot",
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
+        .product(name: "SwiftParser", package: "swift-syntax"),
+        .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
       ]
     ),
     
@@ -96,7 +98,7 @@ for index in package.targets.indices {
   package.targets[index].swiftSettings = swiftSettings
 }
 
-#if !os(Windows)
+#if os(macOS)
 // Add the documentation compiler plugin if possible
 package.dependencies.append(
   .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.4.0")

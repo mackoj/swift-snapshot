@@ -17,7 +17,8 @@ import Foundation
 ///     sortDictionaryKeys: true,      // Deterministic dictionary output
 ///     setDeterminism: true,          // Deterministic set ordering
 ///     dataInlineThreshold: 16,       // Small Data as hex, large as base64
-///     forceEnumDotSyntax: true       // Use .case instead of Type.case
+///     forceEnumDotSyntax: true,      // Use .case instead of Type.case
+///     useMacroGeneratedExpressions: false // Stable default: reflection/built-ins
 /// )
 /// SwiftSnapshotConfig.setRenderOptions(options)
 /// ```
@@ -96,26 +97,41 @@ public struct RenderOptions: Sendable {
   /// let status: Status = Status.active
   /// ```
   public var forceEnumDotSyntax: Bool
-
-  /// Creates render options with specified behavior
+  
+    /// Whether to opt into macro-generated expression rendering for @SwiftSnapshot types.
   ///
-  /// - Parameters:
+    /// When `false` (default), SwiftSnapshot uses built-ins and reflection for deterministic,
+    /// stable output.
+    ///
+    /// When `true`, SwiftSnapshot will attempt to use macro-generated expression strings for
+    /// `SwiftSnapshotExportable` values first. This path is currently experimental and may
+    /// fall back to reflection if parsing fails.
+    ///
+    /// **Default**: `false`
+    public var useMacroGeneratedExpressions: Bool
+
+    /// Creates render options with specified behavior
+    ///
+    /// - Parameters:
   ///   - sortDictionaryKeys: Whether to sort dictionary keys (default: `true`)
   ///   - setDeterminism: Whether to use deterministic set ordering (default: `true`)
   ///   - dataInlineThreshold: Byte threshold for Data rendering (default: `16`)
   ///   - forceEnumDotSyntax: Whether to use dot syntax for enums (default: `true`)
-  public init(
-    sortDictionaryKeys: Bool,
-    setDeterminism: Bool,
-    dataInlineThreshold: Int,
-    forceEnumDotSyntax: Bool
-  ) {
-    self.sortDictionaryKeys = sortDictionaryKeys
-    self.setDeterminism = setDeterminism
-    self.dataInlineThreshold = dataInlineThreshold
-    self.forceEnumDotSyntax = forceEnumDotSyntax
+    ///   - useMacroGeneratedExpressions: Whether to enable macro-generated expression rendering (default: `false`)
+    public init(
+      sortDictionaryKeys: Bool,
+      setDeterminism: Bool,
+      dataInlineThreshold: Int,
+      forceEnumDotSyntax: Bool,
+      useMacroGeneratedExpressions: Bool = false
+    ) {
+      self.sortDictionaryKeys = sortDictionaryKeys
+      self.setDeterminism = setDeterminism
+      self.dataInlineThreshold = dataInlineThreshold
+      self.forceEnumDotSyntax = forceEnumDotSyntax
+      self.useMacroGeneratedExpressions = useMacroGeneratedExpressions
+    }
   }
-}
 
 /// Profile controlling code formatting
 ///

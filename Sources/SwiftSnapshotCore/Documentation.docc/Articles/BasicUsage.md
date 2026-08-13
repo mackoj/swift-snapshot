@@ -235,7 +235,8 @@ let options = RenderOptions(
     sortDictionaryKeys: true,
     setDeterminism: true,
     dataInlineThreshold: 16,
-    forceEnumDotSyntax: true
+    forceEnumDotSyntax: true,
+    useMacroGeneratedExpressions: false
 )
 SwiftSnapshotConfig.setRenderOptions(options)
 ```

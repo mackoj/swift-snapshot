@@ -31,6 +31,11 @@ import Foundation
 /// ```
 ///
 /// This is automatically conformed to by types annotated with @SwiftSnapshot.
+///
+/// - Warning: This protocol's expression-string rendering path is experimental and is
+///   disabled by default. Prefer the stable built-in/reflection rendering path or
+///   custom renderers via ``SnapshotRendererRegistry``.
+@available(*, deprecated, message: "Macro-generated expression string rendering is experimental. Prefer reflection/built-ins or SnapshotRendererRegistry custom renderers.")
 public protocol SwiftSnapshotExportable {
   /// Generate a Swift expression string for this instance, applying any redactions.
   ///
