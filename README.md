@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 > [!WARNING]
-> This is a work in progress everything is not ready yet some feature may be buggy or work in very limited use cases.
+> This project is evolving. Stable fixture-generation features are production-ready; advanced macro-expression rendering remains experimental and opt-in.
 
 <img width="400" height="400" alt="logo" src="https://github.com/user-attachments/assets/ed0c0179-bcaa-4e80-8509-7cd024e203d2" />
 
@@ -90,6 +90,19 @@ Optional compile-time macros add:
 
 ---
 
+## Positioning: what this library is for
+
+SwiftSnapshot is best at:
+- Typed fixture generation from real runtime state
+- Reproducible state capture for bug fixes/regression tests
+- Sharing realistic model data between tests and SwiftUI previews
+
+SwiftSnapshot is not a full replacement for behavior-oriented mocks:
+- Keep network stubs/spies when tests assert interactions or side effects
+- Use SwiftSnapshot for the data/state those tests consume
+
+---
+
 ## Motivation
 
 Traditional test fixtures have problems:
@@ -107,6 +120,8 @@ Traditional test fixtures have problems:
 - [What is SwiftSnapshot and Why?](Sources/SwiftSnapshotCore/Documentation.docc/Articles/WhatAndWhy.md) - Purpose and motivation
 - [Architecture](Sources/SwiftSnapshotCore/Documentation.docc/Articles/Architecture.md) - Technical design
 - [Basic Usage](Sources/SwiftSnapshotCore/Documentation.docc/Articles/BasicUsage.md) - Examples and patterns
+- [Stability and Support Tiers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/StabilityAndSupportTiers.md) - Stable/experimental/deprecated areas
+- [SwiftSnapshot vs DebugSnapshots](Sources/SwiftSnapshotCore/Documentation.docc/Articles/SwiftSnapshotVsDebugSnapshots.md) - Scope and engine comparison
 - [Custom Renderers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/CustomRenderers.md) - Type-specific rendering
 - [Formatting Configuration](Sources/SwiftSnapshotCore/Documentation.docc/Articles/FormattingConfiguration.md) - Code style setup
 
@@ -260,6 +275,33 @@ withDependencies {
     // Tests with custom config
 }
 ```
+
+### Render Stability Mode
+
+```swift
+let options = RenderOptions(
+    sortDictionaryKeys: true,
+    setDeterminism: true,
+    dataInlineThreshold: 16,
+    forceEnumDotSyntax: true,
+    useMacroGeneratedExpressions: false // stable default
+)
+SwiftSnapshotConfig.setRenderOptions(options)
+```
+
+If you set `useMacroGeneratedExpressions` to `true`, SwiftSnapshot will try macro-generated expression strings first (experimental) and fall back to reflection when parsing fails.
+
+### Baseline test matrix
+
+```bash
+swift test --filter SwiftSnapshotTests
+swift test --filter SwiftSnapshotMacrosTests
+```
+
+Support-tier guideline:
+- **Stable**: primitives/collections/foundation rendering, deterministic output, file export path
+- **Experimental**: macro-expression-string rendering (`useMacroGeneratedExpressions = true`)
+- **Deprecated**: direct dependence on `SwiftSnapshotExportable` expression strings as a primary rendering strategy
 
 ---
 

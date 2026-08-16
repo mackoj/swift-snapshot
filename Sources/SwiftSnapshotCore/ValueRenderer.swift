@@ -101,7 +101,9 @@ enum ValueRenderer {
     // because the macro-generated string representations don't properly escape values
     // and can't be reliably parsed back into valid Swift syntax.
     // This is a known limitation that needs to be addressed in the macro implementation.
-    if let exportable = value as? any SwiftSnapshotExportable {
+    if context.options.useMacroGeneratedExpressions,
+      let exportable = value as? any SwiftSnapshotExportable
+    {
       // Try to use the macro-generated expression, but fall back to reflection if it fails
       do {
         return try renderSwiftSnapshotExportable(exportable, context: context)
@@ -891,6 +893,16 @@ enum ValueRenderer {
   static func renderStructViaReflection(
     _ value: Any, typeName: String, mirror: Mirror, context: SnapshotRenderContext
   ) throws -> ExprSyntax {
+    if context.path.isEmpty, let exportable = value as? any SwiftSnapshotExportable {
+      if let extractedExpr = try renderStructFromTargetReflectionFields(
+        exportable,
+        typeName: typeName,
+        context: context
+      ) {
+        return extractedExpr
+      }
+    }
+
     var labeledArgs: [LabeledExprSyntax] = []
     
     // Log at top level for debugging
@@ -957,6 +969,60 @@ enum ValueRenderer {
     for (index, arg) in labeledArgs.enumerated() {
       if index < labeledArgs.count - 1 {
         // Add comma for all but the last argument
+        argsWithCommas.append(arg.with(\.trailingComma, .commaToken()))
+      } else {
+        argsWithCommas.append(arg)
+      }
+    }
+
+    return ExprSyntax(
+      FunctionCallExprSyntax(
+        calledExpression: DeclReferenceExprSyntax(baseName: .identifier(typeName)),
+        leftParen: .leftParenToken(),
+        arguments: LabeledExprListSyntax(argsWithCommas),
+        rightParen: .rightParenToken()
+      )
+    )
+  }
+
+  static func renderStructFromTargetReflectionFields(
+    _ exportable: any SwiftSnapshotExportable,
+    typeName: String,
+    context: SnapshotRenderContext
+  ) throws -> ExprSyntax? {
+    let fields = exportable.__swiftSnapshot_reflectionFields()
+    guard !fields.isEmpty else { return nil }
+
+    var labeledArgs: [LabeledExprSyntax] = []
+    for field in fields {
+      let childContext = context.appending(path: field.label)
+
+      let childExpr: ExprSyntax
+      do {
+        childExpr = try render(field.value, context: childContext)
+      } catch {
+        reportIssue(
+          "Failed to render extracted field '\(field.label)' in '\(typeName)'. Using nil as default.",
+          fileID: #fileID,
+          filePath: #filePath,
+          line: #line,
+          column: #column
+        )
+        childExpr = ExprSyntax(NilLiteralExprSyntax())
+      }
+
+      labeledArgs.append(
+        LabeledExprSyntax(
+          label: .identifier(field.label),
+          colon: .colonToken(),
+          expression: childExpr
+        )
+      )
+    }
+
+    var argsWithCommas: [LabeledExprSyntax] = []
+    for (index, arg) in labeledArgs.enumerated() {
+      if index < labeledArgs.count - 1 {
         argsWithCommas.append(arg.with(\.trailingComma, .commaToken()))
       } else {
         argsWithCommas.append(arg)

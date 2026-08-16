@@ -55,6 +55,12 @@ extension SnapshotTests {
         public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
           return "Product(id: \(instance.id), name: \(instance.name))"
         }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "name", value: self.name)
+          ]
+        }
       }
 
       extension Product: SwiftSnapshotExportable {
@@ -136,6 +142,12 @@ extension SnapshotTests {
 
         public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
           return "User(id: \(instance.id))"
+        }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id)
+          ]
         }
       }
 
@@ -219,6 +231,12 @@ extension SnapshotTests {
         public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
           return "Product(id: \(instance.id), displayName: \(instance.name))"
         }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "name", value: self.name)
+          ]
+        }
       }
 
       extension Product: SwiftSnapshotExportable {
@@ -300,6 +318,12 @@ extension SnapshotTests {
 
         public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
           return "User(id: \(instance.id), apiKey: \"SECRET\")"
+        }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "apiKey", value: "SECRET")
+          ]
         }
       }
 
@@ -383,6 +407,12 @@ extension SnapshotTests {
         public static func __swiftSnapshot_makeExpr(from instance: Account) -> String {
           return "Account(id: \(instance.id), password: \"<hashed>\")"
         }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "password", value: "<hashed>")
+          ]
+        }
       }
 
       extension Account: SwiftSnapshotExportable {
@@ -464,6 +494,12 @@ extension SnapshotTests {
 
         public static func __swiftSnapshot_makeExpr(from instance: Config) -> String {
           return "Config(id: \(instance.id), token: \"•••\")"
+        }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "token", value: "•••")
+          ]
         }
       }
 
@@ -554,6 +590,10 @@ extension SnapshotTests {
               return ".pending"
           }
         }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          []
+        }
       }
 
       extension Status: SwiftSnapshotExportable {
@@ -631,6 +671,12 @@ extension SnapshotTests {
 
         public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
           return "Product(id: \(instance.id))"
+        }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id)
+          ]
         }
       }
 
@@ -717,6 +763,12 @@ extension SnapshotTests {
         public static func __swiftSnapshot_makeExpr(from instance: SyncUpFormModel) -> String {
           return "SyncUpFormModel(focus: \(instance.focus), syncUp: \(instance.syncUp), uuid: \(instance.uuid))"
         }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "focus", value: self.focus), SwiftSnapshotReflectionField(label: "syncUp", value: self.syncUp), SwiftSnapshotReflectionField(label: "uuid", value: self.uuid)
+          ]
+        }
       }
 
       extension SyncUpFormModel: SwiftSnapshotExportable {
@@ -800,6 +852,12 @@ extension SnapshotTests {
 
         public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
           return "User(id: \(instance.id), name: \(instance.name), some: \(instance.some))"
+        }
+
+        public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+          [
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "name", value: self.name), SwiftSnapshotReflectionField(label: "some", value: self.some)
+          ]
         }
       }
 

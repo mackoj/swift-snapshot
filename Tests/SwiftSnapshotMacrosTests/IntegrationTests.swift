@@ -41,6 +41,16 @@ struct TestHashRedact {
 }
 
 @SwiftSnapshot
+struct TestOrderedTransforms {
+  let id: String
+  @SnapshotIgnore
+  let cache: [String: String]
+  @SnapshotRedact(.mask("REDACTED"))
+  let token: String
+  let note: String?
+}
+
+@SwiftSnapshot
 enum TestStatus {
   case active
   case inactive
@@ -81,8 +91,25 @@ struct TestUserGeneric<T: Codable> {
   let some: [T]
 }
 
+struct EmptyReflectionFieldsExportable: SwiftSnapshotExportable {
+  let id: String
+  let alias: String?
+
+  static func __swiftSnapshot_makeExpr(from instance: EmptyReflectionFieldsExportable) -> String {
+    "EmptyReflectionFieldsExportable(id: \(instance.id), alias: \(instance.alias ?? "nil"))"
+  }
+
+  func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
+    []
+  }
+}
+
 extension SnapshotTests {
   @Suite struct MacroIntegrationTests {
+    init() {
+      SwiftSnapshotConfig.resetToLibraryDefaults()
+    }
+
     @Test func macroGeneratedCodeCompiles() throws {
       // This test verifies that code using the macros compiles successfully
       // The fact that this file compiles proves the macros are working
@@ -194,9 +221,114 @@ extension SnapshotTests {
       }
     }
 
+    @Test func targetLevelReflectionExtractionAppliesRedaction() throws {
+      let secret = TestSecret(id: "secret123", apiKey: "super-secret-key")
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: secret,
+        variableName: "testSecret"
+      )
+
+      assertInlineSnapshot(of: code, as: .description) {
+        """
+        import Foundation
+
+        extension TestSecret {
+            static let testSecret: TestSecret = TestSecret(id: "secret123", apiKey: "REDACTED")
+        }
+
+        """
+      }
+    }
+
+    @Test func emptyExtractedFieldsFallbackToMirrorAtTopLevel() throws {
+      let value = EmptyReflectionFieldsExportable(id: "abc", alias: nil)
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: value,
+        variableName: "fixture"
+      )
+
+      #expect(code.contains("extension EmptyReflectionFieldsExportable"))
+      #expect(code.contains("static let fixture: EmptyReflectionFieldsExportable"))
+      #expect(code.contains("id: \"abc\""))
+      #expect(code.contains("alias: nil"))
+    }
+
+    @Test func topLevelUsesExtractedFieldsButNestedUsesMirrorFallback() throws {
+      struct SecretContainer {
+        let secret: TestSecret
+      }
+
+      let secret = TestSecret(id: "secret123", apiKey: "super-secret-key")
+
+      let topLevelCode = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: secret,
+        variableName: "topLevelSecret"
+      )
+
+      #expect(topLevelCode.contains("extension TestSecret"))
+      #expect(topLevelCode.contains("static let topLevelSecret: TestSecret"))
+      #expect(topLevelCode.contains("apiKey: \"REDACTED\""))
+
+      let nestedCode = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: SecretContainer(secret: secret),
+        variableName: "nestedSecret"
+      )
+
+      #expect(nestedCode.contains("extension SecretContainer"))
+      #expect(nestedCode.contains("static let nestedSecret: SecretContainer"))
+      #expect(nestedCode.contains("apiKey: \"super-secret-key\""))
+      #expect(!nestedCode.contains("apiKey: \"REDACTED\""))
+    }
+
+    @Test func topLevelEnumWithAssociatedValuesRendersViaRuntime() throws {
+      let value = TestResult.success(value: 42)
+
+      let code = try SwiftSnapshotRuntime.generateSwiftCode(
+        instance: value,
+        variableName: "enumFixture"
+      )
+
+      #expect(code.contains("extension TestResult"))
+      #expect(code.contains("static let enumFixture: TestResult"))
+      #expect(!code.contains("__swiftSnapshot_reflectionFields"))
+    }
+
+    @Test func extractedFieldsApplyTransformsInDeterministicOrder() {
+      let value = TestOrderedTransforms(
+        id: "user-1",
+        cache: ["session": "live"],
+        token: "secret-token",
+        note: nil
+      )
+
+      let fields = value.__swiftSnapshot_reflectionFields()
+      #expect(fields.map(\.label) == ["id", "token", "note"])
+      #expect(fields[0].value as? String == "user-1")
+      #expect(fields[1].value as? String == "REDACTED")
+      #expect(fields[2].value as? String == nil)
+    }
+
     @Test func nestedTypeWithRedaction() throws {
       // This test verifies that when a type with @SwiftSnapshot and @SnapshotRedact
       // is nested inside another type during export, the redaction is properly applied
+      let originalFormatConfigSource = SwiftSnapshotConfig.getFormatConfigSource()
+      let originalFormatProfile = SwiftSnapshotConfig.formattingProfile()
+      defer {
+        SwiftSnapshotConfig.setFormatConfigSource(originalFormatConfigSource)
+        SwiftSnapshotConfig.setFormattingProfile(originalFormatProfile)
+      }
+      SwiftSnapshotConfig.setFormatConfigSource(nil)
+      SwiftSnapshotConfig.setFormattingProfile(
+        FormatProfile(
+          indentStyle: .space,
+          indentSize: 4,
+          endOfLine: .lf,
+          insertFinalNewline: true,
+          trimTrailingWhitespace: true
+        )
+      )
       
       let mockData = [
         TestKakou(toto: "hello", tata: .b),

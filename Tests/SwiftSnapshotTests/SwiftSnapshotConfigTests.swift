@@ -123,6 +123,7 @@ extension SnapshotTests {
       #expect(retrieved.setDeterminism == false)
       #expect(retrieved.dataInlineThreshold == 256)
       #expect(retrieved.forceEnumDotSyntax == false)
+      #expect(retrieved.useMacroGeneratedExpressions == false)
       
       // Cleanup
       SwiftSnapshotConfig.resetToLibraryDefaults()
@@ -224,6 +225,7 @@ extension SnapshotTests {
       #expect(options.setDeterminism == true)
       #expect(options.dataInlineThreshold == 16)
       #expect(options.forceEnumDotSyntax == true)
+      #expect(options.useMacroGeneratedExpressions == false)
     }
     
     // MARK: - Library Default Methods Tests
@@ -236,6 +238,7 @@ extension SnapshotTests {
       #expect(defaults.setDeterminism == true)
       #expect(defaults.dataInlineThreshold == 16)
       #expect(defaults.forceEnumDotSyntax == true)
+      #expect(defaults.useMacroGeneratedExpressions == false)
     }
     
     /// Test library default format profile
