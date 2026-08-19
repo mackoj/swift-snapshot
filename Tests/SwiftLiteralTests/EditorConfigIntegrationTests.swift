@@ -1,3 +1,4 @@
+import DependenciesTestSupport
 import InlineSnapshotTesting
 import Testing
 
@@ -5,7 +6,7 @@ import Testing
 
 extension LiteralTests {
   /// Comprehensive tests for EditorConfig behavior verification
-  @Suite struct EditorConfigIntegrationTests {
+  @Suite(.dependency(\.literalConfiguration, .live)) struct EditorConfigIntegrationTests {
     init() {
       // Reset configuration between tests
       LiteralConfig.resetToLibraryDefaults()

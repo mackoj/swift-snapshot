@@ -1,3 +1,4 @@
+import DependenciesTestSupport
 import InlineSnapshotTesting
 import Testing
 
@@ -5,7 +6,7 @@ import Testing
 
 extension LiteralTests {
   /// Tests for format configuration loading from .swift-format and .editorconfig files
-  @Suite struct FormattingConfigTests {
+  @Suite(.dependency(\.literalConfiguration, .live)) struct FormattingConfigTests {
     init() {
       // Reset configuration between tests
       LiteralConfig.resetToLibraryDefaults()

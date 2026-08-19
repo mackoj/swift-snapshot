@@ -1,3 +1,4 @@
+import DependenciesTestSupport
 import Testing
 import Foundation
 
@@ -5,7 +6,7 @@ import Foundation
 
 extension LiteralTests {
   /// Tests for LiteralConfig
-  @Suite struct LiteralConfigTests {
+  @Suite(.dependency(\.literalConfiguration, .live)) struct LiteralConfigTests {
     
     init() {
       // Reset configuration between tests

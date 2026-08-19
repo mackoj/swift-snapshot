@@ -62,6 +62,7 @@ enum PathResolver {
   /// - Returns: URL to the output directory where snapshot files should be written
   static func resolveOutputDirectory(
     directory outputBasePath: String?,
+    globalRoot: URL?,
     fileID: StaticString,
     filePath: StaticString
   ) -> URL {
@@ -70,8 +71,8 @@ enum PathResolver {
       return URL(fileURLWithPath: basePath)
     }
 
-    // 2. Global configuration
-    if let globalRoot = LiteralConfig.getGlobalRoot() {
+    // 2. Configuration, handed in by the caller rather than read from a global here.
+    if let globalRoot {
       return globalRoot
     }
 

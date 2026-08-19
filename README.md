@@ -75,7 +75,12 @@ is in when a screen looks wrong and hand it to a SwiftUI preview.
 .product(name: "SwiftLiteral", package: "swift-snapshot")
 ```
 
-Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16.
+Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16. CI builds every one of them.
+
+`Literal.source` works anywhere. `Literal.write` needs somewhere to write: on a simulator
+the default path resolves against the machine that compiled the code, so it lands in your
+source tree as expected. On a device it does not, and you should pass a `directory:` inside
+the app's sandbox or use `Literal.source` and move the text yourself.
 
 ## Use
 
@@ -245,6 +250,27 @@ LiteralConfig.setRenderOptions(
     RenderOptions(sortDictionaryKeys: true, setDeterminism: true, dataInlineThreshold: 16)
 )
 ```
+
+### Configuration in tests
+
+`LiteralConfig` is process-global. That is fine for an app and wrong for a test suite:
+tests run concurrently, so one test setting a two-space `.editorconfig` changes what
+another test renders, and the failure only shows up when the timing is unlucky.
+
+So a render reads its configuration from a dependency, not from the globals. Its test value
+is the library defaults and nothing else. To render with something else, say so:
+
+```swift
+import Dependencies
+
+withDependencies {
+    $0.literalConfiguration.formatProfile = { FormatProfile(indentSize: 2) }
+} operation: {
+    let code = try Literal.source(of: value, named: "fixture")
+}
+```
+
+The override is a task local, so it applies to that test and no other.
 
 ## What it does not do
 

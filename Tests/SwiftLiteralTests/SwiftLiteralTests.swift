@@ -1,10 +1,11 @@
+import DependenciesTestSupport
 import InlineSnapshotTesting
 import Testing
 
 @testable import SwiftLiteralCore
 
 extension LiteralTests {
-  @Suite struct SwiftLiteralTests {
+  @Suite(.dependency(\.literalConfiguration, .live)) struct SwiftLiteralTests {
     init() {
       // Reset configuration between tests
       LiteralConfig.resetToLibraryDefaults()

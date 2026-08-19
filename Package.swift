@@ -22,6 +22,7 @@ let package = Package(
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.11.0"),
     .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", "1.18.0"..<"1.19.0"),
     .package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.6.0"),
+    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.10.0"),
   ],
   targets: [
     // Macro implementation (compiler plugin + public macro definitions)
@@ -44,6 +45,7 @@ let package = Package(
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
+        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ],
       path: "Sources/SwiftLiteralReflection"
     ),
@@ -58,6 +60,7 @@ let package = Package(
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftFormat", package: "swift-format"),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
+        .product(name: "Dependencies", package: "swift-dependencies"),
       ],
       path: "Sources/SwiftLiteralCore"
     ),
@@ -77,8 +80,10 @@ let package = Package(
       name: "SwiftLiteralReflectionTests",
       dependencies: [
         "SwiftLiteralReflection",
+        .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
-      ]
+      ],
+      exclude: ["__Snapshots__"]
     ),
 
     // Core runtime tests

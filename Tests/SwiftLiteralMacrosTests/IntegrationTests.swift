@@ -102,9 +102,8 @@ struct EmptyReflectionFieldsExportable: LiteralFields {
 
 extension LiteralTests {
   @Suite struct MacroIntegrationTests {
-    init() {
-      LiteralConfig.resetToLibraryDefaults()
-    }
+    // No setup. The test configuration client is already library defaults, and nothing
+    // another suite does can change that.
 
     /// Assert on what the library writes, not on an intermediate string.
     ///
@@ -268,25 +267,13 @@ extension LiteralTests {
     }
 
     @Test func nestedTypeWithRedaction() throws {
-      // This test verifies that when a type with @SwiftLiteral and @LiteralRedact
-      // is nested inside another type during export, the redaction is properly applied
-      let originalFormatConfigSource = LiteralConfig.getFormatConfigSource()
-      let originalFormatProfile = LiteralConfig.formattingProfile()
-      defer {
-        LiteralConfig.setFormatConfigSource(originalFormatConfigSource)
-        LiteralConfig.setFormattingProfile(originalFormatProfile)
-      }
-      LiteralConfig.setFormatConfigSource(nil)
-      LiteralConfig.setFormattingProfile(
-        FormatProfile(
-          indentStyle: .space,
-          indentSize: 4,
-          endOfLine: .lf,
-          insertFinalNewline: true,
-          trimTrailingWhitespace: true
-        )
-      )
-      
+      // Redaction on a type nested inside another type, through an array, through a
+      // generic.
+      //
+      // This test used to save the global format configuration, overwrite it, and put it
+      // back, because another suite could change it mid-render. That is no longer
+      // possible: the test client hands out library defaults and ignores the globals.
+
       let mockData = [
         TestKakou(toto: "hello", tata: .b),
         TestKakou(toto: "world", tata: .c),
