@@ -116,6 +116,10 @@ public enum ValueRenderer {
       return "URL(string: \(quoted(v.absoluteString)))!"
     case let v as Decimal:
       return "Decimal(string: \(quoted(v.description)))!"
+    case let v as Locale:
+      return "Locale(identifier: \(quoted(v.identifier)))"
+    case let v as TimeZone:
+      return "TimeZone(identifier: \(quoted(v.identifier)))!"
     case let v as Data:
       if v.count <= context.options.dataInlineThreshold {
         let bytes = v.map { String(format: "0x%02X", $0) }.joined(separator: ", ")
@@ -226,6 +230,14 @@ public enum ValueRenderer {
     let mirror = Mirror(reflecting: value)
 
     switch mirror.displayStyle {
+    case .tuple:
+      let elements = try mirror.children.enumerated().map { index, child in
+        let rendered = try text(child.value, context: context.appending(path: ".\(index)"))
+        guard let label = child.label, !label.hasPrefix(".") else { return rendered }
+        return "\(label): \(rendered)"
+      }
+      return "(\(elements.joined(separator: ", ")))"
+
     case .enum:
       return try enumText(value, typeName: typeName, mirror: mirror, context: context)
 
@@ -394,7 +406,13 @@ public enum ValueRenderer {
     let simple = String(describing: type(of: value))
     let qualified = String(reflecting: type(of: value))
 
-    guard !qualified.contains("(unknown context"), !qualified.contains("<") else {
+    // A tuple reflects as "(Swift.Int, Swift.String)" and a function as
+    // "(Swift.Int) -> Swift.String". Neither is a dotted path, and splitting one produces
+    // nonsense like "Int, Swift.String)".
+    guard !qualified.contains("(unknown context"),
+      !qualified.contains("<"),
+      !qualified.hasPrefix("(")
+    else {
       return simple
     }
 

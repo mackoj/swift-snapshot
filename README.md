@@ -273,7 +273,8 @@ redacted.
 |---|---|
 | Primitives | `String`, `Character`, `Bool`, `Double`, `Float`, every sized integer, and the special float values |
 | Collections | arrays, dictionaries, sets, ranges |
-| Foundation | `Date`, `UUID`, `URL`, `Data`, `Decimal` |
+| Tuples | labelled and unlabelled |
+| Foundation | `Date`, `UUID`, `URL`, `Data`, `Decimal`, `Locale`, `TimeZone` |
 | Optionals | including nested ones |
 | Your types | structs, classes, enums, generics |
 

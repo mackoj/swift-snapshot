@@ -101,6 +101,15 @@ func samples() -> [Sample] {
     "invoice", "Invoice",
     Invoice(state: .sent, lines: [Invoice.Line(sku: "WDG-001", quantity: 2)])
   ),
+  Sample(
+    "settings", "Settings",
+    Settings(
+      window: (width: 1024, height: 768),
+      origin: (0, 0),
+      locale: Locale(identifier: "fr_FR"),
+      zone: TimeZone(identifier: "Europe/Paris")!
+    )
+  ),
   Sample("form", "Form", Form(title: "  padded  ")),
   Sample("generics", "Generics", Generics(intBox: Box(value: 1), stringBox: Box(value: "x"))),
   Sample(

@@ -202,3 +202,14 @@ struct Invoice {
   var state: State
   var lines: [Line]
 }
+
+/// Tuples, and the two Foundation types that reflect into something unusable.
+///
+/// `Locale` reflects with an extra `locale` child that no initializer takes. `TimeZone`
+/// reflects down into an `UnsafePointer`.
+struct Settings {
+  var window: (width: Int, height: Int)
+  var origin: (Int, Int)
+  var locale: Locale
+  var zone: TimeZone
+}
