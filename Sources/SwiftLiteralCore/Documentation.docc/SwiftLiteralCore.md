@@ -10,7 +10,7 @@ extension around the expression looks like.
 
 ### Three steps
 
-1. **Get a value.** Run the app, decode a response, reproduce the bug — whatever gives you
+1. **Get a value.** Run the app, decode a response, reproduce the bug. Whatever gives you
    the state you care about.
 
 2. **Write it.**
