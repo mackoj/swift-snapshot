@@ -13,12 +13,17 @@ jobs:
   test:
     # macOS, because the round-trip test shells out to swiftc and the package builds
     # swift-format.
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
+      # Newest Xcode the image happens to carry. Naming a version pins the workflow to a
+      # runner image that gets retired.
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.app
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "${xcode:-/Applications/Xcode.app}"
+          swift --version
 
       - name: Build
         run: swift build
@@ -27,12 +32,14 @@ jobs:
         run: swift test
 
   documentation:
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.app
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "${xcode:-/Applications/Xcode.app}"
 
       # Warnings here mean a doc link points at something that no longer exists.
       - name: Build documentation
