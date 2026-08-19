@@ -222,7 +222,7 @@ public enum ValueRenderer {
   // MARK: - Reflection
 
   private static func reflectedText(_ value: Any, context: RenderContext) throws -> String {
-    let typeName = String(describing: type(of: value))
+    let typeName = typeName(of: value)
     let mirror = Mirror(reflecting: value)
 
     switch mirror.displayStyle {
@@ -335,7 +335,7 @@ public enum ValueRenderer {
   ) throws -> String? {
     let fields = exportable.__swiftLiteral_fields()
     guard !fields.isEmpty else { return nil }
-    let typeName = String(describing: type(of: exportable))
+    let typeName = typeName(of: exportable)
     let arguments = try fields.map { field in
       "\(field.label): \(try text(field.value, context: context.appending(path: field.label)))"
     }
@@ -375,6 +375,32 @@ public enum ValueRenderer {
   private static func isPointer(_ value: Any) -> Bool {
     let name = String(describing: type(of: value))
     return name.hasPrefix("Unsafe") && name.contains("Pointer")
+  }
+
+  /// The name to write for a type.
+  ///
+  /// `String(describing:)` gives the innermost name, so a nested `Order.Line` comes out as
+  /// `Line`. That only resolves if the fixture happens to sit somewhere that can see it,
+  /// and a fixture is an extension on some other type, so usually it does not.
+  ///
+  /// `String(reflecting:)` gives the whole path with the module in front. The module comes
+  /// off: a fixture in the same module does not need it, and one in another module needs an
+  /// import, which `additionalImports` covers.
+  ///
+  /// Types declared inside a function have no writable name at all — the runtime spells
+  /// them `(unknown context at $7f…)` — and generics nest their own qualified names inside
+  /// the angle brackets. Both keep the short name, which is what they had before.
+  static func typeName(of value: Any) -> String {
+    let simple = String(describing: type(of: value))
+    let qualified = String(reflecting: type(of: value))
+
+    guard !qualified.contains("(unknown context"), !qualified.contains("<") else {
+      return simple
+    }
+
+    let components = qualified.split(separator: ".")
+    guard components.count > 2 else { return simple }
+    return components.dropFirst().joined(separator: ".")
   }
 
   // MARK: - Strings

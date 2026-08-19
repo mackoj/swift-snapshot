@@ -1,25 +1,53 @@
 # SwiftLiteral
 
+[![CI](https://github.com/mackoj/swift-snapshot/actions/workflows/ci.yml/badge.svg)](https://github.com/mackoj/swift-snapshot/actions/workflows/ci.yml)
+[![Swift](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmackoj%2Fswift-snapshot%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/mackoj/swift-snapshot)
+[![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmackoj%2Fswift-snapshot%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/mackoj/swift-snapshot)
+
 Take a value that exists at runtime. Write it back out as Swift source.
 
 ```swift
-let user = User(id: 42, name: "Alice", role: .admin)
-try Literal.write(user, named: "testUser")
+// A real response, with forty fields you are not going to type by hand.
+let order = try JSONDecoder().decode(Order.self, from: data)
+
+try Literal.write(order, named: "shippedOrder")
 ```
 
-That writes `User+testUser.swift`:
+`Order+shippedOrder.swift`, next to your test:
 
 ```swift
 import Foundation
 
-extension User {
-    static let testUser: User = User(id: 42, name: "Alice", role: .admin)
+extension Order {
+    static let shippedOrder: Order = Order(
+        id: UUID(uuidString: "8C6D4E2A-0000-4000-8000-1B2C3D4E5F60")!,
+        placedAt: Date(timeIntervalSince1970: 1710000000.0),
+        status: .shipped,
+        lines: [Order.Line(sku: "WDG-001", quantity: 2, unitPrice: Decimal(string: "29.99")!)]
+    )
 }
 ```
 
-From then on `User.testUser` is ordinary Swift. Commit it. Diff it. Use it in a test, in a
-preview, in another fixture. It has autocomplete and jump-to-definition, because it is
-code, not data.
+That block is not written by hand. `ReadmeExampleTests` renders it and asserts on the
+text, so if the output changes the README fails the build.
+
+Commit it. From now on `Order.shippedOrder` is ordinary Swift: autocomplete,
+jump-to-definition, no decoding, no network. Rename a property and it stops compiling,
+and the compiler tells you where.
+
+## Contents
+
+- [Why](#why) — what this is for
+- [Install](#install)
+- [Quick start](#quick-start) — three steps
+- [Writing values](#writing-values) — `write`, `source`, headers, imports
+- [Describing a type](#describing-a-type) — the `@SwiftLiteral` macro
+- [What it renders](#what-it-renders)
+- [When reflection is not enough](#when-reflection-is-not-enough) — custom renderers
+- [Formatting](#formatting) and [determinism](#determinism)
+- [In tests](#in-tests)
+- [What it does not do](#what-it-does-not-do) — read this one
+- [Modules](#modules)
 
 ---
 
@@ -42,33 +70,35 @@ struct User {
 ```json
 { "name": "Alice" }
 ```
+
 The file is now wrong. Nothing says so until the test runs.
 
 ```swift
 User(name: "Alice")
 ```
-This does not build. The compiler points at the line and tells you what to do.
+
+This does not build. The compiler points at the line.
 
 That is the whole idea. A fixture written in Swift is checked by the same compiler that
 checks everything else you wrote.
 
-The rest follows from it. No decoding step, so no decoding cost and no `try` in your test
-setup. Readable diffs, because the fixture is text a person wrote the grammar for. One
-place to look, because a fixture can reference another fixture.
+The rest follows. No decoding step, so no decoding cost and no `try` in your setup.
+Readable diffs, because a person designed this grammar to be read. One place to look,
+because one fixture can reference another.
 
-## Where the value comes from
+### Where the value comes from
 
 Anywhere. That is the point of taking it at runtime.
 
-Catch a bug in the simulator, write the state that caused it straight into a fixture, and
-now the regression test has the real thing instead of your reconstruction of it. Capture
-a decoded API response once and stop hitting the network in tests. Take the state your app
-is in when a screen looks wrong and hand it to a SwiftUI preview.
+- Catch a bug in the simulator. Write the state that caused it straight into a fixture, and
+  the regression test has the real thing instead of your reconstruction of it a day later.
+- Decode an API response once. Stop hitting the network in tests.
+- Take the state a screen is in when it looks wrong. Hand it to a SwiftUI preview.
 
 ## Install
 
 ```swift
-.package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.3.0")
+.package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.3.1")
 ```
 
 ```swift
@@ -102,12 +132,33 @@ standalone toolchain while you are there.
 
 </details>
 
-## Use
+## Quick start
+
+1. **Get a value.** Run the app, decode a response, reproduce the bug — whatever gives you
+   the state you care about.
+
+2. **Write it.** In a test, a preview, or a debug button:
+
+   ```swift
+   try Literal.write(order, named: "shippedOrder")
+   ```
+
+   The file appears in `__Snapshots__`, next to the file that called it.
+
+3. **Commit it, then use it.**
+
+   ```swift
+   #expect(Order.shippedOrder.total == 59.98)
+   ```
+
+Delete the `write` call, or leave it — it does nothing in a release build.
+
+## Writing values
 
 ### Write a file
 
 ```swift
-try Literal.write(user, named: "testUser")
+try Literal.write(order, named: "shippedOrder")
 ```
 
 The file lands in the first of these that is set:
@@ -117,20 +168,16 @@ The file lands in the first of these that is set:
 3. the `SWIFT_SNAPSHOT_ROOT` environment variable
 4. `__Snapshots__`, next to the file that called it
 
-`write` throws. If the value cannot be rendered as compilable Swift, you get an error that
-names the type and the path to it. You do not get a file that looks fine and does not
-build.
-
-`write` does nothing in a release build. Writing source files is something you do while
-writing tests.
+`write` throws. If a value cannot be rendered as compilable Swift you get an error naming
+the type and the path to it. You do not get a file that looks fine and does not build.
 
 ### Get the source without writing it
 
 ```swift
-let code = try Literal.source(of: user, named: "testUser")
+let code = try Literal.source(of: order, named: "shippedOrder")
 ```
 
-Useful when you want to assert on the text, or put it somewhere yourself.
+For asserting on the text, or putting it somewhere yourself.
 
 ### Add a header and a note
 
@@ -151,15 +198,14 @@ The generated file imports Foundation. If the fixture mentions a type from somew
 say so — reflection sees the type's name, not which module it came from.
 
 ```swift
-try Literal.write(order, named: "testOrder", additionalImports: ["MyModels"])
+try Literal.write(order, named: "shippedOrder", additionalImports: ["MyModels"])
 ```
 
-### The macro
+## Describing a type
 
 Reflection sees stored properties and nothing else. It cannot see that a property is a
-secret, or that the initializer takes a different label, or that a field is a cache you do
-not want in the file. Those facts live in the source, so a macro reads them at compile
-time.
+secret, that the initializer takes a different label, or that a field is a cache you do not
+want in the file. Those facts live in the source, so a macro reads them at compile time.
 
 ```swift
 import SwiftLiteral
@@ -195,31 +241,32 @@ extension User {
 | `@LiteralRedact(.mask("***"))` | Replaces the value with a literal. |
 | `@LiteralRedact(.hash)` | Replaces the value with `"<hashed>"`. |
 
-Redaction applies at every depth. A redacted property three structs down is still
+**Redaction applies at every depth.** A redacted property three structs down is still
 redacted.
 
-### Types it handles
+## What it renders
 
-Primitives, including every sized integer. `String`, `Character`, `Bool`, `Double`,
-`Float`, and the special float values.
+| | |
+|---|---|
+| Primitives | `String`, `Character`, `Bool`, `Double`, `Float`, every sized integer, and the special float values |
+| Collections | arrays, dictionaries, sets, ranges |
+| Foundation | `Date`, `UUID`, `URL`, `Data`, `Decimal` |
+| Optionals | including nested ones |
+| Your types | structs, classes, enums, generics |
 
-Arrays, dictionaries, sets, ranges. Keys keep their type: `[1: "one"]` renders as
-`[1: "one"]`, not `["1": "one"]`.
+Some details that are easy to get wrong, and are covered by tests:
 
-`Date`, `UUID`, `URL`, `Data`, `Decimal`.
+- Dictionary keys keep their type. `[1: "one"]` renders as `[1: "one"]`, not `["1": "one"]`.
+- Enum case names come from the runtime, so an enum that overrides `description` still
+  renders its real case.
+- `Int??.some(nil)` renders as `.some(nil)`, because that is not the same value as `nil`.
+- Inherited properties are included. A subclass renders its superclass's state too.
+- Nested types keep their path. `Order.Line`, not `Line`, which would not resolve.
+- `Double` round-trips exactly.
 
-Optionals, including nested ones. `Int??.some(nil)` renders as `.some(nil)`, because that
-is a different value from `nil`.
+## When reflection is not enough
 
-Structs, classes, and enums by reflection. Enum case names come from the runtime, so an
-enum that overrides `description` still renders its real case.
-
-Generic types, with their parameters.
-
-### When reflection is not enough
-
-Reflection reads stored properties. If a type's initializer does not take its stored
-properties, reflection cannot build a call that compiles.
+Reflection reads stored properties and assumes an initializer takes them. When it does not:
 
 ```swift
 struct Phone {
@@ -229,8 +276,8 @@ struct Phone {
 }
 ```
 
-Reflection would write `Phone(digits: [3, 3, 6, …])`, and there is no such initializer.
-Write a renderer:
+Reflection would write `Phone(digits: [3, 3, 1])`, and there is no such initializer. Write
+a renderer:
 
 ```swift
 import SwiftSyntax
@@ -240,8 +287,8 @@ LiteralConfig.registerRenderer(Phone.self) { phone, _ in
 }
 ```
 
-In a test, scope them instead of registering globally. Renderers travel in the render
-context, so two tests can disagree about how to render a type and neither has to clean up:
+In a test, scope them instead. Renderers travel in the render context, so two tests can
+disagree about how to render a type and neither has to clean up:
 
 ```swift
 let renderers = ValueRenderers().registering(Phone.self) { phone, _ in
@@ -255,10 +302,10 @@ withDependencies {
 }
 ```
 
-### Formatting
+## Formatting
 
-Generated files go through swift-format. Point it at your project's config and the
-fixtures come out looking like the rest of your code, so the diff is about the data.
+Generated files go through swift-format. Point it at your project's config and fixtures
+come out looking like the rest of your code, so the diff is about the data.
 
 ```swift
 LiteralConfig.setFormatConfigSource(.editorconfig(URL(filePath: ".editorconfig")))
@@ -273,12 +320,10 @@ LiteralConfig.setFormatConfigSource(.swiftFormat(URL(filePath: ".swift-format"))
 Or set it directly:
 
 ```swift
-LiteralConfig.setFormattingProfile(
-    FormatProfile(indentStyle: .space, indentSize: 2)
-)
+LiteralConfig.setFormattingProfile(FormatProfile(indentStyle: .space, indentSize: 2))
 ```
 
-### Determinism
+## Determinism
 
 Two runs over equal values produce the same bytes. Otherwise the fixture churns in every
 diff and the whole thing is worse than JSON.
@@ -292,7 +337,7 @@ LiteralConfig.setRenderOptions(
 )
 ```
 
-### Configuration in tests
+## In tests
 
 `LiteralConfig` is process-global. That is fine for an app and wrong for a test suite:
 tests run concurrently, so one test setting a two-space `.editorconfig` changes what
@@ -315,12 +360,12 @@ The override is a task local, so it applies to that test and no other.
 
 ## What it does not do
 
-**It is not a mocking library.** It gives you the data a test consumes. It does not
-observe calls, stub network responses, or assert on interactions. Keep your spies.
+**It is not a mocking library.** It gives you the data a test consumes. It does not observe
+calls, stub network responses, or assert on interactions. Keep your spies.
 
-**It is not swift-snapshot-testing.** That library records what your code produced and
-tells you when it changes. This one records a value so you can build it again. They answer
-different questions and they get along fine in the same test target.
+**It is not swift-snapshot-testing.** That library records what your code produced and tells
+you when it changes. This one records a value so you can build it again. Different
+questions, and they get along fine in the same test target.
 
 **It cannot read every property wrapper.** A wrapper that stores its value, or computes
 `wrappedValue` on top of one stored property, works. A wrapper that keeps its value behind
@@ -328,10 +373,16 @@ a pointer or inside framework machinery — `@Published`, SwiftUI's `@State` —
 readable through `Mirror`, and the library says so instead of guessing. Mark those
 `@LiteralIgnore`.
 
+**It cannot write down a cycle.** Source is a tree; an object graph is not. Two objects
+pointing at each other throw rather than recurse forever.
+
 **It cannot invent an initializer.** If the memberwise initializer is not what the type
 offers, register a renderer.
 
-## Layout
+Every limit, with what to do about each, is in the
+[Limits](Sources/SwiftLiteralCore/Documentation.docc/Articles/Limits.md) article.
+
+## Modules
 
 | Module | Holds |
 |---|---|
@@ -349,7 +400,7 @@ files.
 swift test
 ```
 
-The test that matters is `everySampleTypechecks`. It renders every sample in the matrix,
+The one that matters is `everySampleTypechecks`. It renders every sample in the matrix,
 writes them next to the real type declarations, and runs `swiftc -typecheck` over both.
 
 Parsing is not enough. `User(name: nil)` parses.

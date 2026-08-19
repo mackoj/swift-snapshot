@@ -185,3 +185,20 @@ final class Car: Vehicle {
     super.init(wheels: wheels)
   }
 }
+
+/// A nested type. `String(describing:)` gives only `Line`, which does not resolve from a
+/// fixture that lives in an extension on something else.
+struct Invoice {
+  struct Line {
+    var sku: String
+    var quantity: Int
+  }
+
+  enum State {
+    case draft
+    case sent
+  }
+
+  var state: State
+  var lines: [Line]
+}

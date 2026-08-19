@@ -97,6 +97,10 @@ func samples() -> [Sample] {
     Bags(numbers: Bag([1, 2, 3]), addresses: Bag([Address(street: "4 Pine", city: "Lyon")]))
   ),
   Sample("car", "Car", Car(wheels: 4, plate: "AB-123-CD")),
+  Sample(
+    "invoice", "Invoice",
+    Invoice(state: .sent, lines: [Invoice.Line(sku: "WDG-001", quantity: 2)])
+  ),
   Sample("form", "Form", Form(title: "  padded  ")),
   Sample("generics", "Generics", Generics(intBox: Box(value: 1), stringBox: Box(value: "x"))),
   Sample(
