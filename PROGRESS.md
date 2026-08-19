@@ -26,24 +26,24 @@ Also checked: `swift package update` alone does not fix it, and swift-snapshot-t
 
 ### Removed
 
-- **swift-dependencies.** `SwiftSnapshotConfigClient` was 13 closures wrapping static
+- **swift-dependencies.** `LiteralConfigClient` was 13 closures wrapping static
   functions, with `testValue` set to `.live`. Zero test isolation, one dependency.
 - **The macro-expression-string path.** `__swiftSnapshot_makeExpr` produced
   `TestProduct(id: 123, name: Widget)` — unquoted strings, not compilable Swift. The
   source comments already admitted it did not work. Gone, along with
-  `useMacroGeneratedExpressions` and `renderSwiftSnapshotExportable`.
+  `useMacroGeneratedExpressions` and `renderLiteralFields`.
 - **Pointer dereferencing.** `tryDereferencePointer` cast an `UnsafeMutablePointer` to a
   list of thirty likely types, and `extractCurrentValueFromPublisher` walked Combine
   internals looking for a field named `currentValue`. When they guessed wrong, the value
   became `nil` and the file was written anyway.
-- **`SwiftSnapshotBootstrap.registerDefaults()`**, which had an empty body.
+- **`SwiftLiteralBootstrap.registerDefaults()`**, which had an empty body.
 - **`reportIssue` as a logger.** The renderer reported an issue on every top-level
   render, on every optional, on every struct. In a test, `reportIssue` is a failure.
 
 ### Split
 
-New `SwiftSnapshotReflection` target: value in, `ExprSyntax` out. No file I/O, no global
-config. `SwiftSnapshotCore` keeps configuration, formatting, path resolution, and writing.
+New `SwiftLiteralReflection` target: value in, `ExprSyntax` out. No file I/O, no global
+config. `SwiftLiteralCore` keeps configuration, formatting, path resolution, and writing.
 `ValueRenderer` went from 1384 lines to about 340.
 
 ### Fixed
@@ -58,7 +58,7 @@ Every one of these is covered by the round-trip typecheck test.
 | A failed render became `nil`, and the file was written | It throws |
 | `export` swallowed every error and returned a `/tmp/swift-snapshot-error` URL | `export` throws |
 | Redaction applied at the top level only, so a nested secret was written in the clear | Redaction applies at every depth |
-| `@SnapshotRename` was ignored on the reflection path | The new label is used |
+| `@LiteralRename` was ignored on the reflection path | The new label is used |
 | Ranges rendered `Range<Int>(lowerBound: 1, upperBound: 5)`, which has no such initializer | `1..<5` |
 | Every non-ASCII character became `\u{...}` | Accents and emoji stay themselves |
 | `Set([1, 2])`, which cannot infer its element type in an argument position | `[1, 2]` |
@@ -68,7 +68,7 @@ Every one of these is covered by the round-trip typecheck test.
 
 ### Testing
 
-`Tests/SwiftSnapshotReflectionTests` is new and holds the test that matters:
+`Tests/SwiftLiteralReflectionTests` is new and holds the test that matters:
 `everySampleTypechecks` renders the whole sample matrix, writes it next to the real type
 declarations, and runs `swiftc -typecheck -swift-version 6` over both. Parsing was never
 enough — `User(name: nil)` parses.

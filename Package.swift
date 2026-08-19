@@ -7,13 +7,13 @@ let package = Package(
   platforms: [.macOS(.v13), .iOS(.v16), .watchOS(.v9), .tvOS(.v16)],
   products: [
     .library(
-      name: "SwiftSnapshot",
-      targets: ["SwiftSnapshot"]
+      name: "SwiftLiteral",
+      targets: ["SwiftLiteral"]
     ),
     // The rendering engine on its own, for anyone who wants expressions but not files.
     .library(
-      name: "SwiftSnapshotReflection",
-      targets: ["SwiftSnapshotReflection"]
+      name: "SwiftLiteralReflection",
+      targets: ["SwiftLiteralReflection"]
     ),
   ],
   dependencies: [
@@ -26,7 +26,7 @@ let package = Package(
   targets: [
     // Macro implementation (compiler plugin + public macro definitions)
     .macro(
-      name: "SwiftSnapshotMacros",
+      name: "SwiftLiteralMacros",
       dependencies: [
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
@@ -34,58 +34,58 @@ let package = Package(
         .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
         .product(name: "SwiftDiagnostics", package: "swift-syntax"),
       ],
-      path: "Sources/SwiftSnapshotMacros"
+      path: "Sources/SwiftLiteralMacros"
     ),
 
     // The rendering engine. Value in, ExprSyntax out. No file I/O, no global config.
     .target(
-      name: "SwiftSnapshotReflection",
+      name: "SwiftLiteralReflection",
       dependencies: [
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
       ],
-      path: "Sources/SwiftSnapshotReflection"
+      path: "Sources/SwiftLiteralReflection"
     ),
 
     // Configuration, formatting, path resolution, and writing files.
     .target(
-      name: "SwiftSnapshotCore",
+      name: "SwiftLiteralCore",
       dependencies: [
-        "SwiftSnapshotReflection",
+        "SwiftLiteralReflection",
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftFormat", package: "swift-format"),
         .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
       ],
-      path: "Sources/SwiftSnapshotCore"
+      path: "Sources/SwiftLiteralCore"
     ),
 
     // Unified import module (re-exports Core + Macros)
     .target(
-      name: "SwiftSnapshot",
+      name: "SwiftLiteral",
       dependencies: [
-        "SwiftSnapshotCore",
-        "SwiftSnapshotMacros",
+        "SwiftLiteralCore",
+        "SwiftLiteralMacros",
       ],
-      path: "Sources/SwiftSnapshot"
+      path: "Sources/SwiftLiteral"
     ),
 
     // Engine tests. These are the ones that prove the output compiles.
     .testTarget(
-      name: "SwiftSnapshotReflectionTests",
+      name: "SwiftLiteralReflectionTests",
       dependencies: [
-        "SwiftSnapshotReflection",
+        "SwiftLiteralReflection",
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
       ]
     ),
 
     // Core runtime tests
     .testTarget(
-      name: "SwiftSnapshotTests",
+      name: "SwiftLiteralTests",
       dependencies: [
-        "SwiftSnapshot",
+        "SwiftLiteral",
         .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "SwiftParser", package: "swift-syntax"),
@@ -95,10 +95,10 @@ let package = Package(
 
     // Macro tests
     .testTarget(
-      name: "SwiftSnapshotMacrosTests",
+      name: "SwiftLiteralMacrosTests",
       dependencies: [
-        "SwiftSnapshotMacros",
-        "SwiftSnapshot",
+        "SwiftLiteralMacros",
+        "SwiftLiteral",
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "MacroTesting", package: "swift-macro-testing"),
         .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),

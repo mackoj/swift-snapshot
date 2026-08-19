@@ -19,9 +19,9 @@ Checked items are done and verified. Do not redo them. What happened is in PROGR
 
 ## P1 — split the reflection engine
 
-- [x] `SwiftSnapshotReflection`: value -> `ExprSyntax`. No file I/O, no global config.
-- [x] `SwiftSnapshotCore` keeps config, paths, formatting, file writing.
-- [x] `SwiftSnapshotReflectionTests`.
+- [x] `SwiftLiteralReflection`: value -> `ExprSyntax`. No file I/O, no global config.
+- [x] `SwiftLiteralCore` keeps config, paths, formatting, file writing.
+- [x] `SwiftLiteralReflectionTests`.
 
 ## P2 — make the testing story real
 
@@ -39,22 +39,22 @@ Checked items are done and verified. Do not redo them. What happened is in PROGR
 - [x] Ranges rendered an initializer that does not exist.
 - [x] Nested optionals collapsed.
 - [x] Redaction applied only at the top level.
-- [x] `@SnapshotRename` was ignored on the reflection path.
+- [x] `@LiteralRename` was ignored on the reflection path.
 - [x] `indent(level:)` ignored tab style.
 
 ## P4 — deprecate and isolate
 
 - [x] Delete the macro-expression-string path.
 - [x] Delete pointer dereferencing and Combine internals walking.
-- [x] Delete `SwiftSnapshotBootstrap`, which did nothing.
-- [x] Keep `__swiftSnapshot_reflectionFields`. That is the path that works.
+- [x] Delete `SwiftLiteralBootstrap`, which did nothing.
+- [x] Keep `__swiftLiteral_fields`. That is the path that works.
 
 ## P5 — docs and README
 
 - [ ] Pick a name.
 - [ ] Rewrite README.
 - [ ] Rewrite the DocC articles. Several describe things that no longer exist:
-      `SwiftSnapshotVsDebugSnapshots`, `StabilityAndSupportTiers`, `Architecture`
+      `SwiftLiteralVsDebugSnapshots`, `StabilityAndSupportTiers`, `Architecture`
       (documents the dependency injection that is gone).
 - [ ] Delete `EditorConfigVerification.md` and `EditorConfigMapping.md` or fold them into
       one formatting article.
@@ -72,4 +72,4 @@ Name candidates, no "fixture":
 
 - [ ] Compare against pointfreeco/swift-debug-snapshots and borrow test cases.
 - [ ] CI that runs the round-trip typecheck on every push.
-- [ ] Decide whether `SnapshotRendererRegistry` should be scoped rather than global.
+- [ ] Decide whether `ValueRendererRegistry` should be scoped rather than global.

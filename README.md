@@ -1,4 +1,4 @@
-# SwiftSnapshot
+# SwiftLiteral
 
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
@@ -11,11 +11,11 @@
 
 **Generate type-safe Swift source fixtures from runtime values.**
 
-SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere: no JSON, no decoding, just Swift.
+SwiftLiteral converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere: no JSON, no decoding, just Swift.
 
 ```swift
 let user = User(id: 42, name: "Alice", role: .admin)
-user.exportSnapshot(variableName: "testUser")
+user.writeLiteral(variableName: "testUser")
 
 // Creates: User+testUser.swift
 // extension User {
@@ -83,23 +83,23 @@ Or in Xcode: **File → Add Packages** → Enter repository URL
 
 Optional compile-time macros add:
 
-- `@SwiftSnapshot` - Type-level fixture support
-- `@SnapshotIgnore` - Exclude properties
-- `@SnapshotRedact` - Mask sensitive values
-- `@SnapshotRename` - Change property names
+- `@SwiftLiteral` - Type-level fixture support
+- `@LiteralIgnore` - Exclude properties
+- `@LiteralRedact` - Mask sensitive values
+- `@LiteralRename` - Change property names
 
 ---
 
 ## Positioning: what this library is for
 
-SwiftSnapshot is best at:
+SwiftLiteral is best at:
 - Typed fixture generation from real runtime state
 - Reproducible state capture for bug fixes/regression tests
 - Sharing realistic model data between tests and SwiftUI previews
 
-SwiftSnapshot is not a full replacement for behavior-oriented mocks:
+SwiftLiteral is not a full replacement for behavior-oriented mocks:
 - Keep network stubs/spies when tests assert interactions or side effects
-- Use SwiftSnapshot for the data/state those tests consume
+- Use SwiftLiteral for the data/state those tests consume
 
 ---
 
@@ -107,7 +107,7 @@ SwiftSnapshot is not a full replacement for behavior-oriented mocks:
 
 Traditional test fixtures have problems:
 
-| Problem | SwiftSnapshot Solution |
+| Problem | SwiftLiteral Solution |
 |---------|----------------------|
 | JSON fixtures break silently when types change | **Compiler-verified** - won't build if types change |
 | Hardcoded test data scattered across files | **Centralized fixtures** with single source of truth |
@@ -117,13 +117,13 @@ Traditional test fixtures have problems:
 
 ### Learn More
 
-- [What is SwiftSnapshot and Why?](Sources/SwiftSnapshotCore/Documentation.docc/Articles/WhatAndWhy.md) - Purpose and motivation
-- [Architecture](Sources/SwiftSnapshotCore/Documentation.docc/Articles/Architecture.md) - Technical design
-- [Basic Usage](Sources/SwiftSnapshotCore/Documentation.docc/Articles/BasicUsage.md) - Examples and patterns
-- [Stability and Support Tiers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/StabilityAndSupportTiers.md) - Stable/experimental/deprecated areas
-- [SwiftSnapshot vs DebugSnapshots](Sources/SwiftSnapshotCore/Documentation.docc/Articles/SwiftSnapshotVsDebugSnapshots.md) - Scope and engine comparison
-- [Custom Renderers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/CustomRenderers.md) - Type-specific rendering
-- [Formatting Configuration](Sources/SwiftSnapshotCore/Documentation.docc/Articles/FormattingConfiguration.md) - Code style setup
+- [What is SwiftLiteral and Why?](Sources/SwiftLiteralCore/Documentation.docc/Articles/WhatAndWhy.md) - Purpose and motivation
+- [Architecture](Sources/SwiftLiteralCore/Documentation.docc/Articles/Architecture.md) - Technical design
+- [Basic Usage](Sources/SwiftLiteralCore/Documentation.docc/Articles/BasicUsage.md) - Examples and patterns
+- [Stability and Support Tiers](Sources/SwiftLiteralCore/Documentation.docc/Articles/StabilityAndSupportTiers.md) - Stable/experimental/deprecated areas
+- [SwiftLiteral vs DebugSnapshots](Sources/SwiftLiteralCore/Documentation.docc/Articles/SwiftLiteralVsDebugSnapshots.md) - Scope and engine comparison
+- [Custom Renderers](Sources/SwiftLiteralCore/Documentation.docc/Articles/CustomRenderers.md) - Type-specific rendering
+- [Formatting Configuration](Sources/SwiftLiteralCore/Documentation.docc/Articles/FormattingConfiguration.md) - Code style setup
 
 ---
 
@@ -134,7 +134,7 @@ Traditional test fixtures have problems:
 ```swift
 let user = User(id: 42, name: "Alice", role: .admin)
 
-SwiftSnapshotRuntime.export(
+Literal.export(
     instance: user,
     variableName: "testUser"
 )
@@ -146,7 +146,7 @@ let reference = User.testUser
 ### With Documentation
 
 ```swift
-SwiftSnapshotRuntime.export(
+Literal.export(
     instance: product,
     variableName: "sampleProduct",
     header: "// Test Fixtures",
@@ -157,7 +157,7 @@ SwiftSnapshotRuntime.export(
 ### Custom Output
 
 ```swift
-SwiftSnapshotRuntime.export(
+Literal.export(
     instance: user,
     variableName: "testUser",
     outputBasePath: "/path/to/fixtures",
@@ -168,24 +168,24 @@ SwiftSnapshotRuntime.export(
 ### With Macros
 
 ```swift
-@SwiftSnapshot(folder: "Fixtures")
+@SwiftLiteral(folder: "Fixtures")
 struct User {
     let id: String
-    @SnapshotRename("displayName")
+    @LiteralRename("displayName")
     let name: String
-    @SnapshotRedact(.mask("***"))
+    @LiteralRedact(.mask("***"))
     let apiKey: String
-    @SnapshotIgnore
+    @LiteralIgnore
     let cache: [String: Any]
 }
 
-user.exportSnapshot(variableName: "testUser")
+user.writeLiteral(variableName: "testUser")
 ```
 
 ### Custom Renderers
 
 ```swift
-SnapshotRendererRegistry.register(MyType.self) { value, context in
+ValueRendererRegistry.register(MyType.self) { value, context in
     ExprSyntax(stringLiteral: "MyType(value: \"\(value.property)\")")
 }
 ```
@@ -196,7 +196,7 @@ SnapshotRendererRegistry.register(MyType.self) { value, context in
 class Tests: XCTestCase {
     func testFeature() {
         let state = captureState()
-        state.exportSnapshot(variableName: "testState")
+        state.writeLiteral(variableName: "testState")
         
         // Use in other tests
         XCTAssertEqual(State.testState.isValid, true)
@@ -236,15 +236,15 @@ User(name: "Alice")  // Error: No parameter 'name'
 ### Global Settings
 
 ```swift
-SwiftSnapshotConfig.setGlobalRoot(URL(fileURLWithPath: "./Fixtures"))
-SwiftSnapshotConfig.setGlobalHeader("// Test Fixtures")
+LiteralConfig.setGlobalRoot(URL(fileURLWithPath: "./Fixtures"))
+LiteralConfig.setGlobalHeader("// Test Fixtures")
 ```
 
 ### Formatting
 
 ```swift
 // From .editorconfig
-SwiftSnapshotConfig.setFormatConfigSource(
+LiteralConfig.setFormatConfigSource(
     .editorconfig(URL(fileURLWithPath: ".editorconfig"))
 )
 
@@ -256,7 +256,7 @@ let profile = FormatProfile(
     insertFinalNewline: true,
     trimTrailingWhitespace: true
 )
-SwiftSnapshotConfig.setFormattingProfile(profile)
+LiteralConfig.setFormattingProfile(profile)
 ```
 
 ### Dependency Injection
@@ -286,28 +286,28 @@ let options = RenderOptions(
     forceEnumDotSyntax: true,
     useMacroGeneratedExpressions: false // stable default
 )
-SwiftSnapshotConfig.setRenderOptions(options)
+LiteralConfig.setRenderOptions(options)
 ```
 
-If you set `useMacroGeneratedExpressions` to `true`, SwiftSnapshot will try macro-generated expression strings first (experimental) and fall back to reflection when parsing fails.
+If you set `useMacroGeneratedExpressions` to `true`, SwiftLiteral will try macro-generated expression strings first (experimental) and fall back to reflection when parsing fails.
 
 ### Baseline test matrix
 
 ```bash
-swift test --filter SwiftSnapshotTests
-swift test --filter SwiftSnapshotMacrosTests
+swift test --filter SwiftLiteralTests
+swift test --filter SwiftLiteralMacrosTests
 ```
 
 Support-tier guideline:
 - **Stable**: primitives/collections/foundation rendering, deterministic output, file export path
 - **Experimental**: macro-expression-string rendering (`useMacroGeneratedExpressions = true`)
-- **Deprecated**: direct dependence on `SwiftSnapshotExportable` expression strings as a primary rendering strategy
+- **Deprecated**: direct dependence on `LiteralFields` expression strings as a primary rendering strategy
 
 ---
 
 ## DEBUG Only Architecture
 
-SwiftSnapshot follows the same philosophy as [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) and [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay):
+SwiftLiteral follows the same philosophy as [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) and [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay):
 
 **Development tools should not affect production code.**
 
@@ -319,7 +319,7 @@ SwiftSnapshot follows the same philosophy as [swift-dependencies](https://github
 
 ```swift
 // Safe to leave in codebase
-let url = user.exportSnapshot()
+let url = user.writeLiteral()
 // DEBUG: Creates file
 // RELEASE: Returns placeholder, no I/O
 ```
