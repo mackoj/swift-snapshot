@@ -1,3 +1,4 @@
+import SwiftSnapshotReflection
 import Foundation
 import IssueReporting
 
@@ -49,21 +50,8 @@ public enum FormatConfigSource: Sendable {
 /// ```
 public enum SwiftSnapshotConfig {
   // MARK: - Baseline Library Defaults
-  private static let baselineRenderOptions = RenderOptions(
-    sortDictionaryKeys: true,
-    setDeterminism: true,
-    dataInlineThreshold: 16,
-    forceEnumDotSyntax: true,
-    useMacroGeneratedExpressions: false
-  )
-  
-  private static let baselineFormatProfile = FormatProfile(
-    indentStyle: .space,
-    indentSize: 4,
-    endOfLine: .lf,
-    insertFinalNewline: true,
-    trimTrailingWhitespace: true
-  )
+  private static let baselineRenderOptions = RenderOptions.default
+  private static let baselineFormatProfile = FormatProfile.default
   
   // MARK: - Active Configuration State
   // These properties are protected by 'lock' for thread safety

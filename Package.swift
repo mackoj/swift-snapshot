@@ -9,15 +9,20 @@ let package = Package(
     .library(
       name: "SwiftSnapshot",
       targets: ["SwiftSnapshot"]
-    )
+    ),
+    // The rendering engine on its own, for anyone who wants expressions but not files.
+    .library(
+      name: "SwiftSnapshotReflection",
+      targets: ["SwiftSnapshotReflection"]
+    ),
   ],
   dependencies: [
     .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"603.0.0"),
     .package(url: "https://github.com/swiftlang/swift-format", "509.0.0"..<"603.0.0"),
-    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.7.0"),
-    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.0"),
+    .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.11.0"),
+    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", "1.18.0"..<"1.19.0"),
     .package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.6.0"),
-    ],
+  ],
   targets: [
     // Macro implementation (compiler plugin + public macro definitions)
     .macro(
@@ -31,11 +36,23 @@ let package = Package(
       ],
       path: "Sources/SwiftSnapshotMacros"
     ),
-    
-    // Core runtime library implementation
+
+    // The rendering engine. Value in, ExprSyntax out. No file I/O, no global config.
+    .target(
+      name: "SwiftSnapshotReflection",
+      dependencies: [
+        .product(name: "SwiftSyntax", package: "swift-syntax"),
+        .product(name: "SwiftParser", package: "swift-syntax"),
+        .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
+      ],
+      path: "Sources/SwiftSnapshotReflection"
+    ),
+
+    // Configuration, formatting, path resolution, and writing files.
     .target(
       name: "SwiftSnapshotCore",
       dependencies: [
+        "SwiftSnapshotReflection",
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
         .product(name: "SwiftParser", package: "swift-syntax"),
@@ -44,7 +61,7 @@ let package = Package(
       ],
       path: "Sources/SwiftSnapshotCore"
     ),
-    
+
     // Unified import module (re-exports Core + Macros)
     .target(
       name: "SwiftSnapshot",
@@ -54,7 +71,16 @@ let package = Package(
       ],
       path: "Sources/SwiftSnapshot"
     ),
-    
+
+    // Engine tests. These are the ones that prove the output compiles.
+    .testTarget(
+      name: "SwiftSnapshotReflectionTests",
+      dependencies: [
+        "SwiftSnapshotReflection",
+        .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+      ]
+    ),
+
     // Core runtime tests
     .testTarget(
       name: "SwiftSnapshotTests",
@@ -66,7 +92,7 @@ let package = Package(
         .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
       ]
     ),
-    
+
     // Macro tests
     .testTarget(
       name: "SwiftSnapshotMacrosTests",
@@ -84,12 +110,6 @@ let package = Package(
 
 let swiftSettings: [SwiftSetting] = [
   .enableUpcomingFeature("MemberImportVisibility")
-  // .unsafeFlags([
-  //   "-Xfrontend",
-  //   "-warn-long-function-bodies=50",
-  //   "-Xfrontend",
-  //   "-warn-long-expression-type-checking=50",
-  // ])
 ]
 
 for index in package.targets.indices {

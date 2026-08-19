@@ -52,10 +52,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
-          return "Product(id: \(instance.id), name: \(instance.name))"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "name", value: self.name)
@@ -78,11 +74,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -140,10 +136,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
-          return "User(id: \(instance.id))"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id)
@@ -166,11 +158,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -228,13 +220,9 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
-          return "Product(id: \(instance.id), displayName: \(instance.name))"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
-            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "name", value: self.name)
+            SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "displayName", value: self.name)
           ]
         }
       }
@@ -254,11 +242,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -316,10 +304,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
-          return "User(id: \(instance.id), apiKey: \"SECRET\")"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "apiKey", value: "SECRET")
@@ -342,11 +326,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -404,10 +388,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: Account) -> String {
-          return "Account(id: \(instance.id), password: \"<hashed>\")"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "password", value: "<hashed>")
@@ -430,11 +410,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "account"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -492,10 +472,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: Config) -> String {
-          return "Config(id: \(instance.id), token: \"•••\")"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "token", value: "•••")
@@ -518,11 +494,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "config"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -580,17 +556,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: Status) -> String {
-          switch instance {
-          case .active:
-              return ".active"
-              case .inactive:
-              return ".inactive"
-              case .pending:
-              return ".pending"
-          }
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           []
         }
@@ -611,11 +576,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "status"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -669,10 +634,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: Product) -> String {
-          return "Product(id: \(instance.id))"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id)
@@ -695,11 +656,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "product"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -760,10 +721,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: SyncUpFormModel) -> String {
-          return "SyncUpFormModel(focus: \(instance.focus), syncUp: \(instance.syncUp), uuid: \(instance.uuid))"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "focus", value: self.focus), SwiftSnapshotReflectionField(label: "syncUp", value: self.syncUp), SwiftSnapshotReflectionField(label: "uuid", value: self.uuid)
@@ -786,11 +743,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "syncUpFormModel"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -850,10 +807,6 @@ extension SnapshotTests {
           ]
         }
 
-        public static func __swiftSnapshot_makeExpr(from instance: User) -> String {
-          return "User(id: \(instance.id), name: \(instance.name), some: \(instance.some))"
-        }
-
         public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
           [
             SwiftSnapshotReflectionField(label: "id", value: self.id), SwiftSnapshotReflectionField(label: "name", value: self.name), SwiftSnapshotReflectionField(label: "some", value: self.some)
@@ -876,11 +829,11 @@ extension SnapshotTests {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "user"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,

@@ -3,11 +3,12 @@ import Foundation
 import SwiftSyntax
 import SwiftSyntaxBuilder
 
-@testable import SwiftSnapshotCore
+@testable import SwiftSnapshotReflection
 
-extension SnapshotTests {
-  /// Tests for SnapshotRendererRegistry
-  @Suite struct SnapshotRendererRegistryTests {
+/// Tests for SnapshotRendererRegistry
+@Suite(.serialized) struct SnapshotRendererRegistryTests {
+  init() { SnapshotRendererRegistry.removeAll() }
+
     
     // MARK: - Basic Registration Tests
     
@@ -182,17 +183,6 @@ extension SnapshotTests {
       }
     }
     
-    // MARK: - SwiftSnapshotBootstrap Tests
-    
-    /// Test that registerDefaults can be called safely
-    @Test func bootstrapRegisterDefaults() {
-      // Should not crash or throw
-      SwiftSnapshotBootstrap.registerDefaults()
-      
-      // Calling again should be safe (idempotent)
-      SwiftSnapshotBootstrap.registerDefaults()
-    }
-    
     // MARK: - Protocol-based Registration Tests
     
     /// Test registering a renderer that conforms to SnapshotCustomRenderer
@@ -303,4 +293,3 @@ extension SnapshotTests {
       }
     }
   }
-}

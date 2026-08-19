@@ -78,11 +78,11 @@ public struct SwiftSnapshotMacro: MemberMacro, ExtensionMacro {
           line: UInt = #line,
           fileID: StaticString = #fileID,
           filePath: StaticString = #filePath
-        ) -> URL {
+        ) throws -> URL {
           let defaultVarName = "\(raw: typeName.prefix(1).lowercased() + typeName.dropFirst())"
           let effectiveVarName = variableName ?? defaultVarName
 
-          return SwiftSnapshotRuntime.export(
+          return try SwiftSnapshotRuntime.export(
             instance: self,
             variableName: effectiveVarName,
             fileName: nil as String?,
@@ -304,47 +304,25 @@ extension SwiftSnapshotMacro {
       typeName = "Self"
     }
 
-    // Build initializer arguments for non-ignored properties
-    let activeProperties = properties.filter { !$0.isIgnored }
+    _ = typeName
 
-    // Build the arguments string
-    var argumentParts: [String] = []
-    for prop in activeProperties {
+    // `@SnapshotIgnore` drops the property. `@SnapshotRename` changes the argument
+    // label. `@SnapshotRedact` replaces the value with a literal stand-in. All three
+    // are source facts, invisible to reflection, so the macro hands them over here.
+    let reflectionFields = properties.filter { !$0.isIgnored }.map { prop -> String in
       let label = prop.renamedTo ?? prop.name
-
       if let redaction = prop.redaction {
         switch redaction.mode {
         case .mask(let maskValue):
-          // Generate masked literal - need to escape quotes in the mask value
-          argumentParts.append("\(label): \\\"\(maskValue)\\\"")
+          return "SwiftSnapshotReflectionField(label: \"\(label)\", value: \"\(maskValue)\")"
         case .hash:
-          argumentParts.append("\(label): \\\"<hashed>\\\"")
-        }
-      } else {
-        // Reference the actual property value via interpolation
-        argumentParts.append("\(label): \\(instance.\(prop.name))")
-      }
-    }
-
-    let arguments = argumentParts.joined(separator: ", ")
-    let reflectionFields = activeProperties.map { prop -> String in
-      if let redaction = prop.redaction {
-        switch redaction.mode {
-        case .mask(let maskValue):
-          return "SwiftSnapshotReflectionField(label: \"\(prop.name)\", value: \"\(maskValue)\")"
-        case .hash:
-          return "SwiftSnapshotReflectionField(label: \"\(prop.name)\", value: \"<hashed>\")"
+          return "SwiftSnapshotReflectionField(label: \"\(label)\", value: \"<hashed>\")"
         }
       }
-
-      return "SwiftSnapshotReflectionField(label: \"\(prop.name)\", value: self.\(prop.name))"
+      return "SwiftSnapshotReflectionField(label: \"\(label)\", value: self.\(prop.name))"
     }.joined(separator: ", ")
 
     return """
-      public static func __swiftSnapshot_makeExpr(from instance: \(raw: typeName)) -> String {
-        return "\(raw: typeName)(\(raw: arguments))"
-      }
-
       public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
         [
           \(raw: reflectionFields)
@@ -353,82 +331,20 @@ extension SwiftSnapshotMacro {
       """
   }
 
+  /// Enums render through reflection.
+  ///
+  /// Case names, labels, and payloads all survive `Mirror`, so there is nothing here the
+  /// macro needs to describe. Returning no fields tells the renderer to reflect.
   static func generateEnumExpressionBuilder(
     from declaration: some DeclGroupSyntax,
     properties: [PropertyInfo],
     context: some MacroExpansionContext
   ) throws -> DeclSyntax {
-    guard let enumDecl = declaration.as(EnumDeclSyntax.self) else {
+    guard declaration.is(EnumDeclSyntax.self) else {
       throw MacroError.notAnEnum
     }
 
-    // Get enum name
-    let enumName = enumDecl.name.text
-
-    // Collect all enum cases
-    var cases: [String] = []
-    for member in enumDecl.memberBlock.members {
-      guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else { continue }
-
-      for element in caseDecl.elements {
-        let caseName = element.name.text
-
-        if let associatedValue = element.parameterClause {
-          // Case with associated values
-          let parameters = associatedValue.parameters
-          let bindings = parameters.enumerated().map { index, param in
-            if let firstName = param.firstName?.text, firstName != "_" {
-              return "let \(firstName)"
-            } else {
-              return "let val\(index)"
-            }
-          }.joined(separator: ", ")
-
-          let arguments = parameters.enumerated().map { index, param in
-            let valueName: String
-            if let firstName = param.firstName?.text, firstName != "_" {
-              valueName = firstName
-            } else {
-              valueName = "val\(index)"
-            }
-
-            let label: String
-            if let firstName = param.firstName?.text, firstName != "_" {
-              label = "\(firstName): "
-            } else if let secondName = param.secondName?.text {
-              label = "\(secondName): "
-            } else {
-              label = ""
-            }
-
-            return "\(label)\\(\(valueName))"
-          }.joined(separator: ", ")
-
-          cases.append(
-            """
-            case .\(caseName)(\(bindings)):
-                  return ".\(caseName)(\(arguments))"
-            """)
-        } else {
-          // Simple case without associated values
-          cases.append(
-            """
-            case .\(caseName):
-                  return ".\(caseName)"
-            """)
-        }
-      }
-    }
-
-    let switchBody = cases.joined(separator: "\n      ")
-
     return """
-      public static func __swiftSnapshot_makeExpr(from instance: \(raw: enumName)) -> String {
-        switch instance {
-        \(raw: switchBody)
-        }
-      }
-
       public func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
         []
       }

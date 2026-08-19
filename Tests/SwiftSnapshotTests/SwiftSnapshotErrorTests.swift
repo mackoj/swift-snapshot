@@ -1,111 +1,72 @@
-import Testing
 import Foundation
+import Testing
 
 @testable import SwiftSnapshotCore
 
 extension SnapshotTests {
-  /// Tests for SwiftSnapshotError
+  /// Error messages are part of the API. If they stop naming the type, the path, or the
+  /// way out, the user is left guessing.
   @Suite struct SwiftSnapshotErrorTests {
-    
-    // MARK: - Error Case Tests
-    
-    /// Test unsupportedType error description
-    @Test func unsupportedTypeError() {
-      let error = SwiftSnapshotError.unsupportedType("CustomType", path: ["root", "field", "nested"])
-      
-      let description = error.description
-      #expect(description.contains("Unsupported type: CustomType"))
-      #expect(description.contains("at path: root → field → nested"))
+    @Test func unsupportedTypeNamesTheTypeThePathAndTheFix() {
+      let error = SwiftSnapshotError.unsupportedType(
+        "CustomType", path: ["root", "field", "nested"])
+
+      #expect(
+        error.description == """
+          Cannot render 'CustomType' at root.field.nested. \
+          Register a custom renderer with SnapshotRendererRegistry.register(CustomType.self).
+          """
+      )
     }
-    
-    /// Test unsupportedType error with empty path
-    @Test func unsupportedTypeErrorEmptyPath() {
+
+    @Test func unsupportedTypeAtTopLevelHasNoPath() {
       let error = SwiftSnapshotError.unsupportedType("CustomType", path: [])
-      
-      let description = error.description
-      #expect(description == "Unsupported type: CustomType")
-      #expect(!description.contains("at path:"))
+
+      #expect(!error.description.contains(" at "))
+      #expect(error.description.hasPrefix("Cannot render 'CustomType'."))
     }
-    
-    /// Test io error description
-    @Test func ioError() {
-      let error = SwiftSnapshotError.io("Failed to write file")
-      
-      let description = error.description
-      #expect(description == "I/O error: Failed to write file")
+
+    @Test func reflectionCarriesThePath() {
+      let error = SwiftSnapshotError.reflection(
+        "Cannot reflect type", path: ["User", "address", "zip"])
+
+      #expect(error.description == "Cannot reflect type at User.address.zip")
     }
-    
-    /// Test overwriteDisallowed error description
-    @Test func overwriteDisallowedError() {
-      let url = URL(fileURLWithPath: "/tmp/test.swift")
-      let error = SwiftSnapshotError.overwriteDisallowed(url)
-      
-      let description = error.description
-      #expect(description.contains("Overwrite disallowed for file:"))
-      #expect(description.contains("/tmp/test.swift"))
-    }
-    
-    /// Test formatting error description
-    @Test func formattingError() {
-      let error = SwiftSnapshotError.formatting("Invalid configuration")
-      
-      let description = error.description
-      #expect(description == "Formatting error: Invalid configuration")
-    }
-    
-    /// Test reflection error description
-    @Test func reflectionError() {
-      let error = SwiftSnapshotError.reflection("Cannot reflect type", path: ["User", "address", "zip"])
-      
-      let description = error.description
-      #expect(description.contains("Reflection error: Cannot reflect type"))
-      #expect(description.contains("at path: User → address → zip"))
-    }
-    
-    /// Test reflection error with empty path
-    @Test func reflectionErrorEmptyPath() {
+
+    @Test func reflectionAtTopLevelHasNoPath() {
       let error = SwiftSnapshotError.reflection("Cannot reflect type", path: [])
-      
-      let description = error.description
-      #expect(description == "Reflection error: Cannot reflect type")
-      #expect(!description.contains("at path:"))
+
+      #expect(error.description == "Cannot reflect type")
     }
-    
-    // MARK: - Error Throwing Tests
-    
-    /// Test that errors can be caught and matched
-    @Test func errorCanBeCaught() {
-      do {
-        throw SwiftSnapshotError.io("Test error")
-      } catch let error as SwiftSnapshotError {
-        if case .io(let message) = error {
-          #expect(message == "Test error")
-        } else {
-          Issue.record("Expected .io error")
-        }
-      } catch {
-        Issue.record("Expected SwiftSnapshotError")
-      }
+
+    @Test func ioPassesTheMessageThrough() {
+      #expect(SwiftSnapshotError.io("Failed to write file").description == "Failed to write file")
     }
-    
-    /// Test that different error cases can be distinguished
-    @Test func errorCasesAreDistinct() {
-      let error1 = SwiftSnapshotError.io("test")
-      let error2 = SwiftSnapshotError.formatting("test")
-      
-      // These should have different descriptions
-      #expect(error1.description != error2.description)
-      #expect(error1.description.contains("I/O error"))
-      #expect(error2.description.contains("Formatting error"))
+
+    @Test func overwriteDisallowedNamesTheFile() {
+      let error = SwiftSnapshotError.overwriteDisallowed(URL(fileURLWithPath: "/tmp/test.swift"))
+
+      #expect(error.description == "File exists and overwrite is disallowed: /tmp/test.swift")
     }
-    
-    /// Test error with complex path
-    @Test func errorWithComplexPath() {
-      let path = ["MyStruct", "nestedArray", "[0]", "deepField", "value"]
-      let error = SwiftSnapshotError.unsupportedType("UnknownType", path: path)
-      
-      let description = error.description
-      #expect(description.contains("MyStruct → nestedArray → [0] → deepField → value"))
+
+    @Test func formattingIsLabelled() {
+      let error = SwiftSnapshotError.formatting("Invalid configuration")
+
+      #expect(error.description == "Formatting failed: Invalid configuration")
+    }
+
+    @Test func casesAreEquatable() {
+      #expect(SwiftSnapshotError.io("test") != SwiftSnapshotError.formatting("test"))
+      #expect(SwiftSnapshotError.io("test") == SwiftSnapshotError.io("test"))
+    }
+
+    @Test func deepPathsReadInOrder() {
+      let error = SwiftSnapshotError.unsupportedType(
+        "UnknownType",
+        path: ["MyStruct", "nestedArray", "[0]", "deepField", "value"]
+      )
+
+      #expect(error.description.contains("MyStruct.nestedArray.[0].deepField.value"))
     }
   }
 }

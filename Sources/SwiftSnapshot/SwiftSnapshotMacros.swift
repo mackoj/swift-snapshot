@@ -30,7 +30,7 @@ public enum RedactionStyle {
 /// ```
 @attached(
   member, names: named(__swiftSnapshot_folder), named(__swiftSnapshot_properties),
-  named(__swiftSnapshot_makeExpr), named(__swiftSnapshot_reflectionFields), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata),
+  named(__swiftSnapshot_reflectionFields), named(exportSnapshot), named(__SwiftSnapshot_PropertyMetadata),
   named(__SwiftSnapshot_Redaction))
 @attached(extension, conformances: SwiftSnapshotExportable, names: named(exportSnapshot))
 public macro SwiftSnapshot(folder: String? = nil) =

@@ -22,7 +22,6 @@ extension SnapshotTests {
       #expect(options.setDeterminism == false)
       #expect(options.dataInlineThreshold == 128)
       #expect(options.forceEnumDotSyntax == true)
-      #expect(options.useMacroGeneratedExpressions == false)
     }
     
     /// Test RenderOptions with default-like values
@@ -32,14 +31,12 @@ extension SnapshotTests {
         setDeterminism: false,
         dataInlineThreshold: 0,
         forceEnumDotSyntax: false,
-        useMacroGeneratedExpressions: true
       )
       
       #expect(options.sortDictionaryKeys == false)
       #expect(options.setDeterminism == false)
       #expect(options.dataInlineThreshold == 0)
       #expect(options.forceEnumDotSyntax == false)
-      #expect(options.useMacroGeneratedExpressions == true)
     }
     
     /// Test RenderOptions property mutation
@@ -55,13 +52,11 @@ extension SnapshotTests {
       options.setDeterminism = true
       options.dataInlineThreshold = 32
       options.forceEnumDotSyntax = true
-      options.useMacroGeneratedExpressions = true
       
       #expect(options.sortDictionaryKeys == true)
       #expect(options.setDeterminism == true)
       #expect(options.dataInlineThreshold == 32)
       #expect(options.forceEnumDotSyntax == true)
-      #expect(options.useMacroGeneratedExpressions == true)
     }
     
     // MARK: - FormatProfile Tests

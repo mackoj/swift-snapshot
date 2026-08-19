@@ -95,10 +95,6 @@ struct EmptyReflectionFieldsExportable: SwiftSnapshotExportable {
   let id: String
   let alias: String?
 
-  static func __swiftSnapshot_makeExpr(from instance: EmptyReflectionFieldsExportable) -> String {
-    "EmptyReflectionFieldsExportable(id: \(instance.id), alias: \(instance.alias ?? "nil"))"
-  }
-
   func __swiftSnapshot_reflectionFields() -> [SwiftSnapshotReflectionField] {
     []
   }
@@ -110,115 +106,70 @@ extension SnapshotTests {
       SwiftSnapshotConfig.resetToLibraryDefaults()
     }
 
-    @Test func macroGeneratedCodeCompiles() throws {
-      // This test verifies that code using the macros compiles successfully
-      // The fact that this file compiles proves the macros are working
+    /// Assert on what the library writes, not on an intermediate string.
+    ///
+    /// These tests used to assert on `__swiftSnapshot_makeExpr`, which produced things
+    /// like `TestProduct(id: 123, name: Widget)`: unquoted strings, not compilable Swift.
+    /// That path is gone. What the file contains is what matters.
+    private func generate<T>(_ value: T, as name: String = "fixture") throws -> String {
+      try SwiftSnapshotRuntime.generateSwiftCode(instance: value, variableName: name)
+    }
 
-      // Verify the generated members exist
-      #expect(TestProduct.__swiftSnapshot_folder == nil)  // No folder parameter specified
+    @Test func macroAttachesItsMembers() throws {
+      #expect(TestProduct.__swiftSnapshot_folder == nil)
       #expect(!TestProduct.__swiftSnapshot_properties.isEmpty)
 
-      let product = TestProduct(id: "123", name: "Widget")
-      let expr = TestProduct.__swiftSnapshot_makeExpr(from: product)
-
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        TestProduct(id: 123, name: Widget)
-        """
-      }
+      let code = try generate(TestProduct(id: "123", name: "Widget"))
+      #expect(code.contains(#"TestProduct(id: "123", name: "Widget")"#))
     }
 
-    @Test func macroWithIgnore() throws {
-      let user = TestUser(id: "user123", cache: [:])
-      let expr = TestUser.__swiftSnapshot_makeExpr(from: user)
+    @Test func ignoredPropertyIsDropped() throws {
+      let code = try generate(TestUser(id: "user123", cache: [:]))
 
-      // Verify ignored property is not in expression
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        TestUser(id: user123)
-        """
-      }
+      #expect(code.contains(#"TestUser(id: "user123")"#))
+      #expect(!code.contains("cache"))
     }
 
-    @Test func macroWithRename() throws {
-      let item = TestItem(id: "item123", name: "Test Item")
-      let expr = TestItem.__swiftSnapshot_makeExpr(from: item)
+    @Test func renamedPropertyUsesTheNewLabel() throws {
+      let code = try generate(TestItem(id: "item123", name: "Test Item"))
 
-      // Verify renamed label is used
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        TestItem(id: item123, displayName: Test Item)
-        """
-      }
+      #expect(code.contains(#"displayName: "Test Item""#))
+      #expect(!code.contains("name:"))
     }
 
-    @Test func macroWithRedact() throws {
-      let secret = TestSecret(id: "secret123", apiKey: "super-secret-key")
-      let expr = TestSecret.__swiftSnapshot_makeExpr(from: secret)
+    @Test func maskedPropertyIsReplaced() throws {
+      let code = try generate(TestSecret(id: "secret123", apiKey: "super-secret-key"))
 
-      // Verify redacted value appears instead of actual value
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        TestSecret(id: secret123, apiKey: "REDACTED")
-        """
-      }
+      #expect(code.contains(#"apiKey: "REDACTED""#))
+      #expect(!code.contains("super-secret-key"))
     }
 
-    @Test func macroWithHashRedact() throws {
-      let hashSecret = TestHashRedact(id: "hash123", password: "my-password")
-      let expr = TestHashRedact.__swiftSnapshot_makeExpr(from: hashSecret)
+    @Test func hashedPropertyIsReplaced() throws {
+      let code = try generate(TestHashRedact(id: "hash123", password: "my-password"))
 
-      // Verify hashed placeholder appears instead of actual value
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        TestHashRedact(id: hash123, password: "<hashed>")
-        """
-      }
+      #expect(code.contains(#"password: "<hashed>""#))
+      #expect(!code.contains("my-password"))
     }
 
-    @Test func macroWithEnum() throws {
-      let status = TestStatus.active
-      let expr = TestStatus.__swiftSnapshot_makeExpr(from: status)
+    @Test func enumRendersItsCase() throws {
+      let code = try generate(TestStatus.active)
 
-      // Verify enum case is rendered
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        .active
-        """
-      }
+      #expect(code.contains("= .active"))
     }
 
-    // Folder test skipped - requires full runtime integration
-    // @Test func macroWithFolder() throws {
-    //   #expect(TestConfig.__swiftSnapshot_folder == "Fixtures/Test")
-    // }
+    @Test func enumRendersAssociatedValues() throws {
+      let code = try generate(TestResult.success(value: 42))
 
-    @Test func enumWithAssociatedValues() throws {
-      let success = TestResult.success(value: 42)
-      let expr = TestResult.__swiftSnapshot_makeExpr(from: success)
-
-      // Verify enum with associated values
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        .success(value: 42)
-        """
-      }
+      #expect(code.contains(".success(value: 42)"))
     }
 
-    @Test func macroWithGenericType() throws {
-      // Verify that generic types compile and have computed properties
+    @Test func genericTypesCarryTheirParameters() throws {
       #expect(TestGenericContainer<Int>.__swiftSnapshot_folder == nil)
       #expect(!TestGenericContainer<Int>.__swiftSnapshot_properties.isEmpty)
 
-      let container = TestGenericContainer(id: 1, items: [10, 20, 30])
-      let expr = TestGenericContainer<Int>.__swiftSnapshot_makeExpr(from: container)
-
-      // Verify expression is generated correctly
-      assertInlineSnapshot(of: expr.description, as: .description) {
-        """
-        TestGenericContainer(id: 1, items: [10, 20, 30])
-        """
-      }
+      let code = try generate(TestGenericContainer(id: 1, items: [10, 20, 30]))
+      #expect(code.contains("id: 1"))
+      #expect(code.contains("items: [10, 20, 30]"))
     }
 
     @Test func targetLevelReflectionExtractionAppliesRedaction() throws {
@@ -255,7 +206,11 @@ extension SnapshotTests {
       #expect(code.contains("alias: nil"))
     }
 
-    @Test func topLevelUsesExtractedFieldsButNestedUsesMirrorFallback() throws {
+    /// Redaction applies at every depth.
+    ///
+    /// It used to apply only at the top level, so a secret one struct down was written
+    /// to disk in the clear. A redacted property is a secret wherever it sits.
+    @Test func redactionAppliesWhenNested() throws {
       struct SecretContainer {
         let secret: TestSecret
       }
@@ -278,8 +233,8 @@ extension SnapshotTests {
 
       #expect(nestedCode.contains("extension SecretContainer"))
       #expect(nestedCode.contains("static let nestedSecret: SecretContainer"))
-      #expect(nestedCode.contains("apiKey: \"super-secret-key\""))
-      #expect(!nestedCode.contains("apiKey: \"REDACTED\""))
+      #expect(nestedCode.contains("apiKey: \"REDACTED\""))
+      #expect(!nestedCode.contains("super-secret-key"))
     }
 
     @Test func topLevelEnumWithAssociatedValuesRendersViaRuntime() throws {
@@ -358,7 +313,7 @@ extension SnapshotTests {
             static let mock: TestUserGeneric<TestKakou> = TestUserGeneric<TestKakou>(
                 id: 42,
                 name: "Mack",
-                some: [TestKakou(toto: "hello", tata: .b), TestKakou(toto: "world", tata: .c)]
+                some: [TestKakou(toto: "1234", tata: .b), TestKakou(toto: "1234", tata: .c)]
             )
         }
 

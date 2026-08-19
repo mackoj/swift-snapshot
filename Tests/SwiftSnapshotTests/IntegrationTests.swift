@@ -275,7 +275,7 @@ extension SnapshotTests {
       .appendingPathComponent("SwiftSnapshotTests")
       .appendingPathComponent(UUID().uuidString)
 
-    let url = SwiftSnapshotRuntime.export(
+    let url = try SwiftSnapshotRuntime.export(
       instance: response,
       variableName: "successResponse",
       fileName: "APIResponse+Fixtures",
@@ -321,7 +321,7 @@ extension SnapshotTests {
     }
 
     // Register custom renderer
-    SnapshotRendererRegistry.shared.register(CustomType.self) { value, context in
+    SnapshotRendererRegistry.register(CustomType.self) { value, context in
       ExprSyntax(stringLiteral: "CustomType(value: \"CUSTOM_\(value.value)\")")
     }
 
@@ -361,7 +361,7 @@ extension SnapshotTests {
       import Foundation
 
       extension Container {
-          static let emptyContainer: Container = Container(array: [], dict: [:], set: Set([]))
+          static let emptyContainer: Container = Container(array: [], dict: [:], set: [])
       }
 
       """
@@ -392,9 +392,9 @@ extension SnapshotTests {
 
       extension Message {
           static let testMessage: Message = Message(
-              text: #"Hello\nWorld\t\"quoted\""#,
-              emoji: #"\u{1F389}\u{1F680}"#,
-              code: #"let x = \"test\""#
+              text: "Hello\nWorld\t\"quoted\"",
+              emoji: "🎉🚀",
+              code: "let x = \"test\""
           )
       }
 
@@ -431,7 +431,7 @@ extension SnapshotTests {
         .appendingPathComponent("SwiftSnapshotTests")
         .appendingPathComponent(UUID().uuidString)
       
-      let url = SwiftSnapshotRuntime.export(
+      let url = try SwiftSnapshotRuntime.export(
         instance: user,
         variableName: "mock",
         outputBasePath: tempDir.path,

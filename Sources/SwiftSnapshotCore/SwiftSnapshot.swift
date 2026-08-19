@@ -1,3 +1,4 @@
+@_exported import SwiftSnapshotReflection
 // SwiftSnapshot - Generate type-safe Swift source fixtures from runtime values
 
 @_exported import Foundation

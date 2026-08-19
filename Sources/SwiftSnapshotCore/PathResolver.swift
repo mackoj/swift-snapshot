@@ -1,3 +1,4 @@
+import SwiftSnapshotReflection
 import Foundation
 
 /// Resolves output paths for snapshot files

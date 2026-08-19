@@ -89,7 +89,7 @@ extension SnapshotTests {
       #"""
       import Foundation
 
-      extension String { static let testEscaped: String = #"Hello\nWorld\t\"quoted\""# }
+      extension String { static let testEscaped: String = "Hello\nWorld\t\"quoted\"" }
 
       """#
     }
@@ -395,7 +395,7 @@ extension SnapshotTests {
     let tempDir = FileManager.default.temporaryDirectory
       .appendingPathComponent(UUID().uuidString)
 
-    let url = SwiftSnapshotRuntime.export(
+    let url = try SwiftSnapshotRuntime.export(
       instance: 42,
       variableName: "testInt",
       outputBasePath: tempDir.path
@@ -420,7 +420,7 @@ extension SnapshotTests {
       .appendingPathComponent(UUID().uuidString)
 
     // First export
-    let url1 = SwiftSnapshotRuntime.export(
+    let url1 = try SwiftSnapshotRuntime.export(
       instance: 42,
       variableName: "testInt",
       outputBasePath: tempDir.path
@@ -431,17 +431,17 @@ extension SnapshotTests {
     // Verify first export succeeded
     #expect(FileManager.default.fileExists(atPath: url1.path))
 
-    // Second export with overwrite disallowed should report an issue and return placeholder URL
-    let url2 = SwiftSnapshotRuntime.export(
-      instance: 43,
-      variableName: "testInt",
-      outputBasePath: tempDir.path,
-      allowOverwrite: false
-    )
-    
-    // The URL should be the error placeholder
-    #expect(url2.path.contains("swift-snapshot-error"))
-    
+    // Exporting again with overwrite disallowed throws. It used to swallow the error
+    // and hand back a placeholder URL pointing at /tmp, which read as success.
+    #expect(throws: SwiftSnapshotError.self) {
+      try SwiftSnapshotRuntime.export(
+        instance: 43,
+        variableName: "testInt",
+        outputBasePath: tempDir.path,
+        allowOverwrite: false
+      )
+    }
+
     // Verify the original file wasn't overwritten
     let content = try String(contentsOf: url1, encoding: .utf8)
     #expect(content.contains("42"))

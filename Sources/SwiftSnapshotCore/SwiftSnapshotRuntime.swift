@@ -1,3 +1,4 @@
+import SwiftSnapshotReflection
 import Foundation
 import IssueReporting
 import SwiftSyntax
@@ -118,71 +119,56 @@ public enum SwiftSnapshotRuntime {
     line: UInt = #line,
     fileID: StaticString = #fileID,
     filePath: StaticString = #filePath
-  ) -> URL {
+  ) throws -> URL {
     #if DEBUG
-    return withErrorReporting(
-      "Failed to export snapshot",
+    let sanitizedVariableName = sanitizeVariableName(variableName)
+
+    let code = try generateSwiftCode(
+      instance: instance,
+      variableName: sanitizedVariableName,
+      header: header,
+      context: context
+    )
+
+    let outputDirectory = PathResolver.resolveOutputDirectory(
+      outputBasePath: outputBasePath,
       fileID: fileID,
-      filePath: filePath,
-      line: line
-    ) {
-      // Sanitize the variable name to ensure it's a valid Swift identifier
-      let sanitizedVariableName = sanitizeVariableName(variableName)
-      
-      // Generate the Swift code
-      let code = try generateSwiftCode(
-        instance: instance,
-        variableName: sanitizedVariableName,
-        header: header,
-        context: context
+      filePath: filePath
+    )
+
+    let destination = PathResolver.resolveFilePath(
+      typeName: String(describing: T.self),
+      variableName: sanitizedVariableName,
+      fileName: fileName,
+      outputDirectory: outputDirectory
+    )
+
+    if !allowOverwrite, FileManager.default.fileExists(atPath: destination.path) {
+      throw SwiftSnapshotError.overwriteDisallowed(destination)
+    }
+
+    do {
+      try FileManager.default.createDirectory(
+        at: destination.deletingLastPathComponent(),
+        withIntermediateDirectories: true
       )
+    } catch {
+      throw SwiftSnapshotError.io("Failed to create directory: \(error.localizedDescription)")
+    }
 
-      // Resolve output directory
-      let outputDirectory = PathResolver.resolveOutputDirectory(
-        outputBasePath: outputBasePath,
-        fileID: fileID,
-        filePath: filePath
-      )
+    do {
+      try code.write(to: destination, atomically: true, encoding: .utf8)
+    } catch {
+      throw SwiftSnapshotError.io("Failed to write file: \(error.localizedDescription)")
+    }
 
-      // Resolve full file path
-      let typeName = String(describing: T.self)
-      let filePath = PathResolver.resolveFilePath(
-        typeName: typeName,
-        variableName: sanitizedVariableName,
-        fileName: fileName,
-        outputDirectory: outputDirectory
-      )
-
-      // Check if file exists and overwrite is disallowed
-      if !allowOverwrite && FileManager.default.fileExists(atPath: filePath.path) {
-        throw SwiftSnapshotError.overwriteDisallowed(filePath)
-      }
-
-      // Create directory if needed
-      let directory = filePath.deletingLastPathComponent()
-      do {
-        try FileManager.default.createDirectory(
-          at: directory,
-          withIntermediateDirectories: true,
-          attributes: nil
-        )
-      } catch {
-        throw SwiftSnapshotError.io("Failed to create directory: \(error.localizedDescription)")
-      }
-
-      // Write file
-      do {
-        try code.write(to: filePath, atomically: true, encoding: .utf8)
-      } catch {
-        throw SwiftSnapshotError.io("Failed to write file: \(error.localizedDescription)")
-      }
-
-      return filePath
-    } ?? URL(fileURLWithPath: "/tmp/swift-snapshot-error")
+    return destination
     #else
-    // In non-DEBUG builds, return a placeholder URL without performing any I/O
-    reportIssue("SwiftSnapshot.export() called in release build. This method should only be used in DEBUG builds.")
-    return URL(fileURLWithPath: "/tmp/swift-snapshot-noop")
+    // Release builds do no I/O. Exporting a fixture is a thing you do while writing
+    // tests, not a thing a shipped app does.
+    reportIssue(
+      "SwiftSnapshotRuntime.export() was called in a release build. It did nothing.")
+    return URL(fileURLWithPath: "/dev/null")
     #endif
   }
 
@@ -230,27 +216,9 @@ public enum SwiftSnapshotRuntime {
     let effectiveHeader = header ?? SwiftSnapshotConfig.getGlobalHeader()
 
     // Create render context
-    let renderContext = SnapshotRenderContext(
-      path: [],
-      formatting: formatting,
-      options: options
-    )
+    let renderContext = SnapshotRenderContext(options: options)
 
-    // Render the value
-    let expression: ExprSyntax
-    do {
-      expression = try ValueRenderer.render(instance, context: renderContext)
-    } catch let error as SwiftSnapshotError {
-      // Re-throw with better context using IssueReporting
-      reportIssue("Failed to render value: \(error.description)")
-      throw error
-    } catch {
-      reportIssue("Unexpected error rendering value: \(error)")
-      throw SwiftSnapshotError.reflection(
-        "Unexpected error: \(error.localizedDescription)",
-        path: []
-      )
-    }
+    let expression = try ValueRenderer.render(instance, context: renderContext)
 
     // Get type name
     let typeName = String(describing: T.self)

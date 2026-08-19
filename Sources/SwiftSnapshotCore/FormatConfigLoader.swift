@@ -1,3 +1,4 @@
+import SwiftSnapshotReflection
 import Foundation
 
 /// Loads format configuration from .editorconfig or .swift-format files.

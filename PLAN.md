@@ -1,65 +1,63 @@
 # swift-snapshot: rebuild plan
 
-Working branch: `worktree-rebrand-and-tests`
-Worktree: `.claude/worktrees/rebrand-and-tests`
+Working branch: `rework/tests-reflection-docs` (PR #49)
 
-Update the checkboxes as work lands. Anything checked is done and verified; do not redo it.
+Checked items are done and verified. Do not redo them. What happened is in PROGRESS.md.
 
 ## Decisions taken (2026-08-19)
 
 - Breaking changes allowed. 0.x, break freely.
 - Tests must really typecheck the generated code, not just parse it.
 - Reflection engine gets its own target.
-- Name: keep the spirit, open to a rename. Candidates in P5.
+- Name: open to a rename. Candidates below, waiting on a pick.
 
-## P0 — make `swift test` green (BLOCKER)
+## P0 — make `swift test` green
 
-`swift test` on `main` segfaults. It has been red the whole time.
-
-- [ ] Fix SIGSEGV in `targetLevelReflectionExtractionAppliesRedaction`
-- [ ] `swift test` runs to completion
-
-Root cause: `SwiftSnapshotRuntime.generateSwiftCode` reads `@Dependency(\.swiftSnapshotConfig)`.
-Crash is inside swift-dependencies `CachedValues` -> swift-testing `_currentTest()` -> `outlined destroy of Test?`.
-Only fires from the MacroTesting suite. Dependency/toolchain ABI mismatch.
-
-Fix: delete the dependency. `SwiftSnapshotConfigClient` is 13 closures wrapping static
-functions, and its `testValue` is `.live`, so it buys zero test isolation. It is pure
-ceremony that happens to crash.
+- [x] Fix the SIGSEGV. Cause: `xctest-dynamic-overlay` 1.7.0 against the 6.3.3 toolchain.
+- [x] Pin swift-snapshot-testing below 1.19, which does not compile on this toolchain.
+- [x] `swift test` runs to completion. 197 tests pass.
 
 ## P1 — split the reflection engine
 
-- [ ] New target `SwiftSnapshotReflection`: value -> `ExprSyntax`. No file I/O, no global config.
-- [ ] `SwiftSnapshotCore` keeps config, paths, formatting, file writing.
-- [ ] New test target `SwiftSnapshotReflectionTests`.
+- [x] `SwiftSnapshotReflection`: value -> `ExprSyntax`. No file I/O, no global config.
+- [x] `SwiftSnapshotCore` keeps config, paths, formatting, file writing.
+- [x] `SwiftSnapshotReflectionTests`.
 
 ## P2 — make the testing story real
 
-- [ ] Round-trip typecheck harness: render values, emit one file, run `swiftc -typecheck` once.
-- [ ] Reflection coverage matrix (see P3 for the bugs it should catch).
+- [x] Round-trip typecheck: render the matrix, emit one file, `swiftc -typecheck` once.
+- [x] Pin the generated text as a snapshot so rendering changes show up in a diff.
+- [x] Reflection coverage matrix.
 
-## P3 — fix what the tests expose
+## P3 — fix what the tests exposed
 
-Found by reading, before writing a line of test:
-
-- [ ] Dictionary keys are stringified. `[1: "a"]` renders `["1": "a"]`. Does not compile.
-- [ ] `reportIssue` used as a logger. Any user exporting inside a test gets spurious failures.
-- [ ] Render failures are swallowed and replaced with `nil`. Produces non-compiling output and calls it success.
-- [ ] Enum case names come from `String(describing:)`. Wrong for `CustomStringConvertible` types.
-- [ ] Generic `Collection` fallback emits `Type<...>([...])`. Wrong for ranges, string views, most collections.
-- [ ] Nested optionals collapse.
+- [x] Dictionary keys were stringified.
+- [x] `reportIssue` was used as a logger.
+- [x] Render failures were swallowed and replaced with `nil`.
+- [x] Enum case names came from `String(describing:)`.
+- [x] Enum payload tuples were passed as a single argument.
+- [x] Ranges rendered an initializer that does not exist.
+- [x] Nested optionals collapsed.
+- [x] Redaction applied only at the top level.
+- [x] `@SnapshotRename` was ignored on the reflection path.
+- [x] `indent(level:)` ignored tab style.
 
 ## P4 — deprecate and isolate
 
-- [ ] Delete the macro-expression-string path: `useMacroGeneratedExpressions`, `__swiftSnapshot_makeExpr`, `renderSwiftSnapshotExportable`. The source comments already admit it does not work.
-- [ ] Delete `tryDereferencePointer` and `extractCurrentValueFromPublisher`. Hand-rolled pointer casts against Combine internals.
-- [ ] Keep `__swiftSnapshot_reflectionFields`. That is the redaction path that works.
+- [x] Delete the macro-expression-string path.
+- [x] Delete pointer dereferencing and Combine internals walking.
+- [x] Delete `SwiftSnapshotBootstrap`, which did nothing.
+- [x] Keep `__swiftSnapshot_reflectionFields`. That is the path that works.
 
 ## P5 — docs and README
 
 - [ ] Pick a name.
 - [ ] Rewrite README.
-- [ ] Rewrite DocC articles.
+- [ ] Rewrite the DocC articles. Several describe things that no longer exist:
+      `SwiftSnapshotVsDebugSnapshots`, `StabilityAndSupportTiers`, `Architecture`
+      (documents the dependency injection that is gone).
+- [ ] Delete `EditorConfigVerification.md` and `EditorConfigMapping.md` or fold them into
+      one formatting article.
 
 Name candidates, no "fixture":
 
@@ -68,4 +66,10 @@ Name candidates, no "fixture":
 | `SwiftLiteral` | turns a value into a Swift literal. Most literal, least clever. |
 | `Petrify` | live value turned to stone. Memorable. |
 | `Engrave` | engrave a runtime value into source. |
-| `Reify` | precise, CS-flavoured, slightly academic. |
+| `Reify` | precise, slightly academic. |
+
+## P6 — not started
+
+- [ ] Compare against pointfreeco/swift-debug-snapshots and borrow test cases.
+- [ ] CI that runs the round-trip typecheck on every push.
+- [ ] Decide whether `SnapshotRendererRegistry` should be scoped rather than global.

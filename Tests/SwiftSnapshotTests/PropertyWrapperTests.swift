@@ -206,11 +206,12 @@ extension SnapshotTests {
       }
     }
 
-    @Test func propertyWrapperWithUnsafePointer() throws {
-      // This test simulates Combine's @Published which uses UnsafeMutablePointer internally
+    @Test func propertyWrapperWithPointerStorageFails() throws {
+      // Combine's @Published keeps its value behind an UnsafeMutablePointer, and Mirror
+      // cannot read it. The library used to cast the pointer to a list of likely types
+      // and write `nil` when none of them matched. It now says what it cannot do.
       @propertyWrapper
       struct MockPublished<Value> {
-        // Simulating @Published's internal storage with an unsafe pointer
         var storage: UnsafeMutablePointer<Value>
 
         var wrappedValue: Value {
@@ -229,25 +230,15 @@ extension SnapshotTests {
         var title: String
       }
 
-      let viewModel = ViewModel(isLoading: false, title: "Test")
-
-      // This should not throw "Unsupported type: UnsafeMutablePointer"
-      let code = try SwiftSnapshotRuntime.generateSwiftCode(
-        instance: viewModel,
-        variableName: "testViewModel"
-      )
-
-      // The unsafe pointer should be dereferenced to get the actual value
-      assertInlineSnapshot(of: code, as: .description) {
-        """
-        import Foundation
-
-        extension ViewModel {
-            static let testViewModel: ViewModel = ViewModel(isLoading: false, title: "Test")
-        }
-
-        """
+      let error = #expect(throws: SwiftSnapshotError.self) {
+        try SwiftSnapshotRuntime.generateSwiftCode(
+          instance: ViewModel(isLoading: false, title: "Test"),
+          variableName: "testViewModel"
+        )
       }
+
+      #expect(error?.description.contains("MockPublished<Bool>") == true)
+      #expect(error?.description.contains("isLoading") == true)
     }
 
     @Test func structWithUnsupportedProperty() throws {

@@ -1,3 +1,4 @@
+import SwiftSnapshotReflection
 import Foundation
 import IssueReporting
 import SwiftFormat
