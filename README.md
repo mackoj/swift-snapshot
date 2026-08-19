@@ -77,10 +77,30 @@ is in when a screen looks wrong and hand it to a SwiftUI preview.
 
 Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16. CI builds every one of them.
 
-`Literal.source` works anywhere. `Literal.write` needs somewhere to write: on a simulator
-the default path resolves against the machine that compiled the code, so it lands in your
-source tree as expected. On a device it does not, and you should pass a `directory:` inside
-the app's sandbox or use `Literal.source` and move the text yourself.
+**Generate on macOS or in the simulator.** That is the design. The tool writes a file into
+your source tree so you can commit it, and the simulator and your Mac are where your source
+tree is. A device build links fine, but the default output path comes from `#filePath` —
+the compiling machine's path — which does not exist on a phone.
+
+<details>
+<summary>If Xcode says <code>Unable to resolve module dependency: 'SwiftSyntax'</code></summary>
+
+That is Xcode's module scanner failing on modules it has already built, not a platform
+problem. It shows up on packages that have both a macro plugin and a library on
+swift-syntax, which is this package's shape.
+
+Clear the caches and rebuild:
+
+```bash
+rm -rf ~/Library/Caches/org.swift.swiftpm ~/Library/org.swift.swiftpm
+rm -rf ~/Library/Developer/Xcode/DerivedData/<YourProject>-*
+```
+
+SwiftPM keeps prebuilt swift-syntax artifacts in that first directory. A partial one
+produces exactly this error. Check `xcode-select -p` points at an Xcode and not a
+standalone toolchain while you are there.
+
+</details>
 
 ## Use
 

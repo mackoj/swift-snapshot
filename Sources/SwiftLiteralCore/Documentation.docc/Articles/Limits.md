@@ -85,19 +85,20 @@ not, and this is the only place in the library that assumes a shape it cannot ve
 
 **What to do:** register a renderer.
 
-## On a device there is nowhere obvious to write
+## Generate on macOS or in the simulator
 
-The library builds for macOS, iOS, watchOS, and tvOS, and CI checks all four.
+That is the design, not a workaround. The tool writes a file into your source tree so you
+can commit it. Both of those need the source tree, and the simulator and your Mac are where
+it is.
 
-`Literal.source` works anywhere. It returns a string.
+The library builds for macOS, iOS, watchOS, and tvOS, and CI checks all four, so nothing
+stops you linking it in a device build. But `Literal.write` defaults to `__Snapshots__`
+next to the file that called it, resolved from `#filePath` — the path on the machine that
+compiled the code. In the simulator that machine is yours and the file lands where you
+want it. On a device that path does not exist, and even if you point it somewhere inside
+the app container the result is a file on a phone, which is not where fixtures live.
 
-`Literal.write` needs a destination. Its default is `__Snapshots__` next to the file that
-called it, resolved from `#filePath` — the path on the machine that compiled the code. In a
-simulator that machine is yours, so the file lands in your source tree, which is the point.
-On a device that path does not exist and the write fails with an I/O error.
-
-**What to do:** on a device, pass a `directory:` inside the app's sandbox, or call
-`Literal.source` and move the text yourself.
+`Literal.source` returns a string and works anywhere, if you have somewhere to send it.
 
 ## Floating point round-trips, and says so
 
