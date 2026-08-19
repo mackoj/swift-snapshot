@@ -23,7 +23,7 @@ syntax nodes by hand at every level. If the text does not parse, rendering throw
 Per value, in order:
 
 1. **Optionals** are unwrapped first, so a renderer registered for `T` also covers `T?`.
-2. **Custom renderers** from ``ValueRendererRegistry``.
+2. **Custom renderers** from ``ValueRenderers``.
 3. **Macro-described types**, via ``LiteralFields``.
 4. **Primitives and Foundation types.**
 5. **Collections**, through `Mirror` rather than casts.
@@ -59,7 +59,7 @@ because that is not the same value as `nil`.
 
 ### Extending
 
-- ``ValueRendererRegistry``
+- ``ValueRenderers``
 - ``CustomValueRenderer``
 
 ### Macro support

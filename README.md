@@ -226,13 +226,25 @@ Write a renderer:
 ```swift
 import SwiftSyntax
 
-ValueRendererRegistry.register(Phone.self) { phone, _ in
+LiteralConfig.registerRenderer(Phone.self) { phone, _ in
     "Phone(e164: \(literal: phone.e164))"
 }
 ```
 
-The registry is global. Call `ValueRendererRegistry.removeAll()` in your test setup so a
-renderer registered by one test does not leak into the next.
+In a test, scope them instead of registering globally. Renderers travel in the render
+context, so two tests can disagree about how to render a type and neither has to clean up:
+
+```swift
+let renderers = ValueRenderers().registering(Phone.self) { phone, _ in
+    "Phone(e164: \(literal: phone.e164))"
+}
+
+withDependencies {
+    $0.literalConfiguration.renderers = { renderers }
+} operation: {
+    let code = try Literal.source(of: contact, named: "testContact")
+}
+```
 
 ### Formatting
 

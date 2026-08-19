@@ -1,3 +1,4 @@
+import Dependencies
 import InlineSnapshotTesting
 import Testing
 import SwiftSyntaxBuilder
@@ -320,16 +321,18 @@ extension LiteralTests {
       let value: String
     }
 
-    // Register custom renderer
-    ValueRendererRegistry.register(CustomType.self) { value, context in
-      ExprSyntax(stringLiteral: "CustomType(value: \"CUSTOM_\(value.value)\")")
+    // Registered on the configuration, and scoped to this test. It used to go into a
+    // shared registry and stay there for whatever ran next.
+    let renderers = ValueRenderers().registering(CustomType.self) { value, _ in
+      "CustomType(value: \(literal: "CUSTOM_\(value.value)"))"
     }
 
     let custom = CustomType(value: "test")
-    let code = try Literal.source(
-        of: custom,
-        named: "testCustom"
-    )
+    let code = try withDependencies {
+      $0.literalConfiguration.renderers = { renderers }
+    } operation: {
+      try Literal.source(of: custom, named: "testCustom")
+    }
 
     assertInlineSnapshot(of: code, as: .description) {
       """

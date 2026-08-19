@@ -70,7 +70,10 @@ public enum Literal {
 
     let expression = try ValueRenderer.render(
       value,
-      context: RenderContext(options: configuration.renderOptions())
+      context: RenderContext(
+        options: configuration.renderOptions(),
+        renderers: configuration.renderers()
+      )
     )
 
     return CodeFormatter.formatFile(

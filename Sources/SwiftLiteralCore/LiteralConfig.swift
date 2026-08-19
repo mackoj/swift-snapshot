@@ -1,5 +1,6 @@
 import SwiftLiteralReflection
 import Foundation
+import SwiftSyntax
 import IssueReporting
 
 /// Source for format configuration.
@@ -60,6 +61,7 @@ public enum LiteralConfig {
   private nonisolated(unsafe) static var formatProfile: FormatProfile = baselineFormatProfile
   private nonisolated(unsafe) static var formatConfigSource: FormatConfigSource?
   private nonisolated(unsafe) static var renderOpts: RenderOptions = baselineRenderOptions
+  private nonisolated(unsafe) static var customRenderers = ValueRenderers()
   private static let lock = NSLock()
 
   /// Set the global root directory for snapshot output
@@ -227,6 +229,7 @@ public enum LiteralConfig {
     formatProfile = baselineFormatProfile
     formatConfigSource = nil
     renderOpts = baselineRenderOptions
+    customRenderers = ValueRenderers()
     #else
     reportIssue("LiteralConfig.resetToLibraryDefaults() called in release build. Configuration methods should only be used in DEBUG builds.")
     #endif
@@ -251,4 +254,67 @@ public enum LiteralConfig {
   public static func libraryDefaultFormatProfile() -> FormatProfile {
     return baselineFormatProfile
   }
+
+  // MARK: - Custom Renderers
+
+  /// Teach the library how to render a type reflection cannot handle.
+  ///
+  /// ```swift
+  /// LiteralConfig.registerRenderer(Phone.self) { phone, _ in
+  ///   "Phone(e164: \(literal: phone.e164))"
+  /// }
+  /// ```
+  ///
+  /// Lookup is by exact concrete type, and optionals are unwrapped first, so registering
+  /// `Phone` covers `Phone?`.
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
+  public static func registerRenderer<Value>(
+    _ type: Value.Type,
+    render: @escaping @Sendable (Value, RenderContext) throws -> ExprSyntax
+  ) {
+    #if DEBUG
+    lock.lock()
+    defer { lock.unlock() }
+    customRenderers.register(type, render: render)
+    #else
+    reportIssue(
+      "LiteralConfig.registerRenderer() called in release build. Custom renderers are a DEBUG-only tool.")
+    #endif
+  }
+
+  /// Register a ``CustomValueRenderer``.
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
+  public static func registerRenderer<R: CustomValueRenderer>(_ rendererType: R.Type) {
+    registerRenderer(R.Value.self) { value, context in
+      try R.render(value, context: context)
+    }
+  }
+
+  /// The renderers a render will consult.
+  public static func renderers() -> ValueRenderers {
+    #if DEBUG
+    lock.lock()
+    defer { lock.unlock() }
+    return customRenderers
+    #else
+    return ValueRenderers()
+    #endif
+  }
+
+  /// Forget every registered renderer.
+  ///
+  /// **Debug Only**: This method only operates in DEBUG builds.
+  public static func removeAllRenderers() {
+    #if DEBUG
+    lock.lock()
+    defer { lock.unlock() }
+    customRenderers = ValueRenderers()
+    #else
+    reportIssue(
+      "LiteralConfig.removeAllRenderers() called in release build. Custom renderers are a DEBUG-only tool.")
+    #endif
+  }
+
 }

@@ -28,19 +28,22 @@ public struct LiteralConfigurationClient: Sendable {
   public var formatConfigSource: @Sendable () -> FormatConfigSource?
   public var globalRoot: @Sendable () -> URL?
   public var globalHeader: @Sendable () -> String?
+  public var renderers: @Sendable () -> ValueRenderers
 
   public init(
     renderOptions: @escaping @Sendable () -> RenderOptions,
     formatProfile: @escaping @Sendable () -> FormatProfile,
     formatConfigSource: @escaping @Sendable () -> FormatConfigSource?,
     globalRoot: @escaping @Sendable () -> URL?,
-    globalHeader: @escaping @Sendable () -> String?
+    globalHeader: @escaping @Sendable () -> String?,
+    renderers: @escaping @Sendable () -> ValueRenderers
   ) {
     self.renderOptions = renderOptions
     self.formatProfile = formatProfile
     self.formatConfigSource = formatConfigSource
     self.globalRoot = globalRoot
     self.globalHeader = globalHeader
+    self.renderers = renderers
   }
 }
 
@@ -51,7 +54,8 @@ extension LiteralConfigurationClient {
     formatProfile: { LiteralConfig.formattingProfile() },
     formatConfigSource: { LiteralConfig.getFormatConfigSource() },
     globalRoot: { LiteralConfig.getGlobalRoot() },
-    globalHeader: { LiteralConfig.getGlobalHeader() }
+    globalHeader: { LiteralConfig.getGlobalHeader() },
+    renderers: { LiteralConfig.renderers() }
   )
 
   /// Library defaults, and nothing else.
@@ -64,7 +68,8 @@ extension LiteralConfigurationClient {
     formatProfile: { .default },
     formatConfigSource: { nil },
     globalRoot: { nil },
-    globalHeader: { nil }
+    globalHeader: { nil },
+    renderers: { ValueRenderers() }
   )
 }
 

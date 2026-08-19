@@ -30,7 +30,7 @@ attributes; the rest comes from the two it re-exports.
 
 | Module | Holds |
 |---|---|
-| `SwiftLiteralReflection` | The engine. Value in, `ExprSyntax` out. `ValueRenderer`, `ValueRendererRegistry`, `RenderOptions`. |
+| `SwiftLiteralReflection` | The engine. Value in, `ExprSyntax` out. `ValueRenderer`, `ValueRenderers`, `RenderOptions`. |
 | `SwiftLiteralCore` | `Literal`, `LiteralConfig`, `FormatProfile`, and every article. |
 | `SwiftLiteralMacros` | The compiler plugin. |
 
