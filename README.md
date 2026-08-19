@@ -1,345 +1,295 @@
-# SwiftSnapshot
+# SwiftLiteral
 
-[![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
-[![Platform](https://img.shields.io/badge/Platform-macOS-blue.svg)](https://www.apple.com/macos/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-> [!WARNING]
-> This project is evolving. Stable fixture-generation features are production-ready; advanced macro-expression rendering remains experimental and opt-in.
-
-<img width="400" height="400" alt="logo" src="https://github.com/user-attachments/assets/ed0c0179-bcaa-4e80-8509-7cd024e203d2" />
-
-**Generate type-safe Swift source fixtures from runtime values.**
-
-SwiftSnapshot converts in-memory objects into compilable Swift code that you can commit, diff, and reuse anywhere: no JSON, no decoding, just Swift.
+Take a value that exists at runtime. Write it back out as Swift source.
 
 ```swift
 let user = User(id: 42, name: "Alice", role: .admin)
-user.exportSnapshot(variableName: "testUser")
-
-// Creates: User+testUser.swift
-// extension User {
-//     static let testUser: User = User(
-//         id: 42,
-//         name: "Alice",
-//         role: .admin
-//     )
-// }
+try Literal.write(user, named: "testUser")
 ```
 
-_This project was built with help of Copilot. I wanted to tests it's capabilities. This shows that, with proper guidance, it can create something that works._
-
----
-
-## Installation
-
-### Swift Package Manager
-
-Add to your `Package.swift`:
+That writes `User+testUser.swift`:
 
 ```swift
-dependencies: [
-    .package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.1.0")
-]
-```
+import Foundation
 
-Or in Xcode: **File → Add Packages** → Enter repository URL
-
-### Requirements
-
-- Swift 5.9+
-- macOS (currently macOS-only)
-- iOS 16+
-
----
-
-## Features
-
-### Core Capabilities
-
-- **Type-Safe Generation** - Compiler-verified fixtures
-- **Broad Type Support** - Primitives, collections, Foundation types, custom types
-- **Custom Renderers** - Extensible type handling
-- **Deterministic Output** - Sorted keys, stable ordering
-- **Smart Formatting** - EditorConfig and swift-format integration
-- **Thread-Safe** - Concurrent exports supported
-- **DEBUG-Only** - Zero production overhead
-
-### Supported Types
-
-**Built-in:**
-- Primitives: `String`, `Int`, `Double`, `Float`, `Bool`, `Character`
-- Collections: `Array`, `Dictionary`, `Set`
-- Foundation: `Date`, `UUID`, `URL`, `Data`, `Decimal`
-- Optionals: Automatic `nil` handling
-
-**Custom Types:**
-- Structs and classes via reflection
-- Enums with associated values
-- Nested structures
-- User-defined via custom renderers
-
-### Macro Enhancements
-
-Optional compile-time macros add:
-
-- `@SwiftSnapshot` - Type-level fixture support
-- `@SnapshotIgnore` - Exclude properties
-- `@SnapshotRedact` - Mask sensitive values
-- `@SnapshotRename` - Change property names
-
----
-
-## Positioning: what this library is for
-
-SwiftSnapshot is best at:
-- Typed fixture generation from real runtime state
-- Reproducible state capture for bug fixes/regression tests
-- Sharing realistic model data between tests and SwiftUI previews
-
-SwiftSnapshot is not a full replacement for behavior-oriented mocks:
-- Keep network stubs/spies when tests assert interactions or side effects
-- Use SwiftSnapshot for the data/state those tests consume
-
----
-
-## Motivation
-
-Traditional test fixtures have problems:
-
-| Problem | SwiftSnapshot Solution |
-|---------|----------------------|
-| JSON fixtures break silently when types change | **Compiler-verified** - won't build if types change |
-| Hardcoded test data scattered across files | **Centralized fixtures** with single source of truth |
-| Binary snapshots have opaque diffs | **Human-readable diffs** in version control |
-| Decoding overhead in every test | **Zero overhead** - use fixtures directly |
-| No IDE support for fixture data | **Full autocomplete** and navigation |
-
-### Learn More
-
-- [What is SwiftSnapshot and Why?](Sources/SwiftSnapshotCore/Documentation.docc/Articles/WhatAndWhy.md) - Purpose and motivation
-- [Architecture](Sources/SwiftSnapshotCore/Documentation.docc/Articles/Architecture.md) - Technical design
-- [Basic Usage](Sources/SwiftSnapshotCore/Documentation.docc/Articles/BasicUsage.md) - Examples and patterns
-- [Stability and Support Tiers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/StabilityAndSupportTiers.md) - Stable/experimental/deprecated areas
-- [SwiftSnapshot vs DebugSnapshots](Sources/SwiftSnapshotCore/Documentation.docc/Articles/SwiftSnapshotVsDebugSnapshots.md) - Scope and engine comparison
-- [Custom Renderers](Sources/SwiftSnapshotCore/Documentation.docc/Articles/CustomRenderers.md) - Type-specific rendering
-- [Formatting Configuration](Sources/SwiftSnapshotCore/Documentation.docc/Articles/FormattingConfiguration.md) - Code style setup
-
----
-
-## Usage
-
-### Basic Export
-
-```swift
-let user = User(id: 42, name: "Alice", role: .admin)
-
-SwiftSnapshotRuntime.export(
-    instance: user,
-    variableName: "testUser"
-)
-
-// Use fixture
-let reference = User.testUser
-```
-
-### With Documentation
-
-```swift
-SwiftSnapshotRuntime.export(
-    instance: product,
-    variableName: "sampleProduct",
-    header: "// Test Fixtures",
-    context: "Standard product fixture for pricing tests"
-)
-```
-
-### Custom Output
-
-```swift
-SwiftSnapshotRuntime.export(
-    instance: user,
-    variableName: "testUser",
-    outputBasePath: "/path/to/fixtures",
-    fileName: "UserFixtures"
-)
-```
-
-### With Macros
-
-```swift
-@SwiftSnapshot(folder: "Fixtures")
-struct User {
-    let id: String
-    @SnapshotRename("displayName")
-    let name: String
-    @SnapshotRedact(.mask("***"))
-    let apiKey: String
-    @SnapshotIgnore
-    let cache: [String: Any]
-}
-
-user.exportSnapshot(variableName: "testUser")
-```
-
-### Custom Renderers
-
-```swift
-SnapshotRendererRegistry.register(MyType.self) { value, context in
-    ExprSyntax(stringLiteral: "MyType(value: \"\(value.property)\")")
+extension User {
+    static let testUser: User = User(id: 42, name: "Alice", role: .admin)
 }
 ```
 
-### In Tests
+From then on `User.testUser` is ordinary Swift. Commit it. Diff it. Use it in a test, in a
+preview, in another fixture. It has autocomplete and jump-to-definition, because it is
+code, not data.
+
+---
+
+## Why
+
+Test data usually starts as JSON. JSON has one problem, and it is a bad one: the compiler
+cannot see it.
+
+Rename a property and the JSON keeps the old key. Nothing complains. The decode fails at
+runtime, in a test, with a message about a missing key, and you go looking for which of
+forty fixture files is stale.
 
 ```swift
-class Tests: XCTestCase {
-    func testFeature() {
-        let state = captureState()
-        state.exportSnapshot(variableName: "testState")
-        
-        // Use in other tests
-        XCTAssertEqual(State.testState.isValid, true)
-    }
-}
-```
-
-### In SwiftUI Previews
-
-```swift
-#Preview {
-    UserView(user: .testUser)
-}
-```
-
-### Example: The Refactoring Problem
-
-```swift
-// You rename a property
 struct User {
 -   let name: String
 +   let fullName: String
 }
-
-// ❌ JSON fixtures: Silent runtime failure
-{"name": "Alice"}  // Still has old property name
-
-// ✅ Swift fixtures: Compile-time error
-User(name: "Alice")  // Error: No parameter 'name'
-                     // Compiler guides you to fix it
 ```
 
----
-
-## Configuration
-
-### Global Settings
+```json
+{ "name": "Alice" }
+```
+The file is now wrong. Nothing says so until the test runs.
 
 ```swift
-SwiftSnapshotConfig.setGlobalRoot(URL(fileURLWithPath: "./Fixtures"))
-SwiftSnapshotConfig.setGlobalHeader("// Test Fixtures")
+User(name: "Alice")
+```
+This does not build. The compiler points at the line and tells you what to do.
+
+That is the whole idea. A fixture written in Swift is checked by the same compiler that
+checks everything else you wrote.
+
+The rest follows from it. No decoding step, so no decoding cost and no `try` in your test
+setup. Readable diffs, because the fixture is text a person wrote the grammar for. One
+place to look, because a fixture can reference another fixture.
+
+## Where the value comes from
+
+Anywhere. That is the point of taking it at runtime.
+
+Catch a bug in the simulator, write the state that caused it straight into a fixture, and
+now the regression test has the real thing instead of your reconstruction of it. Capture
+a decoded API response once and stop hitting the network in tests. Take the state your app
+is in when a screen looks wrong and hand it to a SwiftUI preview.
+
+## Install
+
+```swift
+.package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.3.0")
 ```
 
-### Formatting
+```swift
+.product(name: "SwiftLiteral", package: "swift-snapshot")
+```
+
+Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16.
+
+## Use
+
+### Write a file
 
 ```swift
-// From .editorconfig
-SwiftSnapshotConfig.setFormatConfigSource(
-    .editorconfig(URL(fileURLWithPath: ".editorconfig"))
+try Literal.write(user, named: "testUser")
+```
+
+The file lands in the first of these that is set:
+
+1. the `directory:` argument
+2. `LiteralConfig.setGlobalRoot(_:)`
+3. the `SWIFT_SNAPSHOT_ROOT` environment variable
+4. `__Snapshots__`, next to the file that called it
+
+`write` throws. If the value cannot be rendered as compilable Swift, you get an error that
+names the type and the path to it. You do not get a file that looks fine and does not
+build.
+
+`write` does nothing in a release build. Writing source files is something you do while
+writing tests.
+
+### Get the source without writing it
+
+```swift
+let code = try Literal.source(of: user, named: "testUser")
+```
+
+Useful when you want to assert on the text, or put it somewhere yourself.
+
+### Add a header and a note
+
+```swift
+try Literal.write(
+    product,
+    named: "sampleProduct",
+    header: "// Generated. Do not edit by hand.",
+    context: "The product used by the pricing tests."
 )
-
-// Or manual
-let profile = FormatProfile(
-    indentStyle: .space,
-    indentSize: 2,
-    endOfLine: .lf,
-    insertFinalNewline: true,
-    trimTrailingWhitespace: true
-)
-SwiftSnapshotConfig.setFormattingProfile(profile)
 ```
 
-### Dependency Injection
+`header` goes at the top of the file. `context` becomes the doc comment on the property.
 
-For isolated test configuration:
+### The macro
+
+Reflection sees stored properties and nothing else. It cannot see that a property is a
+secret, or that the initializer takes a different label, or that a field is a cache you do
+not want in the file. Those facts live in the source, so a macro reads them at compile
+time.
 
 ```swift
-import Dependencies
+import SwiftLiteral
 
-withDependencies {
-    $0.swiftSnapshotConfig = .init(
-        getGlobalRoot: { URL(fileURLWithPath: "/tmp/fixtures") },
-        // ... other overrides
-    )
-} operation: {
-    // Tests with custom config
+@SwiftLiteral(folder: "Fixtures")
+struct User {
+    let id: String
+
+    @LiteralRename("displayName")
+    let name: String
+
+    @LiteralRedact(.mask("***"))
+    let apiKey: String
+
+    @LiteralIgnore
+    let cache: [String: Any]
+}
+
+try user.writeLiteral(named: "testUser")
+```
+
+```swift
+extension User {
+    static let testUser: User = User(id: "1", displayName: "Alice", apiKey: "***")
 }
 ```
 
-### Render Stability Mode
+| Attribute | Does |
+|---|---|
+| `@SwiftLiteral(folder:)` | Adds `writeLiteral(named:)`. `folder` sets the output directory for this type. |
+| `@LiteralIgnore` | Leaves the property out. |
+| `@LiteralRename(_:)` | Uses a different argument label. |
+| `@LiteralRedact(.mask("***"))` | Replaces the value with a literal. |
+| `@LiteralRedact(.hash)` | Replaces the value with `"<hashed>"`. |
+
+Redaction applies at every depth. A redacted property three structs down is still
+redacted.
+
+### Types it handles
+
+Primitives, including every sized integer. `String`, `Character`, `Bool`, `Double`,
+`Float`, and the special float values.
+
+Arrays, dictionaries, sets, ranges. Keys keep their type: `[1: "one"]` renders as
+`[1: "one"]`, not `["1": "one"]`.
+
+`Date`, `UUID`, `URL`, `Data`, `Decimal`.
+
+Optionals, including nested ones. `Int??.some(nil)` renders as `.some(nil)`, because that
+is a different value from `nil`.
+
+Structs, classes, and enums by reflection. Enum case names come from the runtime, so an
+enum that overrides `description` still renders its real case.
+
+Generic types, with their parameters.
+
+### When reflection is not enough
+
+Reflection reads stored properties. If a type's initializer does not take its stored
+properties, reflection cannot build a call that compiles.
 
 ```swift
-let options = RenderOptions(
-    sortDictionaryKeys: true,
-    setDeterminism: true,
-    dataInlineThreshold: 16,
-    forceEnumDotSyntax: true,
-    useMacroGeneratedExpressions: false // stable default
-)
-SwiftSnapshotConfig.setRenderOptions(options)
+struct Phone {
+    private let digits: [Int]        // what reflection sees
+    var e164: String { … }           // what the initializer wants
+    init(e164: String) { … }
+}
 ```
 
-If you set `useMacroGeneratedExpressions` to `true`, SwiftSnapshot will try macro-generated expression strings first (experimental) and fall back to reflection when parsing fails.
+Reflection would write `Phone(digits: [3, 3, 6, …])`, and there is no such initializer.
+Write a renderer:
 
-### Baseline test matrix
+```swift
+import SwiftSyntax
+
+ValueRendererRegistry.register(Phone.self) { phone, _ in
+    "Phone(e164: \(literal: phone.e164))"
+}
+```
+
+The registry is global. Call `ValueRendererRegistry.removeAll()` in your test setup so a
+renderer registered by one test does not leak into the next.
+
+### Formatting
+
+Generated files go through swift-format. Point it at your project's config and the
+fixtures come out looking like the rest of your code, so the diff is about the data.
+
+```swift
+LiteralConfig.setFormatConfigSource(.editorconfig(URL(filePath: ".editorconfig")))
+```
+
+`.swift-format` works too:
+
+```swift
+LiteralConfig.setFormatConfigSource(.swiftFormat(URL(filePath: ".swift-format")))
+```
+
+Or set it directly:
+
+```swift
+LiteralConfig.setFormattingProfile(
+    FormatProfile(indentStyle: .space, indentSize: 2)
+)
+```
+
+### Determinism
+
+Two runs over equal values produce the same bytes. Otherwise the fixture churns in every
+diff and the whole thing is worse than JSON.
+
+Dictionary keys sort. Set elements sort. `Data` under sixteen bytes inlines as hex, above
+that as base64.
+
+```swift
+LiteralConfig.setRenderOptions(
+    RenderOptions(sortDictionaryKeys: true, setDeterminism: true, dataInlineThreshold: 16)
+)
+```
+
+## What it does not do
+
+**It is not a mocking library.** It gives you the data a test consumes. It does not
+observe calls, stub network responses, or assert on interactions. Keep your spies.
+
+**It is not swift-snapshot-testing.** That library records what your code produced and
+tells you when it changes. This one records a value so you can build it again. They answer
+different questions and they get along fine in the same test target.
+
+**It cannot read every property wrapper.** A wrapper that stores its value, or computes
+`wrappedValue` on top of one stored property, works. A wrapper that keeps its value behind
+a pointer or inside framework machinery — `@Published`, SwiftUI's `@State` — is not
+readable through `Mirror`, and the library says so instead of guessing. Mark those
+`@LiteralIgnore`.
+
+**It cannot invent an initializer.** If the memberwise initializer is not what the type
+offers, register a renderer.
+
+## Layout
+
+| Module | Holds |
+|---|---|
+| `SwiftLiteralReflection` | The engine. Value in, `ExprSyntax` out. No file I/O, no global state. |
+| `SwiftLiteralCore` | Configuration, formatting, paths, writing files. |
+| `SwiftLiteralMacros` | The compiler plugin. |
+| `SwiftLiteral` | Imports all of the above. |
+
+`SwiftLiteralReflection` is a product on its own, for anyone who wants expressions and not
+files.
+
+## Tests
 
 ```bash
-swift test --filter SwiftSnapshotTests
-swift test --filter SwiftSnapshotMacrosTests
+swift test
 ```
 
-Support-tier guideline:
-- **Stable**: primitives/collections/foundation rendering, deterministic output, file export path
-- **Experimental**: macro-expression-string rendering (`useMacroGeneratedExpressions = true`)
-- **Deprecated**: direct dependence on `SwiftSnapshotExportable` expression strings as a primary rendering strategy
+The test that matters is `everySampleTypechecks`. It renders every sample in the matrix,
+writes them next to the real type declarations, and runs `swiftc -typecheck` over both.
 
----
-
-## DEBUG Only Architecture
-
-SwiftSnapshot follows the same philosophy as [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) and [xctest-dynamic-overlay](https://github.com/pointfreeco/xctest-dynamic-overlay):
-
-**Development tools should not affect production code.**
-
-### How It Works
-
-- **DEBUG builds**: Full functionality
-- **RELEASE builds**: APIs become no-ops
-- **Result**: Zero production overhead
-
-```swift
-// Safe to leave in codebase
-let url = user.exportSnapshot()
-// DEBUG: Creates file
-// RELEASE: Returns placeholder, no I/O
-```
-
----
-
-## Contributing
-
-Contributions welcome! For major changes, please open an issue first.
-
-## Acknowledgments
-
-Built with:
-- [swift-syntax](https://github.com/apple/swift-syntax) - Code generation
-- [swift-format](https://github.com/swiftlang/swift-format) - Formatting
-- [swift-dependencies](https://github.com/pointfreeco/swift-dependencies) - Dependency injection
-- [swift-issue-reporting](https://github.com/pointfreeco/swift-issue-reporting) - Error messages
-
-Inspired by [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing)
+Parsing is not enough. `User(name: nil)` parses.
 
 ## License
 
-MIT - See [LICENSE](LICENSE) for details
+MIT. See [LICENSE](LICENSE).
+
+Built on [swift-syntax](https://github.com/swiftlang/swift-syntax) and
+[swift-format](https://github.com/swiftlang/swift-format).

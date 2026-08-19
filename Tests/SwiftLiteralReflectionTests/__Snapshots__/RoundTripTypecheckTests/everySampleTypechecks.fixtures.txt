@@ -1,0 +1,30 @@
+import Foundation
+
+func check() {
+  let primitives: Primitives = Primitives(string: "Alice", int: 42, int8: -8, uint64: 18446744073709551615, double: 3.25, float: 1.5, bool: true, character: Character("é"))
+  _ = primitives
+  let optionals: Optionals = Optionals(present: "here", absent: nil, nested: nil, nestedSomeNil: .some(nil))
+  _ = optionals
+  let collections: Collections = Collections(numbers: [3, 1, 2], empty: [], byInt: [1: "one", 2: "two"], byString: ["a": 1, "b": 2], byEnum: [.spades: 1], emptyDictionary: [:], tags: ["apple", "zebra"], emptyTags: [], matrix: [[1, 2], [3]])
+  _ = collections
+  let foundationValues: FoundationValues = FoundationValues(date: Date(timeIntervalSince1970: 1234567890.0), uuid: UUID(uuidString: "DEADBEEF-0000-0000-0000-00000000CAFE")!, url: URL(string: "https://example.com/a%20path?q=1&r=2")!, smallData: Data([0x00, 0x01, 0xFF]), largeData: Data(base64Encoded: "q6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urqw==")!, decimal: Decimal(string: "12345.6789")!)
+  _ = foundationValues
+  let ranges: Ranges = Ranges(half: 1..<5, closed: 1...5)
+  _ = ranges
+  let withEnums: WithEnums = WithEnums(suit: .spades, priority: .high, step: .start, labelled: .move(x: 1, y: 2), unlabelled: .pair(7, "seven"), weekday: .tuesday)
+  _ = withEnums
+  let person: Person = Person(name: "Alice", address: Address(street: "1 Infinite Loop", city: "Cupertino"), previousAddresses: [Address(street: "2 Elm", city: "Paris")])
+  _ = person
+  let account: Account = Account(id: 7, owner: Person(name: "Bob", address: Address(street: "3 Oak", city: "Lille"), previousAddresses: []))
+  _ = account
+  let bags: Bags = Bags(numbers: Bag<Int>([1, 2, 3]), addresses: Bag<Address>([Address(street: "4 Pine", city: "Lyon")]))
+  _ = bags
+  let form: Form = Form(title: "  padded  ")
+  _ = form
+  let generics: Generics = Generics(intBox: Box<Int>(value: 1), stringBox: Box<String>(value: "x"))
+  _ = generics
+  let escapes: Escapes = Escapes(quotes: "he said \"hi\"", backslash: "C:\\path\\to", newline: "line one\nline two", tab: "a\tb", unicode: "café — naïve", emoji: "🇫🇷 shipped 🚀", interpolationLookalike: "\\(notInterpolated)")
+  _ = escapes
+  let extremes: Extremes = Extremes(maxInt: 9223372036854775807, minInt: -9223372036854775808, infinity: Double.infinity, negativeInfinity: -Double.infinity, nan: Double.nan, verySmall: 5e-324, integral: 7.0)
+  _ = extremes
+}

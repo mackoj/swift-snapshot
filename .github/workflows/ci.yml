@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # macOS, because the round-trip test shells out to swiftc and the package builds
+    # swift-format.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.app
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+  documentation:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.app
+
+      # Warnings here mean a doc link points at something that no longer exists.
+      - name: Build documentation
+        run: |
+          for target in SwiftLiteral SwiftLiteralCore SwiftLiteralReflection SwiftLiteralMacros; do
+            swift package generate-documentation --target "$target" --warnings-as-errors
+          done

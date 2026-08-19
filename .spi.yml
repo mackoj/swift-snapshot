@@ -2,8 +2,9 @@ version: 1
 builder:
   configs:
     - documentation_targets:
-        - SwiftSnapshotCore
-        - SwiftSnapshot
+        - SwiftLiteral
+        - SwiftLiteralCore
+        - SwiftLiteralReflection
       custom_documentation_parameters:
         - '--enable-experimental-overloaded-symbol-presentation'
         #- '--enable-experimental-combined-documentation'
