@@ -1,3 +1,4 @@
+import Dependencies
 import Foundation
 import IssueReporting
 import SwiftLiteralReflection
@@ -56,25 +57,27 @@ public enum Literal {
     header: String? = nil,
     context: String? = nil
   ) throws -> String {
+    @Dependency(\.literalConfiguration) var configuration
+
     let variableName = sanitize(name)
 
     let formatting: FormatProfile
-    if let configSource = LiteralConfig.getFormatConfigSource() {
+    if let configSource = configuration.formatConfigSource() {
       formatting = try FormatConfigLoader.loadProfile(from: configSource)
     } else {
-      formatting = LiteralConfig.formattingProfile()
+      formatting = configuration.formatProfile()
     }
 
     let expression = try ValueRenderer.render(
       value,
-      context: RenderContext(options: LiteralConfig.renderOptions())
+      context: RenderContext(options: configuration.renderOptions())
     )
 
     return CodeFormatter.formatFile(
       typeName: String(describing: T.self),
       variableName: variableName,
       expression: expression,
-      header: header ?? LiteralConfig.getGlobalHeader(),
+      header: header ?? configuration.globalHeader(),
       context: context,
       profile: formatting
     )
@@ -108,6 +111,8 @@ public enum Literal {
     filePath: StaticString = #filePath
   ) throws -> URL {
     #if DEBUG
+    @Dependency(\.literalConfiguration) var configuration
+
     let variableName = sanitize(name)
     let code = try source(of: value, named: variableName, header: header, context: context)
 
@@ -117,6 +122,7 @@ public enum Literal {
       file: file,
       outputDirectory: PathResolver.resolveOutputDirectory(
         directory: directory,
+        globalRoot: configuration.globalRoot(),
         fileID: fileID,
         filePath: filePath
       )

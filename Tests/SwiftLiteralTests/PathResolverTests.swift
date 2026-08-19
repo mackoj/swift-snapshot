@@ -19,6 +19,7 @@ extension LiteralTests {
       let explicitPath = "/tmp/custom-snapshots"
       let result = PathResolver.resolveOutputDirectory(
         directory: explicitPath,
+        globalRoot: nil,
         fileID: #fileID,
         filePath: #filePath
       )
@@ -28,19 +29,18 @@ extension LiteralTests {
     
     /// Test that global configuration takes priority over environment and defaults
     @Test func resolveOutputDirectoryWithGlobalConfig() {
+      // The configured root arrives as an argument now, so this test no longer has to
+      // reach into process-global state and put it back afterwards.
       let globalRoot = URL(fileURLWithPath: "/tmp/global-snapshots")
-      LiteralConfig.setGlobalRoot(globalRoot)
-      
+
       let result = PathResolver.resolveOutputDirectory(
         directory: nil,
+        globalRoot: globalRoot,
         fileID: #fileID,
         filePath: #filePath
       )
-      
+
       #expect(result.path == globalRoot.path)
-      
-      // Cleanup
-      LiteralConfig.setGlobalRoot(nil)
     }
     
     /// Test that environment variable is used when no explicit path or global config
@@ -55,6 +55,7 @@ extension LiteralTests {
       
       let result = PathResolver.resolveOutputDirectory(
         directory: nil,
+        globalRoot: nil,
         fileID: #fileID,
         filePath: #filePath
       )
@@ -71,6 +72,7 @@ extension LiteralTests {
       
       let result = PathResolver.resolveOutputDirectory(
         directory: nil,
+        globalRoot: nil,
         fileID: #fileID,
         filePath: testFilePath
       )
@@ -203,34 +205,33 @@ extension LiteralTests {
       let globalPath = URL(fileURLWithPath: "/tmp/global")
       let envPath = "/tmp/env"
       
-      // Set up all levels
-      LiteralConfig.setGlobalRoot(globalPath)
+      // The environment variable is still process-wide, so it still needs putting back.
+      // The configured root does not, which is the whole point of the change.
       setenv("SWIFT_SNAPSHOT_ROOT", envPath, 1)
-      defer {
-        LiteralConfig.setGlobalRoot(nil)
-        unsetenv("SWIFT_SNAPSHOT_ROOT")
-      }
-      
+      defer { unsetenv("SWIFT_SNAPSHOT_ROOT") }
+
       // Explicit should win
       let result1 = PathResolver.resolveOutputDirectory(
         directory: explicitPath,
+        globalRoot: globalPath,
         fileID: #fileID,
         filePath: #filePath
       )
       #expect(result1.path == explicitPath)
-      
-      // Global should win over env
+
+      // Configured root should win over env
       let result2 = PathResolver.resolveOutputDirectory(
         directory: nil,
+        globalRoot: globalPath,
         fileID: #fileID,
         filePath: #filePath
       )
       #expect(result2.path == globalPath.path)
-      
+
       // Env should win over default
-      LiteralConfig.setGlobalRoot(nil)
       let result3 = PathResolver.resolveOutputDirectory(
         directory: nil,
+        globalRoot: nil,
         fileID: #fileID,
         filePath: #filePath
       )

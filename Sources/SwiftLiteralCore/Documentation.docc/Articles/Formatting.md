@@ -57,11 +57,40 @@ Four spaces. LF. Final newline. No trailing whitespace.
 FormatProfile.default
 ```
 
+## In tests
+
+``LiteralConfig`` is process-global. In an app that is fine. In a test suite it is not:
+tests run concurrently, so one test setting a two-space `.editorconfig` changes what
+another test renders, and the failure is timing-dependent. It passes on your machine and
+fails on CI.
+
+So a render does not read the globals in tests. It reads
+``LiteralConfigurationClient``, whose test value is the library defaults and nothing else.
+Four spaces, deterministic ordering, no global root, whatever any other test is doing.
+
+To render with something else, say so:
+
+```swift
+withDependencies {
+  $0.literalConfiguration.formatProfile = { FormatProfile(indentSize: 2) }
+} operation: {
+  let code = try Literal.source(of: value, named: "fixture")
+}
+```
+
+The override lives in a task local, so it applies to that test and no other.
+
+To test the global pathway itself, opt the suite back into the live client:
+
+```swift
+@Suite(.dependency(\.literalConfiguration, .live))
+struct MyConfigTests { … }
+```
+
 ## Reset
 
 ```swift
 LiteralConfig.resetToLibraryDefaults()
 ```
 
-Configuration is global, so a test that changes it changes it for whatever runs next. Reset
-in your suite's `init`.
+For an app that configured the library at launch and wants to undo it.
