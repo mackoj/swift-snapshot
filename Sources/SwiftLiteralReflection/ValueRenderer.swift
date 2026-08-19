@@ -15,7 +15,7 @@ import SwiftSyntax
 /// Order of attempts, per value:
 ///
 /// 1. Optionals are unwrapped first, so a custom renderer for `T` also covers `T?`.
-/// 2. Custom renderers from ``ValueRendererRegistry``.
+/// 2. Custom renderers from ``ValueRenderers``.
 /// 3. Types the `@SwiftLiteral` macro described, via ``LiteralFields``.
 /// 4. Primitives and Foundation types.
 /// 5. Arrays, dictionaries, sets, ranges.
@@ -56,7 +56,7 @@ public enum ValueRenderer {
       return wrapped is any OptionalProtocol ? ".some(\(inner))" : inner
     }
 
-    if let custom = ValueRendererRegistry.shared.renderer(for: value) {
+    if let custom = context.renderers.renderer(for: value) {
       return try custom(value, context).description
     }
 

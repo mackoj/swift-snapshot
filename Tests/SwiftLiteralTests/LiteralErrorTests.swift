@@ -14,7 +14,7 @@ extension LiteralTests {
       #expect(
         error.description == """
           Cannot render 'CustomType' at root.field.nested. \
-          Register a custom renderer with ValueRendererRegistry.register(CustomType.self).
+          Register a custom renderer with LiteralConfig.registerRenderer(CustomType.self).
           """
       )
     }

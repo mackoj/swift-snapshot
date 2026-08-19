@@ -44,7 +44,7 @@ parse, rendering throws rather than handing back a malformed tree.
 Per value, in order:
 
 1. **Optionals** are unwrapped first, so a renderer registered for `T` also covers `T?`.
-2. **Custom renderers** from `ValueRendererRegistry`.
+2. **Custom renderers** from `ValueRenderers`.
 3. **Macro-described types**, via `LiteralFields`. This is where `@LiteralRedact`,
    `@LiteralRename`, and `@LiteralIgnore` take effect, at every depth.
 4. **Primitives and Foundation types.**

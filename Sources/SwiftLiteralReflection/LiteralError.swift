@@ -25,7 +25,7 @@ public enum LiteralError: Error, CustomStringConvertible, Equatable {
     switch self {
     case .unsupportedType(let typeName, let path):
       return "Cannot render '\(typeName)'\(Self.at(path)). "
-        + "Register a custom renderer with ValueRendererRegistry.register(\(typeName).self)."
+        + "Register a custom renderer with LiteralConfig.registerRenderer(\(typeName).self)."
     case .reflection(let message, let path):
       return "\(message)\(Self.at(path))"
     case .io(let message):
