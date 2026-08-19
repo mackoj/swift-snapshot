@@ -23,6 +23,8 @@ func check() {
   _ = car
   let invoice: Invoice = Invoice(state: .sent, lines: [Invoice.Line(sku: "WDG-001", quantity: 2)])
   _ = invoice
+  let settings: Settings = Settings(window: (width: 1024, height: 768), origin: (0, 0), locale: Locale(identifier: "fr_FR"), zone: TimeZone(identifier: "Europe/Paris")!)
+  _ = settings
   let form: Form = Form(title: "  padded  ")
   _ = form
   let generics: Generics = Generics(intBox: Box<Int>(value: 1), stringBox: Box<String>(value: "x"))
