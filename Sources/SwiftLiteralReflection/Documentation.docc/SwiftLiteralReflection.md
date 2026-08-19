@@ -9,9 +9,25 @@ let expression = try ValueRenderer.render(user)
 // User(id: 42, name: "Alice", role: .admin)
 ```
 
-No file I/O. No global configuration. Everything the renderer needs arrives in a
-``RenderContext``, so the same value with the same options renders the same way every
-time, whatever else the process is doing.
+No file I/O. No global state. A render is a pure function of the value and the
+``RenderContext`` it is handed, so the same value with the same context renders the same
+way every time, whatever else the process is doing.
+
+The context carries four things: the ``RenderOptions`` in force, the ``ValueRenderers`` in
+force, a breadcrumb path for error messages, and the class instances already open further
+up the graph.
+
+```swift
+var renderers = ValueRenderers()
+renderers.register(Phone.self) { phone, _ in
+  "Phone(e164: \(literal: phone.e164))"
+}
+
+let expression = try ValueRenderer.render(
+  contact,
+  context: RenderContext(renderers: renderers)
+)
+```
 
 Depend on this module alone if you want expressions and not files.
 
@@ -48,6 +64,14 @@ is not a case name.
 **Round-tripping.** `Double` and `Float` use Swift's shortest round-tripping description,
 so the value you read back is bit-identical. `Int??.some(nil)` renders as `.some(nil)`,
 because that is not the same value as `nil`.
+
+**Names that resolve.** A nested type renders as `Order.Line`, not `Line`, which would not
+resolve from a fixture sitting in an extension on something else. Inherited properties are
+included, because `Mirror.children` stops at the class it was made from and a subclass
+would otherwise lose everything its superclass declared.
+
+**Not recursing forever.** Source is a tree; an object graph is not. Two objects pointing
+at each other throw instead of exhausting the stack.
 
 ## Topics
 

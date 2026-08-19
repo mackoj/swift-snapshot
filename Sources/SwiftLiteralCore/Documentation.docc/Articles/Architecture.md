@@ -14,9 +14,9 @@ Four targets. Each one does a single thing.
 The engine is a separate product. If you want expressions and not files, depend on
 `SwiftLiteralReflection` alone.
 
-The split is not decoration. The engine has no file I/O and no global state: everything it
-needs arrives in a `RenderContext`. That is what makes it testable in isolation, and
-isolation is what let the round-trip typecheck test exist.
+The split is not decoration. The engine has no file I/O and no global state, so a render is
+a pure function of the value and the context it is handed. That is what makes it testable
+in isolation, and isolation is what let the round-trip typecheck test exist.
 
 ## The pipeline
 
@@ -52,13 +52,40 @@ Per value, in order:
    `[AnyHashable: Any]` erases the key type, and the keys come out as strings.
 6. **Reflection** over structs, classes, and enums.
 
-If none of those can read the value, it throws `LiteralError`
-with the path to the value and the name of the type. It does not substitute `nil`.
+If none of those can read the value, it throws `LiteralError` with the path to the value
+and the name of the type. It does not substitute `nil`.
+
+### What the context carries
+
+Everything the engine needs, and nothing it could find another way:
+
+| | |
+|---|---|
+| `options` | sorting, `Data` threshold, enum syntax |
+| `renderers` | the custom renderers in force, as a value |
+| `path` | a breadcrumb to the value, for error messages |
+| open objects | the class instances already open further up the graph |
+
+The last one is how a cycle is caught. Source is a tree and an object graph is not, so
+`a.peer = b; b.peer = a` used to recurse until the stack ran out. The renderer throws when
+it meets an instance it is already inside.
+
+Renderers travel in the context rather than living in a registry so that two renders can
+disagree about how to render a type, and neither has to clean up after itself.
 
 ## Configuration
 
-``LiteralConfig`` holds global settings behind a lock: output root, header, format profile,
-render options. `Literal.source` reads them once, at the top of a render, and passes the
-result down as a value.
+`LiteralConfig` holds global settings behind a lock: output root, header, format profile,
+render options, custom renderers. That is what an app configures at launch.
 
-The engine never reads them. Nothing below the entry point touches global state.
+A render does not read it directly. It reads `LiteralConfigurationClient` through
+`\.literalConfiguration`, whose live value reads `LiteralConfig` and whose test value is
+the library defaults and nothing else.
+
+The reason is concurrency. Tests run at the same time, and a process-global setting means
+one test changing the format profile changes what another test renders. That failure is
+timing-dependent: it passes locally and fails on CI, which is exactly what happened here
+before the client existed.
+
+Either way, the engine never reads any of it. Configuration is resolved once, at the top of
+a render, and travels down as a value.
