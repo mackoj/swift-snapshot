@@ -21,6 +21,8 @@ func check() {
   _ = bags
   let car: Car = Car(wheels: 4, plate: "AB-123-CD")
   _ = car
+  let invoice: Invoice = Invoice(state: .sent, lines: [Invoice.Line(sku: "WDG-001", quantity: 2)])
+  _ = invoice
   let form: Form = Form(title: "  padded  ")
   _ = form
   let generics: Generics = Generics(intBox: Box<Int>(value: 1), stringBox: Box<String>(value: "x"))

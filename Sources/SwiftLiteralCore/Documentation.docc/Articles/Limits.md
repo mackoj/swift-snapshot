@@ -73,6 +73,18 @@ recurse until the stack ran out, which took the process with it.
 **What to do:** mark the back-reference `@LiteralIgnore`, or register a renderer that
 emits `nil` for it and rebuild the link yourself.
 
+## A type declared inside a function has no name to write
+
+Nested types are fine: `Order.Line` renders with its path, because an unqualified `Line`
+would not resolve from a fixture living in an extension on something else.
+
+A type declared inside a function is different. The runtime spells it
+`MyTests.(unknown context at $7f9c…).Model`, which is not something you can write down, so
+it renders under its short name and only compiles where that name happens to be in scope.
+
+**What to do:** move the type to file scope. It is a fixture's type, so it wants to be
+shared anyway.
+
 ## Closures
 
 A closure has no source form. Reflection cannot see its body, and there is nothing to
