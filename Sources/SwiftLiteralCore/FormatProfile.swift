@@ -4,7 +4,7 @@
 /// trailing whitespace. Point the library at your project's config and the fixtures
 /// come out looking like the rest of your code, so the diff is about the data.
 ///
-/// See ``FormatConfigLoader`` for reading this off a file.
+/// See `FormatConfigLoader` for reading this off a file.
 public struct FormatProfile: Sendable, Equatable {
   /// Spaces or tabs.
   public var indentStyle: IndentStyle

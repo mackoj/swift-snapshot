@@ -1,68 +1,37 @@
 # ``SwiftLiteralCore``
 
-The core runtime library for generating type-safe Swift source fixtures from runtime values.
+Configuration, formatting, paths, and writing files.
 
 ## Overview
 
-SwiftLiteralCore provides the essential infrastructure for converting Swift values into compilable source code. This library handles value rendering, code formatting, file I/O, and configuration management.
+The engine lives in `SwiftLiteralReflection` and turns a value into an expression. This
+module surrounds it: it decides how the file is formatted, where it goes, and what the
+extension around the expression looks like.
 
-### Key Features
-
-- **Value Rendering**: Convert any Swift type to SwiftSyntax expressions
-- **Custom Renderers**: Extensible registry for type-specific rendering logic
-- **Code Formatting**: Integration with swift-format and EditorConfig
-- **Path Resolution**: Deterministic file naming and directory organization
-- **Thread-Safe**: All operations are safe for concurrent use
-- **DEBUG-Only**: Zero runtime overhead in production builds
-
-### Core Components
-
-The library is organized into these main subsystems:
-
-- **Runtime API**: ``Literal`` for exporting values
-- **Value Rendering**: ``ValueRenderer`` and ``ValueRendererRegistry``
-- **Configuration**: ``LiteralConfig`` and format profiles
-- **Formatting**: ``CodeFormatter`` and ``FormatConfigLoader``
-- **Utilities**: ``PathResolver`` for output organization
+```swift
+try Literal.write(user, named: "testUser")
+```
 
 ## Topics
 
-### Essential APIs
-
-- ``Literal``
-- ``LiteralConfig``
-- ``ValueRendererRegistry``
-
-### Value Rendering
-
-- ``ValueRenderer``
-- ``RenderContext``
-- ``CustomValueRenderer``
-
-### Configuration
-
-- ``RenderOptions``
-- ``FormatProfile``
-- ``FormatConfigSource``
-
-### Error Handling
-
-- ``LiteralError``
-
-### Code Formatting
-
-- ``CodeFormatter``
-- ``FormatConfigLoader``
-
-### Path Resolution
-
-- ``PathResolver``
-
-### Articles
+### Start here
 
 - <doc:WhatAndWhy>
 - <doc:Architecture>
-- <doc:BasicUsage>
-- <doc:BestPractices>
+- <doc:Comparisons>
+
+### Writing values
+
+- ``Literal``
+
+### Configuring
+
+- ``LiteralConfig``
+- ``FormatProfile``
+- ``FormatConfigSource``
+- <doc:Formatting>
+
+### When reflection is not enough
+
+- <doc:Limits>
 - <doc:CustomRenderers>
-- <doc:FormattingConfiguration>

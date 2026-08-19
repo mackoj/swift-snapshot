@@ -48,7 +48,7 @@ import SwiftOperators
 ///
 /// ## See Also
 /// - ``FormatProfile`` for formatting configuration
-/// - ``FormatConfigLoader`` for loading .editorconfig files
+/// - `FormatConfigLoader` for loading .editorconfig files
 /// - ``Literal/generateSwiftCode(instance:variableName:header:context:)``
 enum CodeFormatter {
   /// Format a complete Swift file with header, context, and extension

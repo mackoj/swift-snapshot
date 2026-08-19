@@ -6,7 +6,7 @@ import SwiftSyntax
 /// Write a runtime value back out as Swift source.
 ///
 /// Two entry points. ``source(of:named:header:context:)`` gives you the text.
-/// ``write(_:named:file:directory:allowOverwrite:header:context:)`` puts it on disk.
+/// ``write(_:named:file:directory:allowOverwrite:header:context:fileID:filePath:)`` puts it on disk.
 ///
 /// ```swift
 /// let user = User(id: 42, name: "Alice")
@@ -36,7 +36,7 @@ import SwiftSyntax
 ///
 /// ## Debug builds only
 ///
-/// In a release build, ``write(_:named:file:directory:allowOverwrite:header:context:)``
+/// In a release build, ``write(_:named:file:directory:allowOverwrite:header:context:fileID:filePath:)``
 /// does nothing and reports an issue. Writing source files is something you do while
 /// writing tests, not something a shipped app does.
 public enum Literal {
@@ -48,7 +48,7 @@ public enum Literal {
   ///   - header: A comment for the top of the file. Falls back to
   ///     ``LiteralConfig/setGlobalHeader(_:)``.
   ///   - context: A doc comment for the property.
-  /// - Throws: ``LiteralError`` if the value cannot be rendered or the source cannot be
+  /// - Throws: `LiteralError` if the value cannot be rendered or the source cannot be
   ///   formatted.
   public static func source<T>(
     of value: T,
@@ -90,8 +90,10 @@ public enum Literal {
   ///   - allowOverwrite: Replace an existing file. `true` by default.
   ///   - header: A comment for the top of the file.
   ///   - context: A doc comment for the property.
+  ///   - fileID: Captured automatically. Used to place the default output directory.
+  ///   - filePath: Captured automatically. Used to place the default output directory.
   /// - Returns: The file that was written.
-  /// - Throws: ``LiteralError`` if the value cannot be rendered, the file exists and
+  /// - Throws: `LiteralError` if the value cannot be rendered, the file exists and
   ///   `allowOverwrite` is `false`, or the write fails.
   @discardableResult
   public static func write<T>(

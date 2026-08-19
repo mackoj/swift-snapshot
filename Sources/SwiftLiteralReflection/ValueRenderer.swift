@@ -169,8 +169,29 @@ public enum ValueRenderer {
         ? "[:]" : "[\(pairs.map { "\($0.key): \($0.value)" }.joined(separator: ", "))]"
 
     default:
-      return try rangeText(value, context: context)
+      if let range = try rangeText(value, context: context) { return range }
+      return try customCollectionText(value, context: context)
     }
+  }
+
+  /// A `Collection` the standard library did not write.
+  ///
+  /// `IdentifiedArray`, `OrderedSet`, and most collection wrappers take an array in their
+  /// initializer, so `TypeName([element, …])` rebuilds them. This is the one place the
+  /// renderer guesses at a shape it cannot verify. When the guess is wrong, register a
+  /// renderer.
+  private static func customCollectionText(_ value: Any, context: RenderContext)
+    throws -> String?
+  {
+    guard let collection = value as? any Collection else { return nil }
+    // Opening the existential explicitly. Iterating an `any Collection` directly is what
+    // the type checker cannot handle here.
+    func erase<C: Collection>(_ collection: C) -> [Any] { collection.map { $0 } }
+    var elements: [String] = []
+    for (index, element) in _openExistential(collection, do: erase).enumerated() {
+      elements.append(try text(element, context: context.appending(path: "[\(index)]")))
+    }
+    return "\(String(describing: type(of: value)))([\(elements.joined(separator: ", "))])"
   }
 
   /// Ranges reflect as plain structs with `lowerBound` and `upperBound`, and there is

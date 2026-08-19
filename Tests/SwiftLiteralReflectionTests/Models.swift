@@ -150,3 +150,21 @@ struct Extremes {
   var verySmall: Double
   var integral: Double
 }
+
+/// A `Collection` the standard library did not write, of the shape `IdentifiedArray` and
+/// `OrderedSet` have: one array in, one initializer taking it.
+struct Bag<Element>: Collection {
+  private let elements: [Element]
+
+  init(_ elements: [Element]) { self.elements = elements }
+
+  var startIndex: Int { elements.startIndex }
+  var endIndex: Int { elements.endIndex }
+  subscript(position: Int) -> Element { elements[position] }
+  func index(after i: Int) -> Int { i + 1 }
+}
+
+struct Bags {
+  var numbers: Bag<Int>
+  var addresses: Bag<Address>
+}

@@ -92,6 +92,10 @@ func samples() -> [Sample] {
       )
     )
   ),
+  Sample(
+    "bags", "Bags",
+    Bags(numbers: Bag([1, 2, 3]), addresses: Bag([Address(street: "4 Pine", city: "Lyon")]))
+  ),
   Sample("form", "Form", Form(title: "  padded  ")),
   Sample("generics", "Generics", Generics(intBox: Box(value: 1), stringBox: Box(value: "x"))),
   Sample(

@@ -1,391 +1,72 @@
-# What is SwiftLiteral and Why Use It?
+# What this is, and why
 
-Understanding the purpose, benefits, and use cases of SwiftLiteral.
+Take a value that exists at runtime. Write it back out as Swift source.
 
-## What is SwiftLiteral?
+## The problem
 
-SwiftLiteral is a library that generates **compilable Swift source code** from runtime values. Instead of serializing data to JSON, XML, or binary formats, it creates actual Swift files with type-safe code that you can commit, diff, and reuse.
+Test data usually starts as JSON. JSON has one problem, and it is a bad one: the compiler
+cannot see it.
 
-### The Core Idea
+Rename a property and the JSON keeps the old key. Nothing complains at build time. The
+decode fails at runtime, in a test, with a message about a missing key. Then you go
+looking for which of forty fixture files is stale.
+
+The cost is not the fix. The cost is that the failure arrives late, in a place that does
+not tell you where the mistake was.
+
+## The move
+
+Write the fixture in Swift instead.
 
 ```swift
-// Traditional approach: JSON fixture
-{
-    "id": 42,
-    "name": "Alice",
-    "role": "admin"
-}
-
-// SwiftLiteral approach: Swift fixture
 extension User {
-    static let testUser: User = User(
-        id: 42,
-        name: "Alice",
-        role: .admin
-    )
+    static let testUser: User = User(id: 42, name: "Alice", role: .admin)
 }
 ```
 
-The Swift fixture is:
-- ✅ **Compilable** - Catches breaking changes at compile time
-- ✅ **Type-safe** - The compiler verifies correctness
-- ✅ **Human-readable** - Easy to review and understand
-- ✅ **Reusable** - Use in tests, previews, documentation, anywhere
-- ✅ **Diff-friendly** - Version control shows semantic changes
+Rename `name` now and this file stops compiling. The compiler points at the line. The
+mistake is found by the same machinery that finds every other mistake you make.
 
-## Why SwiftLiteral Exists
+Everything else follows from that one property.
 
-### Problem 1: Test Fixtures Are Hard to Maintain
+**No decoding.** The value is already the value. No `try`, no `Data`, no bundle lookup, no
+`JSONDecoder` in your test setup.
 
-Traditional approaches have limitations:
+**Readable diffs.** A person designed this grammar to be read. `role: .admin` is legible
+in a pull request in a way a base64 blob is not.
 
-**JSON Fixtures:**
-- ❌ No type safety - typos and schema mismatches caught at runtime
-- ❌ Require custom decoding logic
-- ❌ Hard to review diffs
-- ❌ Break silently when types change
+**One place to look.** A fixture is a normal static property, so one fixture can reference
+another. `User.testUser` inside `Order.testOrder` inside `Cart.testCart`.
 
-**Hardcoded Test Data:**
-- ❌ Duplication across test files
-- ❌ Inconsistent values
-- ❌ No single source of truth
-- ❌ Time-consuming to update
+**It works outside tests.** SwiftUI previews want realistic data more than tests do, and a
+static property is the easiest thing in the world to hand a preview.
 
-**Binary Snapshot Testing:**
-- ❌ Opaque diffs in version control
-- ❌ Limited reusability
-- ❌ Requires external tools to inspect
+## Where the value comes from
 
-### Solution: Swift Source as Fixtures
+Anywhere. That is the point of taking it at runtime.
 
-SwiftLiteral generates **Swift source code** that serves as:
-- 📝 **Documentation** - Shows example values
-- 🧪 **Test Fixtures** - Provides known-good data
-- 🎨 **Preview Data** - Powers SwiftUI previews
-- 🔍 **Debugging** - Captures real states for reproduction
+You catch a bug in the simulator with a specific piece of state on screen. Write that
+state into a fixture and the regression test has the real thing, not your reconstruction
+of it a day later.
 
-### Problem 2: Refactoring Is Risky
+You have an API you would rather not call in tests. Decode the response once, write it out,
+and the fixture is a typed value from then on.
 
-When you refactor types, traditional fixtures break:
+You have a screen that looks wrong at one particular size, in one particular locale, with
+one particular user. Take that state and hand it to a preview.
 
-```swift
-// You rename a property
-struct User {
-    let id: Int
-    let fullName: String  // was: name
-}
+## What it costs
 
-// JSON fixtures still have "name" - runtime error!
-// Swift fixtures won't compile - caught immediately! ✅
-```
+The generated file is code, and code has to compile. That is the deal. It is also the
+point, so the library refuses to write a file it cannot prove is buildable: if a value
+cannot be rendered as a valid initializer call, `Literal.write`
+throws instead of writing something that looks fine.
 
-### Solution: Compiler-Verified Fixtures
+Reflection has limits, and this library will not pretend otherwise. See <doc:Limits>.
 
-SwiftLiteral fixtures are **verified by the compiler**:
-- Rename a property → Fixtures won't compile
-- Change a type → Fixtures won't compile
-- Remove a case → Fixtures won't compile
+## See also
 
-The compiler **guides you** through updates.
-
-### Problem 3: Capturing Complex State Is Manual
-
-Creating fixtures for complex objects is tedious:
-
-```swift
-// Manually writing this is error-prone
-let user = User(
-    id: 42,
-    profile: Profile(
-        name: "Alice",
-        email: "alice@example.com",
-        address: Address(
-            street: "123 Main St",
-            city: "Springfield",
-            state: "IL",
-            zip: "62701"
-        ),
-        preferences: Preferences(
-            theme: .dark,
-            notifications: true,
-            language: "en"
-        )
-    ),
-    posts: [
-        Post(title: "First", content: "..."),
-        Post(title: "Second", content: "...")
-    ]
-)
-```
-
-### Solution: Generate from Live Values
-
-SwiftLiteral captures state automatically:
-
-```swift
-// Create object normally
-let user = createTestUser()
-
-// Generate fixture automatically
-Literal.export(
-    instance: user,
-    variableName: "testUser"
-)
-
-// Now you have a reusable fixture!
-let reference = User.testUser
-```
-
-## Key Benefits
-
-### 1. Type Safety
-
-The compiler ensures fixtures match your types:
-
-```swift
-extension Product {
-    static let sample: Product = Product(
-        id: "123",
-        name: "Widget",
-        price: 29.99,
-        inStock: true
-    )
-}
-
-// If Product changes, this won't compile
-// You MUST update it - no silent failures
-```
-
-### 2. Diff-Friendly
-
-Version control shows meaningful changes:
-
-```diff
- extension User {
-     static let testUser: User = User(
-         id: 42,
-         name: "Alice",
--        role: .member
-+        role: .admin
-     )
- }
-```
-
-Compare to JSON:
-```diff
--  "role": "member"
-+  "role": "admin"
-```
-
-Both look similar, but Swift fixture shows:
-- The exact type being modified
-- The full context
-- Valid Swift syntax
-
-### 3. Zero Decoding Overhead
-
-Use fixtures directly:
-
-```swift
-// No decoding needed
-let user = User.testUser
-
-// Compare to JSON
-let user = try JSONDecoder().decode(User.self, from: data)
-```
-
-### 4. Multi-Context Reuse
-
-Use the same fixture everywhere:
-
-```swift
-// In tests
-func testUserValidation() {
-    let user = User.testUser
-    XCTAssertTrue(user.isValid())
-}
-
-// In SwiftUI previews
-#Preview {
-    UserView(user: .testUser)
-}
-
-// In command-line tools
-print(User.testUser.description)
-```
-
-### 5. Better Code Review
-
-Reviewers can understand fixtures:
-
-```swift
-// Swift: Clear and readable
-static let testOrder: Order = Order(
-    id: "ORD-123",
-    items: [
-        OrderItem(product: "Widget", quantity: 2)
-    ],
-    total: 59.98
-)
-
-// vs JSON: Harder to parse mentally
-{
-  "id": "ORD-123",
-  "items": [{"product": "Widget", "quantity": 2}],
-  "total": 59.98
-}
-```
-
-### 6. IDE Support
-
-Full autocomplete and navigation:
-
-```swift
-let user = User.testUser  // Ctrl+click navigates to definition
-                          // Autocomplete shows all fixtures
-                          // Type checking works
-```
-
-### 7. DEBUG-Only Design
-
-Zero impact on production:
-
-```swift
-// In DEBUG: Full functionality
-#if DEBUG
-let url = try user.writeLiteral()
-#endif
-
-// In RELEASE: Entire library excluded
-// No runtime overhead, no binary bloat
-```
-
-## Common Use Cases
-
-### Test Fixtures
-
-```swift
-class OrderTests: XCTestCase {
-    func testOrderCalculation() {
-        let order = Order.sampleOrder
-        XCTAssertEqual(order.total, 99.99)
-    }
-}
-```
-
-### SwiftUI Previews
-
-```swift
-#Preview {
-    ProductDetailView(product: .sampleProduct)
-}
-
-#Preview("Loading State") {
-    ProductDetailView(product: .loadingProduct)
-}
-```
-
-### Documentation Examples
-
-```swift
-/// Process an order
-///
-/// Example:
-/// ```swift
-/// let result = processOrder(Order.sampleOrder)
-/// ```
-func processOrder(_ order: Order) -> Result { ... }
-```
-
-### Debugging
-
-```swift
-// Capture problematic state
-let url = try currentState.writeLiteral(
-    variableName: "bugReproState"
-)
-// Now you have a reproducible test case
-```
-
-### API Response Mocking
-
-```swift
-extension APIResponse {
-    static let successResponse: APIResponse = APIResponse(
-        status: 200,
-        data: ["key": "value"],
-        headers: [:]
-    )
-    
-    static let errorResponse: APIResponse = APIResponse(
-        status: 404,
-        data: nil,
-        headers: [:]
-    )
-}
-```
-
-## When to Use SwiftLiteral
-
-### ✅ Good Use Cases
-
-- Creating test fixtures from complex objects
-- Capturing known-good states for regression testing
-- Generating SwiftUI preview data
-- Documenting expected data structures
-- Building reusable reference data
-- Debugging by capturing live state
-
-### ⚠️ Consider Alternatives When
-
-- You need to serialize data for network transmission (use Codable)
-- You need to persist user data (use proper persistence)
-- You need cross-language interop (use JSON/Protocol Buffers)
-- Your data changes frequently (fixtures are for stable reference data)
-
-## Comparison to Alternatives
-
-### vs. JSON Fixtures
-
-| Aspect | SwiftLiteral | JSON |
-|--------|---------------|------|
-| Type Safety | ✅ Compile-time | ❌ Runtime |
-| IDE Support | ✅ Full autocomplete | ❌ Strings only |
-| Refactoring | ✅ Compiler-guided | ❌ Manual updates |
-| Reusability | ✅ Use anywhere | ⚠️ Requires decoding |
-| Readability | ✅ Native Swift | ⚠️ JSON syntax |
-| Diffs | ✅ Semantic | ⚠️ Line-based |
-
-### vs. Hardcoded Test Data
-
-| Aspect | SwiftLiteral | Hardcoded |
-|--------|---------------|-----------|
-| Duplication | ✅ Centralized | ❌ Scattered |
-| Consistency | ✅ Single source | ❌ Can diverge |
-| Generation | ✅ Automated | ❌ Manual |
-| Maintenance | ✅ Easy updates | ❌ Time-consuming |
-
-### vs. Binary Snapshot Testing
-
-| Aspect | SwiftLiteral | Binary Snapshots |
-|--------|---------------|------------------|
-| Human Readable | ✅ Swift source | ❌ Binary/image |
-| Version Control | ✅ Meaningful diffs | ❌ Opaque blobs |
-| Reusability | ✅ Use in code | ❌ Test-only |
-| Type Safety | ✅ Compile-time | ❌ None |
-
-## Philosophy
-
-SwiftLiteral embodies these principles:
-
-1. **Swift Source is the Best Format** - For Swift projects, Swift code is the most natural representation
-2. **Type Safety Prevents Errors** - The compiler is your friend, not your enemy
-3. **Human Readability Matters** - Code is read more than written
-4. **Version Control is for Code** - Fixtures should diff like code
-5. **Zero Production Impact** - Development tools shouldn't affect production
-
-## See Also
-
-- <doc:BasicUsage> - Getting started guide
-- <doc:Architecture> - Technical design details
-- ``Literal`` - Main API reference
+- <doc:Architecture>
+- <doc:Comparisons>
+- <doc:Limits>
+- <doc:CustomRenderers>

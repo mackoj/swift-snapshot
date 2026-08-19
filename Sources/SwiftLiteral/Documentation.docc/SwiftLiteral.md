@@ -1,75 +1,73 @@
 # ``SwiftLiteral``
 
-Generate type-safe, human-readable Swift source fixtures directly from live runtime values.
+Take a value that exists at runtime. Write it back out as Swift source.
 
 ## Overview
 
-SwiftLiteral is a comprehensive library for creating compilable Swift fixtures that can be committed, diffed, and reused across your project. It combines a powerful runtime with optional macro-based enhancements for maximum flexibility.
+```swift
+let user = User(id: 42, name: "Alice", role: .admin)
+try Literal.write(user, named: "testUser")
+```
 
-### What is SwiftLiteral?
-
-Instead of serializing data to JSON or binary formats, SwiftLiteral generates actual Swift source code:
+That writes `User+testUser.swift`:
 
 ```swift
+import Foundation
+
 extension User {
-    static let testUser: User = User(
-        id: 42,
-        name: "Alice",
-        role: .admin,
-        isActive: true
-    )
+    static let testUser: User = User(id: 42, name: "Alice", role: .admin)
 }
 ```
 
-This approach provides:
-- **Type Safety**: Refactors surface compiler errors
-- **Human Readable**: Review and understand fixtures like any code
-- **Diff Friendly**: Line-by-line semantic diffs in version control
-- **Reusable**: Use in tests, previews, documentation, anywhere
-- **Zero Production Impact**: DEBUG-only, no release build overhead
+From then on `User.testUser` is ordinary Swift. Commit it. Diff it. Use it in a test, in a
+preview, in another fixture. Rename `name` and it stops compiling, which is the whole
+point: a JSON fixture would have gone quiet and failed at runtime instead.
 
-### Quick Start
+## Where things live
+
+Importing `SwiftLiteral` gives you everything. This module itself declares only the
+attributes; the rest comes from the two it re-exports.
+
+| Module | Holds |
+|---|---|
+| `SwiftLiteralReflection` | The engine. Value in, `ExprSyntax` out. `ValueRenderer`, `ValueRendererRegistry`, `RenderOptions`. |
+| `SwiftLiteralCore` | `Literal`, `LiteralConfig`, `FormatProfile`, and every article. |
+| `SwiftLiteralMacros` | The compiler plugin. |
+
+Start with the articles on `SwiftLiteralCore`.
+
+## Describing a type
+
+Reflection sees stored properties and nothing else. It cannot see that a property is a
+secret, that the initializer takes a different label, or that a field is a cache you do not
+want in the file. Those facts live in the source, so the macro reads them at compile time.
 
 ```swift
-import SwiftLiteral
-
-// Basic usage - runtime API
-let user = User(id: 1, name: "Alice")
-let url = try Literal.export(
-    instance: user,
-    variableName: "testUser"
-)
-
-// With macros - enhanced control
-@SwiftLiteral
-struct Product {
+@SwiftLiteral(folder: "Fixtures")
+struct User {
     let id: String
+
+    @LiteralRename("displayName")
     let name: String
+
+    @LiteralRedact(.mask("***"))
+    let apiKey: String
+
     @LiteralIgnore
     let cache: [String: Any]
 }
 
-let product = Product(id: "123", name: "Widget", cache: [:])
-try product.writeLiteral(variableName: "testProduct")
+try user.writeLiteral(named: "testUser")
 ```
 
-### Architecture
-
-SwiftLiteral consists of three main components:
-
-- **SwiftLiteralCore**: Runtime library for value rendering and file generation
-- **SwiftLiteralMacros**: Compile-time code generation for enhanced features
-- **SwiftLiteral**: Public API that combines both components
+Redaction applies at every depth. A redacted property three structs down is still redacted.
 
 ## Topics
 
-### Getting Started
+### Attributes
 
-- <doc:BasicUsage>
-- <doc:CustomRenderers>
-- <doc:FormattingConfiguration>
-
-### Core Modules
-
-- ``SwiftLiteralCore``
-- ``SwiftLiteralMacros``
+- ``SwiftLiteral(folder:)``
+- ``LiteralIgnore()``
+- ``LiteralRename(_:)``
+- ``LiteralRedact(_:)``
+- ``RedactionStyle``

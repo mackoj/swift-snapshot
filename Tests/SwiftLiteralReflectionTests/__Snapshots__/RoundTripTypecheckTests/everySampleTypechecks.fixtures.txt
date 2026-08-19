@@ -17,6 +17,8 @@ func check() {
   _ = person
   let account: Account = Account(id: 7, owner: Person(name: "Bob", address: Address(street: "3 Oak", city: "Lille"), previousAddresses: []))
   _ = account
+  let bags: Bags = Bags(numbers: Bag<Int>([1, 2, 3]), addresses: Bag<Address>([Address(street: "4 Pine", city: "Lyon")]))
+  _ = bags
   let form: Form = Form(title: "  padded  ")
   _ = form
   let generics: Generics = Generics(intBox: Box<Int>(value: 1), stringBox: Box<String>(value: "x"))

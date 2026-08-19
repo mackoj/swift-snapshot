@@ -1,244 +1,85 @@
-# Custom Renderer Guide
+# Custom renderers
 
-Learn how to register custom renderers to control how your types are converted to Swift code.
+When reflection cannot build a call that compiles, write the call yourself.
 
-## Overview
+## When you need one
 
-SwiftLiteral's ``ValueRendererRegistry`` allows you to register custom rendering logic for types that:
-- Need special initialization syntax
-- Should be rendered differently than the default reflection-based approach
-- Have properties that should be excluded or transformed
-- Require custom formatting or validation
+Reflection reads stored properties and assumes an initializer takes them. That covers most
+types. It fails when the initializer wants something the stored properties are not.
 
-Custom renderers are checked **before** built-in renderers, giving you complete control over type serialization.
+```swift
+struct Phone {
+    private let digits: [Int]        // what reflection sees
+    var e164: String { … }           // what the initializer wants
+    init(e164: String) { … }
+}
+```
 
-## Basic Custom Renderer
+Reflection writes `Phone(digits: [3, 3, 6, …])`. There is no such initializer, so the
+generated file does not build. The other cases are listed in <doc:Limits>.
 
-Register a custom renderer using ``ValueRendererRegistry/register(_:render:)``:
+## Writing one
 
 ```swift
 import SwiftLiteral
 import SwiftSyntax
 
-struct MyCustomType {
-    let value: String
-    let count: Int
-}
-
-// Register custom renderer
-ValueRendererRegistry.register(MyCustomType.self) { instance, context in
-    // Return a SwiftSyntax ExprSyntax representing your type
-    ExprSyntax(stringLiteral: """
-    MyCustomType(
-        value: "\(instance.value)",
-        count: \(instance.count)
-    )
-    """)
-}
-
-// Now use it
-let custom = MyCustomType(value: "test", count: 42)
-let url = Literal.export(
-    instance: custom,
-    variableName: "myCustom"
-)
-```
-
-## Auto-Registration Pattern
-
-Use the auto-registration helper for cleaner code:
-
-```swift
-// Define your custom renderer at module scope
-private let _ = autoregister(MyCustomType.self) { value, ctx in
-    ExprSyntax(stringLiteral: """
-    MyCustomType(
-        value: "\(value.value)",
-        count: \(value.count)
-    )
-    """)
+ValueRendererRegistry.register(Phone.self) { phone, _ in
+    "Phone(e164: \(literal: phone.e164))"
 }
 ```
 
-## Using Render Context
+The closure returns `ExprSyntax`. `ExprSyntax` is `ExpressibleByStringInterpolation`, and
+`\(literal:)` escapes the value properly, so a string with a quote in it does not break the
+output.
 
-The ``RenderContext`` parameter provides access to formatting and options:
+The second argument is a `RenderContext`. It carries the render options in force and the
+path to the value, which is useful in an error message.
 
-```swift
-ValueRendererRegistry.register(MyType.self) { instance, context in
-    // Access the path for debugging
-    let path = context.path.joined(separator: ".")
-    
-    // Access formatting profile
-    let indent = context.formatting.indent(level: 1)
-    
-    // Access render options
-    if context.options.sortDictionaryKeys {
-        // Apply custom sorting logic
-    }
-    
-    return ExprSyntax(stringLiteral: "MyType(...)")
-}
-```
+## As a type
 
-## Render Context Properties
-
-The ``RenderContext`` provides three key properties:
-
-- **path**: Array of property names showing location in the object graph
-- **formatting**: ``FormatProfile`` with indentation, line endings, and whitespace rules
-- **options**: ``RenderOptions`` controlling sorting, determinism, and thresholds
-
-Example usage:
+For something you register in more than one place, conform to `CustomValueRenderer`:
 
 ```swift
-ValueRendererRegistry.register(MyType.self) { value, context in
-    // Use path for error reporting
-    print("Rendering at: \(context.path.joined(separator: "."))")
-    
-    // Use formatting for consistent indentation
-    let indent = context.formatting.indent(level: 1)
-    
-    // Use options for conditional logic
-    let sorted = context.options.sortDictionaryKeys
-    
-    return ExprSyntax(stringLiteral: "MyType(...)")
-}
-```
-
-## Complex Examples
-
-### Example 1: URL with Validation
-
-```swift
-ValueRendererRegistry.register(URL.self) { url, context in
-    let urlString = url.absoluteString
-    return ExprSyntax(stringLiteral: "URL(string: \"\(urlString)\")!")
-}
-```
-
-### Example 2: Date with Custom Format
-
-```swift
-import Foundation
-
-ValueRendererRegistry.register(Date.self) { date, context in
-    let timeInterval = date.timeIntervalSince1970
-    return ExprSyntax(stringLiteral: "Date(timeIntervalSince1970: \(timeInterval))")
-}
-```
-
-### Example 3: Complex Type with Nested Properties
-
-```swift
-struct Address {
-    let street: String
-    let city: String
-    let zipCode: String
-}
-
-ValueRendererRegistry.register(Address.self) { address, context in
-    let indent = context.formatting.indent(level: 1)
-    return ExprSyntax(stringLiteral: """
-    Address(
-    \(indent)street: "\(address.street)",
-    \(indent)city: "\(address.city)",
-    \(indent)zipCode: "\(address.zipCode)"
-    )
-    """)
-}
-```
-
-### Example 4: Types with Transformed or Destroyed Initialization Values
-
-Some types transform their input during initialization, making it impossible to reconstruct them from the original value. In these cases, you must use a custom renderer that references an alternative initializer.
-
-```swift
-@SwiftLiteral
-struct Bizarro {
-    let transformed: Int
-    
-    // Primary initializer transforms input - original value is lost
-    public init(_ content: String) {
-        self.transformed = content.hash
-    }
-    
-    // Alternative initializer for reconstruction
-    init(whyAreYouSoooMean transformed: Int) {
-        self.transformed = transformed
+enum PhoneRenderer: CustomValueRenderer {
+    static func render(_ value: Phone, context: RenderContext) throws -> ExprSyntax {
+        "Phone(e164: \(literal: value.e164))"
     }
 }
 
-// Register custom renderer using the alternative initializer
-ValueRendererRegistry.register(Bizarro.self) { instance, context in
-    ExprSyntax(stringLiteral: """
-    Bizarro(whyAreYouSoooMean: \(instance.transformed))
-    """)
-}
-
-// Now snapshots work correctly
-let bizarre = Bizarro("Pikachu")
-let url = try bizarre.writeLiteral(variableName: "crazyyyyy")
-// Generates: Bizarro(whyAreYouSoooMean: 8234567890)
+ValueRendererRegistry.register(PhoneRenderer.self)
 ```
 
-This pattern is essential for types that:
-- Compute hashes or derived values during initialization
-- Encrypt or encode input data
-- Perform lossy transformations (e.g., rounding, truncation)
-- Convert between incompatible representations
+## Rendering the parts
 
-**Key Guidelines:**
-- Provide an alternative initializer that accepts the stored/transformed values
-- Use descriptive parameter names to clarify the alternative initialization path
-- Document the relationship between initializers in your type's documentation
-- Ensure the alternative initializer is accessible from your test code
-
-## Best Practices
-
-1. **Register Early**: Register custom renderers before using them
-2. **Thread Safety**: Registration is thread-safe via internal locking
-3. **Use Context**: Leverage context for formatting consistency
-4. **Error Handling**: Renderers should not throw; return valid Swift code
-5. **Deterministic**: Ensure output is deterministic for reproducibility
-
-## Bootstrap System
-
-For types requiring early registration:
+A renderer does not have to build everything by hand. Call back into the engine for the
+pieces:
 
 ```swift
-// In your module initialization
-ValueRendererRegistry.bootstrap()
-
-// Your custom renderers are registered automatically via auto-registration
-```
-
-## Troubleshooting
-
-### Renderer Not Applied
-
-Ensure registration happens before usage:
-
-```swift
-// Register
-ValueRendererRegistry.register(MyType.self) { value, ctx in
-    // ...
-}
-
-// Then use
-let url = Literal.export(
-    instance: myInstance,
-    variableName: "myVar"
-)
-```
-
-### Type Ambiguity
-
-For generic types, be specific:
-
-```swift
-// Register for specific generic instantiation
-ValueRendererRegistry.register([MyType].self) { array, context in
-    // Custom array rendering
+ValueRendererRegistry.register(Money.self) { money, context in
+    let amount = try ValueRenderer.render(money.amount, context: context)
+    return "Money(amount: \(amount), currency: .\(raw: money.currency.code))"
 }
 ```
+
+## Lookup is by exact type
+
+A renderer registered for `Phone` applies to `Phone`, and to `Phone?` because optionals are
+unwrapped before the registry is consulted. It does not apply to a subclass or to a
+different generic specialisation. `Box<Int>` and `Box<String>` are two registrations.
+
+## Reset between tests
+
+The registry is global. A renderer registered by one test is still there in the next one,
+and a test suite that only passes in one order is not a test suite.
+
+```swift
+@Suite struct MyTests {
+    init() { ValueRendererRegistry.removeAll() }
+}
+```
+
+## Registering is not the only option
+
+If you control the type, `@LiteralIgnore` on the awkward property is often the smaller
+change. A fixture does not have to carry every field to be useful.
