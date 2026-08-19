@@ -31,22 +31,25 @@ extension Order {
 That block is not written by hand. `ReadmeExampleTests` renders it and asserts on the
 text, so if the output changes the README fails the build.
 
-Commit it. From now on `Order.shippedOrder` is ordinary Swift: autocomplete,
-jump-to-definition, no decoding, no network. Rename a property and it stops compiling,
-and the compiler tells you where.
+Commit it. `Order.shippedOrder` is ordinary Swift from then on. It has autocomplete.
+It needs no decoding.
+
+Rename a property and it stops compiling. The compiler tells you where.
 
 ## Contents
 
-- [Why](#why) — what this is for
+- [Why](#why)
+- [What it costs](#what-it-costs)
 - [Install](#install)
-- [Quick start](#quick-start) — three steps
-- [Writing values](#writing-values) — `write`, `source`, headers, imports
-- [Describing a type](#describing-a-type) — the `@SwiftLiteral` macro
+- [Quick start](#quick-start)
+- [Writing values](#writing-values)
+- [Describing a type](#describing-a-type)
 - [What it renders](#what-it-renders)
-- [When reflection is not enough](#when-reflection-is-not-enough) — custom renderers
-- [Formatting](#formatting) and [determinism](#determinism)
+- [When reflection is not enough](#when-reflection-is-not-enough)
+- [Formatting](#formatting)
+- [Determinism](#determinism)
 - [In tests](#in-tests)
-- [What it does not do](#what-it-does-not-do) — read this one
+- [What it does not do](#what-it-does-not-do)
 - [Modules](#modules)
 
 ---
@@ -79,12 +82,12 @@ User(name: "Alice")
 
 This does not build. The compiler points at the line.
 
-That is the whole idea. A fixture written in Swift is checked by the same compiler that
-checks everything else you wrote.
+A fixture written in Swift is checked by the same compiler that checks everything else you
+wrote.
 
-The rest follows. No decoding step, so no decoding cost and no `try` in your setup.
-Readable diffs, because a person designed this grammar to be read. One place to look,
-because one fixture can reference another.
+Three things follow from that. There is no decoding step, so no decoding cost and no `try`
+in your setup. The diff is legible, because a person designed this grammar to be read. One
+fixture can reference another, so there is one place to look.
 
 ### Where the value comes from
 
@@ -94,6 +97,26 @@ Anywhere. That is the point of taking it at runtime.
   the regression test has the real thing instead of your reconstruction of it a day later.
 - Decode an API response once. Stop hitting the network in tests.
 - Take the state a screen is in when it looks wrong. Hand it to a SwiftUI preview.
+
+## What it costs
+
+A Swift fixture is worse than JSON at four things.
+
+**It breaks the build.** That is the feature, and it is also the cost. Rename a property
+mid-refactor and every fixture stops compiling before you are ready to deal with them. JSON
+lets you defer.
+
+**It compiles.** Fixtures are source, so they add to build time. A large one is a large
+file the compiler now type-checks on every build. JSON costs nothing until it is read.
+
+**Editing means regenerating.** Changing one number in a JSON file takes seconds. Changing
+one number in a fixture means editing generated code by hand, or running the thing again.
+
+**It is Swift only.** A JSON fixture can go to a backend team, a test suite in another
+language, or a bug report. A Swift fixture cannot leave the project.
+
+If your fixtures are shared across languages, or change more often than the types do, JSON
+is the better trade.
 
 ## Install
 
@@ -108,9 +131,9 @@ Anywhere. That is the point of taking it at runtime.
 Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16. CI builds every one of them.
 
 **Generate on macOS or in the simulator.** That is the design. The tool writes a file into
-your source tree so you can commit it, and the simulator and your Mac are where your source
-tree is. A device build links fine, but the default output path comes from `#filePath` —
-the compiling machine's path — which does not exist on a phone.
+your source tree so you can commit it, and those are the two places your source tree
+exists. A device build links fine. The default output path comes from `#filePath`,
+the compiling machine's path. That path does not exist on a phone.
 
 <details>
 <summary>If Xcode says <code>Unable to resolve module dependency: 'SwiftSyntax'</code></summary>
@@ -134,7 +157,7 @@ standalone toolchain while you are there.
 
 ## Quick start
 
-1. **Get a value.** Run the app, decode a response, reproduce the bug — whatever gives you
+1. **Get a value.** Run the app, decode a response, reproduce the bug. Whatever gives you
    the state you care about.
 
 2. **Write it.** In a test, a preview, or a debug button:
@@ -151,7 +174,7 @@ standalone toolchain while you are there.
    #expect(Order.shippedOrder.total == 59.98)
    ```
 
-Delete the `write` call, or leave it — it does nothing in a release build.
+Delete the `write` call, or leave it. It does nothing in a release build.
 
 ## Writing values
 
@@ -195,7 +218,7 @@ try Literal.write(
 ### Import another module
 
 The generated file imports Foundation. If the fixture mentions a type from somewhere else,
-say so — reflection sees the type's name, not which module it came from.
+say so. Reflection sees the type's name, not which module it came from.
 
 ```swift
 try Literal.write(order, named: "shippedOrder", additionalImports: ["MyModels"])
@@ -368,10 +391,9 @@ you when it changes. This one records a value so you can build it again. Differe
 questions, and they get along fine in the same test target.
 
 **It cannot read every property wrapper.** A wrapper that stores its value, or computes
-`wrappedValue` on top of one stored property, works. A wrapper that keeps its value behind
-a pointer or inside framework machinery — `@Published`, SwiftUI's `@State` — is not
-readable through `Mirror`, and the library says so instead of guessing. Mark those
-`@LiteralIgnore`.
+`wrappedValue` on top of one stored property, works. `@Published` and SwiftUI's `@State`
+keep their value somewhere `Mirror` cannot reach. The library says so instead of guessing.
+Mark those `@LiteralIgnore`.
 
 **It cannot write down a cycle.** Source is a tree; an object graph is not. Two objects
 pointing at each other throw rather than recurse forever.
