@@ -228,8 +228,24 @@ public enum ValueRenderer {
     switch mirror.displayStyle {
     case .enum:
       return try enumText(value, typeName: typeName, mirror: mirror, context: context)
-    case .struct, .class:
+
+    case .class:
+      // Source is a tree. An object graph is not. Two objects pointing at each other used
+      // to recurse until the stack ran out and took the process with it.
+      let object = value as AnyObject
+      guard !context.hasOpen(object) else {
+        throw LiteralError.reflection(
+          "'\(typeName)' refers back to itself. A fixture is a tree and cannot express a "
+            + "cycle. Break it with @LiteralIgnore, or register a custom renderer",
+          path: context.path
+        )
+      }
+      return try structText(
+        value, typeName: typeName, mirror: mirror, context: context.opening(object))
+
+    case .struct:
       return try structText(value, typeName: typeName, mirror: mirror, context: context)
+
     default:
       throw LiteralError.unsupportedType(typeName, path: context.path)
     }
@@ -279,7 +295,7 @@ public enum ValueRenderer {
     _ value: Any, typeName: String, mirror: Mirror, context: RenderContext
   ) throws -> String {
     var arguments: [String] = []
-    for child in mirror.children {
+    for child in storedProperties(of: mirror) {
       guard let label = child.label else {
         throw LiteralError.reflection(
           "'\(typeName)' has an unlabelled stored property, so no initializer call can be built",
@@ -296,6 +312,19 @@ public enum ValueRenderer {
       throw LiteralError.unsupportedType(typeName, path: context.path)
     }
     return "\(typeName)(\(arguments.joined(separator: ", ")))"
+  }
+
+  /// Every stored property, including the ones a superclass declared.
+  ///
+  /// `Mirror.children` stops at the class it was made from. A subclass would render
+  /// `Derived(name: "x")` and quietly lose everything `Base` declared, which is both
+  /// wrong and unlikely to compile.
+  ///
+  /// Superclass properties come first, because that is the order a memberwise-style
+  /// initializer takes them in.
+  private static func storedProperties(of mirror: Mirror) -> [Mirror.Child] {
+    guard let superclass = mirror.superclassMirror else { return Array(mirror.children) }
+    return storedProperties(of: superclass) + Array(mirror.children)
   }
 
   /// Fields the `@SwiftLiteral` macro extracted, applied at every depth.

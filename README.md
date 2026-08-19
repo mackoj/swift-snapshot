@@ -145,6 +145,15 @@ try Literal.write(
 
 `header` goes at the top of the file. `context` becomes the doc comment on the property.
 
+### Import another module
+
+The generated file imports Foundation. If the fixture mentions a type from somewhere else,
+say so — reflection sees the type's name, not which module it came from.
+
+```swift
+try Literal.write(order, named: "testOrder", additionalImports: ["MyModels"])
+```
+
 ### The macro
 
 Reflection sees stored properties and nothing else. It cannot see that a property is a

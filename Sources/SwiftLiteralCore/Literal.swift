@@ -6,8 +6,8 @@ import SwiftSyntax
 
 /// Write a runtime value back out as Swift source.
 ///
-/// Two entry points. ``source(of:named:header:context:)`` gives you the text.
-/// ``write(_:named:file:directory:allowOverwrite:header:context:fileID:filePath:)`` puts it on disk.
+/// Two entry points. ``source(of:named:header:context:additionalImports:)`` gives you the text.
+/// ``write(_:named:file:directory:allowOverwrite:header:context:additionalImports:fileID:filePath:)`` puts it on disk.
 ///
 /// ```swift
 /// let user = User(id: 42, name: "Alice")
@@ -37,7 +37,7 @@ import SwiftSyntax
 ///
 /// ## Debug builds only
 ///
-/// In a release build, ``write(_:named:file:directory:allowOverwrite:header:context:fileID:filePath:)``
+/// In a release build, ``write(_:named:file:directory:allowOverwrite:header:context:additionalImports:fileID:filePath:)``
 /// does nothing and reports an issue. Writing source files is something you do while
 /// writing tests, not something a shipped app does.
 public enum Literal {
@@ -49,13 +49,17 @@ public enum Literal {
   ///   - header: A comment for the top of the file. Falls back to
   ///     ``LiteralConfig/setGlobalHeader(_:)``.
   ///   - context: A doc comment for the property.
+  ///   - additionalImports: Modules to import besides Foundation. A fixture that mentions
+  ///     a type from another module needs that module imported, and the renderer cannot
+  ///     know which one.
   /// - Throws: `LiteralError` if the value cannot be rendered or the source cannot be
   ///   formatted.
   public static func source<T>(
     of value: T,
     named name: String,
     header: String? = nil,
-    context: String? = nil
+    context: String? = nil,
+    additionalImports: [String] = []
   ) throws -> String {
     @Dependency(\.literalConfiguration) var configuration
 
@@ -82,7 +86,8 @@ public enum Literal {
       expression: expression,
       header: header ?? configuration.globalHeader(),
       context: context,
-      profile: formatting
+      profile: formatting,
+      additionalImports: additionalImports
     )
   }
 
@@ -96,6 +101,7 @@ public enum Literal {
   ///   - allowOverwrite: Replace an existing file. `true` by default.
   ///   - header: A comment for the top of the file.
   ///   - context: A doc comment for the property.
+  ///   - additionalImports: Modules to import besides Foundation.
   ///   - fileID: Captured automatically. Used to place the default output directory.
   ///   - filePath: Captured automatically. Used to place the default output directory.
   /// - Returns: The file that was written.
@@ -110,6 +116,7 @@ public enum Literal {
     allowOverwrite: Bool = true,
     header: String? = nil,
     context: String? = nil,
+    additionalImports: [String] = [],
     fileID: StaticString = #fileID,
     filePath: StaticString = #filePath
   ) throws -> URL {
@@ -117,7 +124,13 @@ public enum Literal {
     @Dependency(\.literalConfiguration) var configuration
 
     let variableName = sanitize(name)
-    let code = try source(of: value, named: variableName, header: header, context: context)
+    let code = try source(
+      of: value,
+      named: variableName,
+      header: header,
+      context: context,
+      additionalImports: additionalImports
+    )
 
     let destination = PathResolver.resolveFilePath(
       typeName: String(describing: T.self),
