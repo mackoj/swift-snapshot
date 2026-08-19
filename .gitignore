@@ -11,3 +11,4 @@ playground.xcworkspace
 *.DS_Store
 *.profraw
 *.profdata
+.claude/
