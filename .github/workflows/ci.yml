@@ -28,8 +28,38 @@ jobs:
       - name: Build
         run: swift build
 
+      # --no-parallel is a stopgap, not a preference.
+      #
+      # LiteralConfig is process-global. EditorConfigIntegrationTests sets a format config
+      # source pointing at a 2-space .editorconfig; MacroIntegrationTests, in the other
+      # test target, renders at the same time and picks it up. Two root suites both marked
+      # .serialized still run in parallel with each other, so the reset in each suite's
+      # init does not help.
+      #
+      # Remove this once the configuration client lands and tests can scope their own.
       - name: Test
-        run: swift test
+        run: swift test --no-parallel
+
+  platforms:
+    # Package.swift claims four platforms. Nothing checked that claim until now.
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [iOS, tvOS, watchOS]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "${xcode:-/Applications/Xcode.app}"
+
+      - name: Build for ${{ matrix.platform }}
+        run: |
+          xcodebuild build \
+            -scheme SwiftLiteral \
+            -destination "generic/platform=${{ matrix.platform }}"
 
   documentation:
     runs-on: macos-latest

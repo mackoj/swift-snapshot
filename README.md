@@ -75,7 +75,12 @@ is in when a screen looks wrong and hand it to a SwiftUI preview.
 .product(name: "SwiftLiteral", package: "swift-snapshot")
 ```
 
-Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16.
+Swift 6.0. macOS 13, iOS 16, watchOS 9, tvOS 16. CI builds every one of them.
+
+`Literal.source` works anywhere. `Literal.write` needs somewhere to write: on a simulator
+the default path resolves against the machine that compiled the code, so it lands in your
+source tree as expected. On a device it does not, and you should pass a `directory:` inside
+the app's sandbox or use `Literal.source` and move the text yourself.
 
 ## Use
 

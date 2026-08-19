@@ -85,6 +85,20 @@ not, and this is the only place in the library that assumes a shape it cannot ve
 
 **What to do:** register a renderer.
 
+## On a device there is nowhere obvious to write
+
+The library builds for macOS, iOS, watchOS, and tvOS, and CI checks all four.
+
+`Literal.source` works anywhere. It returns a string.
+
+`Literal.write` needs a destination. Its default is `__Snapshots__` next to the file that
+called it, resolved from `#filePath` — the path on the machine that compiled the code. In a
+simulator that machine is yours, so the file lands in your source tree, which is the point.
+On a device that path does not exist and the write fails with an I/O error.
+
+**What to do:** on a device, pass a `directory:` inside the app's sandbox, or call
+`Literal.source` and move the text yourself.
+
 ## Floating point round-trips, and says so
 
 `Double` and `Float` render with Swift's own shortest round-tripping description, so the
