@@ -4,11 +4,10 @@
 [![Swift](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmackoj%2Fswift-snapshot%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/mackoj/swift-snapshot)
 [![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmackoj%2Fswift-snapshot%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/mackoj/swift-snapshot)
 
-Take a value that exists at runtime. Write it back out as Swift source.
+Capture a value your app actually produced. Commit it as Swift.
 
 ```swift
-// A real response, with forty fields you are not going to type by hand.
-let order = try JSONDecoder().decode(Order.self, from: data)
+let order = try JSONDecoder().decode(Order.self, from: response)
 
 try Literal.write(order, named: "shippedOrder")
 ```
@@ -28,18 +27,29 @@ extension Order {
 }
 ```
 
-That block is not written by hand. `ReadmeExampleTests` renders it and asserts on the
-text, so if the output changes the README fails the build.
+`Order.shippedOrder` is ordinary Swift from then on. It has autocomplete. It needs no
+decoding. Rename a property and it stops compiling, and the compiler tells you where.
 
-Commit it. `Order.shippedOrder` is ordinary Swift from then on. It has autocomplete.
-It needs no decoding.
+## Why not write the fixture by hand
 
-Rename a property and it stops compiling. The compiler tells you where.
+You can type one out. Two things go wrong.
+
+**A hand-written fixture is a guess.** It is what someone believed the decoder produces.
+The real response has forty fields, and the ones that break a screen are usually the ones
+nobody thought to type: the optional that is present, the empty array that is nil, the
+date in the format the backend changed in March.
+
+**Fixtures drift and the compiler cannot see it.** A hand-written `Order` and the real
+`Order` diverge one field at a time. Nothing fails until something fails in production.
+
+This captures the value the app made, with every field, and the compiler checks it from
+then on.
 
 ## Contents
 
-- [Why](#why)
-- [What it costs](#what-it-costs)
+- [Why not write the fixture by hand](#why-not-write-the-fixture-by-hand)
+- [Why not JSON](#why-not-json)
+- [Where the value comes from](#where-the-value-comes-from)
 - [Install](#install)
 - [Quick start](#quick-start)
 - [Writing values](#writing-values)
@@ -49,12 +59,13 @@ Rename a property and it stops compiling. The compiler tells you where.
 - [Formatting](#formatting)
 - [Determinism](#determinism)
 - [In tests](#in-tests)
+- [What it costs](#what-it-costs)
 - [What it does not do](#what-it-does-not-do)
 - [Modules](#modules)
 
 ---
 
-## Why
+## Why not JSON
 
 Test data usually starts as JSON. JSON has one problem, and it is a bad one: the compiler
 cannot see it.
@@ -89,7 +100,7 @@ Three things follow from that. There is no decoding step, so no decoding cost an
 in your setup. The diff is legible, because a person designed this grammar to be read. One
 fixture can reference another, so there is one place to look.
 
-### Where the value comes from
+## Where the value comes from
 
 Anywhere. That is the point of taking it at runtime.
 
@@ -97,26 +108,6 @@ Anywhere. That is the point of taking it at runtime.
   the regression test has the real thing instead of your reconstruction of it a day later.
 - Decode an API response once. Stop hitting the network in tests.
 - Take the state a screen is in when it looks wrong. Hand it to a SwiftUI preview.
-
-## What it costs
-
-A Swift fixture is worse than JSON at four things.
-
-**It breaks the build.** That is the feature, and it is also the cost. Rename a property
-mid-refactor and every fixture stops compiling before you are ready to deal with them. JSON
-lets you defer.
-
-**It compiles.** Fixtures are source, so they add to build time. A large one is a large
-file the compiler now type-checks on every build. JSON costs nothing until it is read.
-
-**Editing means regenerating.** Changing one number in a JSON file takes seconds. Changing
-one number in a fixture means editing generated code by hand, or running the thing again.
-
-**It is Swift only.** A JSON fixture can go to a backend team, a test suite in another
-language, or a bug report. A Swift fixture cannot leave the project.
-
-If your fixtures are shared across languages, or change more often than the types do, JSON
-is the better trade.
 
 ## Install
 
@@ -382,6 +373,26 @@ withDependencies {
 
 The override is a task local, so it applies to that test and no other.
 
+## What it costs
+
+A Swift fixture is worse than JSON at four things.
+
+**It breaks the build.** That is the feature, and it is also the cost. Rename a property
+mid-refactor and every fixture stops compiling before you are ready to deal with them. JSON
+lets you defer.
+
+**It compiles.** Fixtures are source, so they add to build time. A large one is a large
+file the compiler now type-checks on every build. JSON costs nothing until it is read.
+
+**Editing means regenerating.** Changing one number in a JSON file takes seconds. Changing
+one number in a fixture means editing generated code by hand, or running the thing again.
+
+**It is Swift only.** A JSON fixture can go to a backend team, a test suite in another
+language, or a bug report. A Swift fixture cannot leave the project.
+
+If your fixtures are shared across languages, or change more often than the types do, JSON
+is the better trade.
+
 ## What it does not do
 
 **It is not a mocking library.** It gives you the data a test consumes. It does not observe
@@ -427,6 +438,10 @@ The one that matters is `everySampleTypechecks`. It renders every sample in the 
 writes them next to the real type declarations, and runs `swiftc -typecheck` over both.
 
 Parsing is not enough. `User(name: nil)` parses.
+
+The generated block at the top of this file is not written by hand either.
+`ReadmeExampleTests` renders it and asserts on the text, so the README fails the build if
+the output drifts.
 
 ## License
 
