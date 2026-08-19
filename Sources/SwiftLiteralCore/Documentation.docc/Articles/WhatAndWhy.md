@@ -57,12 +57,25 @@ one particular user. Take that state and hand it to a preview.
 
 ## What it costs
 
-The generated file is code, and code has to compile. That is the deal. It is also the
-point, so the library refuses to write a file it cannot prove is buildable: if a value
-cannot be rendered as a valid initializer call, `Literal.write`
-throws instead of writing something that looks fine.
+A Swift fixture is worse than JSON at four things.
 
-Reflection has limits, and this library will not pretend otherwise. See <doc:Limits>.
+**It breaks the build.** That is the feature, and it is also the cost. Rename a property
+mid-refactor and every fixture stops compiling before you are ready to deal with them. JSON
+lets you defer.
+
+**It compiles.** Fixtures are source, so they add to build time. A large one is a large
+file the compiler type-checks on every build. JSON costs nothing until it is read.
+
+**Editing means regenerating.** Changing one number in a JSON file takes seconds. Changing
+one number in a fixture means editing generated code by hand, or running the thing again.
+
+**It is Swift only.** A JSON fixture can go to a backend team, a test suite in another
+language, or a bug report. A Swift fixture cannot leave the project.
+
+If your fixtures are shared across languages, or change more often than the types do, JSON
+is the better trade.
+
+Reflection has limits on top of that. See <doc:Limits>.
 
 ## See also
 
