@@ -12,8 +12,8 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"603.0.0"),
-    .package(url: "https://github.com/swiftlang/swift-format", "509.0.0"..<"603.0.0"),
+    .package(url: "https://github.com/swiftlang/swift-syntax", "509.0.0"..<"604.0.0"),
+    .package(url: "https://github.com/swiftlang/swift-format", "509.0.0"..<"604.0.0"),
     .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.7.0"),
     .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.18.0"),
     .package(url: "https://github.com/pointfreeco/swift-macro-testing", from: "0.6.0"),
