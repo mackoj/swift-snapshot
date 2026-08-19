@@ -168,3 +168,20 @@ struct Bags {
   var numbers: Bag<Int>
   var addresses: Bag<Address>
 }
+
+/// A subclass. `Mirror.children` stops at the class it was made from, so the renderer has
+/// to walk the superclass chain itself or inherited state disappears.
+class Vehicle {
+  var wheels: Int
+
+  init(wheels: Int) { self.wheels = wheels }
+}
+
+final class Car: Vehicle {
+  var plate: String
+
+  init(wheels: Int, plate: String) {
+    self.plate = plate
+    super.init(wheels: wheels)
+  }
+}

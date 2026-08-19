@@ -283,12 +283,15 @@ public enum LiteralConfig {
     #endif
   }
 
-  /// Register a ``CustomValueRenderer``.
+  /// Register a `CustomValueRenderer`.
   ///
   /// **Debug Only**: This method only operates in DEBUG builds.
   public static func registerRenderer<R: CustomValueRenderer>(_ rendererType: R.Type) {
+    // Bind the function up front rather than capturing `R.Type`. A metatype is not
+    // Sendable, and the closure is.
+    let render: @Sendable (R.Value, RenderContext) throws -> ExprSyntax = R.render
     registerRenderer(R.Value.self) { value, context in
-      try R.render(value, context: context)
+      try render(value, context)
     }
   }
 

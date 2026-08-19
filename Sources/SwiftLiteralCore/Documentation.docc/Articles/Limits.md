@@ -57,6 +57,22 @@ generated fixture has two objects.
 
 If identity matters, build the fixture by hand and let the library generate the pieces.
 
+## A cycle cannot be written down
+
+Source is a tree. An object graph is not. Two objects pointing at each other have no
+initializer call that describes them, because each one needs the other to exist first.
+
+```swift
+a.peer = b
+b.peer = a
+```
+
+The library throws when it meets an object already open further up the graph. It used to
+recurse until the stack ran out, which took the process with it.
+
+**What to do:** mark the back-reference `@LiteralIgnore`, or register a renderer that
+emits `nil` for it and rebuild the link yourself.
+
 ## Closures
 
 A closure has no source form. Reflection cannot see its body, and there is nothing to

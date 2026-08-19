@@ -16,7 +16,9 @@ import SwiftSyntax
 /// ```
 public protocol CustomValueRenderer {
   associatedtype Value
-  static func render(_ value: Value, context: RenderContext) throws -> ExprSyntax
+  // `@Sendable` so the function can be bound to a value and handed to the renderer store
+  // without dragging the metatype, which is not Sendable, into the closure.
+  @Sendable static func render(_ value: Value, context: RenderContext) throws -> ExprSyntax
 }
 
 /// The custom renderers in force for a render.
@@ -66,8 +68,11 @@ public struct ValueRenderers: Sendable {
 
   /// Register a ``CustomValueRenderer``.
   public mutating func register<R: CustomValueRenderer>(_ rendererType: R.Type) {
+    // Bind the function up front rather than capturing `R.Type`. A metatype is not
+    // Sendable, and the closure is.
+    let render: @Sendable (R.Value, RenderContext) throws -> ExprSyntax = R.render
     register(R.Value.self) { value, context in
-      try R.render(value, context: context)
+      try render(value, context)
     }
   }
 

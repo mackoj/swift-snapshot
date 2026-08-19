@@ -6,4 +6,3 @@
 
 @_exported import Foundation
 @_exported import SwiftLiteralReflection
-@_exported import SwiftSyntax

@@ -77,7 +77,8 @@ enum CodeFormatter {
     expression: ExprSyntax,
     header: String?,
     context: String?,
-    profile: FormatProfile
+    profile: FormatProfile,
+    additionalImports: [String] = []
   ) -> String {
     // Build the complete syntax tree
     let sourceFile = buildSourceFile(
@@ -85,7 +86,8 @@ enum CodeFormatter {
       variableName: variableName,
       expression: expression,
       header: header,
-      context: context
+      context: context,
+      additionalImports: additionalImports
     )
 
     // Convert to string for formatting
@@ -106,7 +108,8 @@ enum CodeFormatter {
     variableName: String,
     expression: ExprSyntax,
     header: String?,
-    context: String?
+    context: String?,
+    additionalImports: [String]
   ) -> SourceFileSyntax {
     var statements: [CodeBlockItemSyntax] = []
 
@@ -126,6 +129,16 @@ enum CodeFormatter {
       path: [ImportPathComponentSyntax(name: .identifier("Foundation"))]
     )
     statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(importDecl))))
+
+    // A fixture that mentions a type from another module needs that module imported, and
+    // the renderer has no way to know which one that is. Sorted, so the output stays
+    // deterministic whatever order they were given in.
+    for module in Set(additionalImports).sorted() {
+      let decl = ImportDeclSyntax(
+        path: [ImportPathComponentSyntax(name: .identifier(module))]
+      )
+      statements.append(CodeBlockItemSyntax(item: .decl(DeclSyntax(decl))))
+    }
 
     // Build context documentation as leading trivia for the variable declaration
     var variableLeadingTrivia: Trivia = []
