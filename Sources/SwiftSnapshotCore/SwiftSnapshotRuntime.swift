@@ -1,7 +1,6 @@
 import Foundation
 import IssueReporting
 import SwiftSyntax
-import Dependencies
 
 /// Main runtime API for SwiftSnapshot
 ///
@@ -214,23 +213,21 @@ public enum SwiftSnapshotRuntime {
     header: String? = nil,
     context: String? = nil
   ) throws -> String {
-    @Dependency(\.swiftSnapshotConfig) var snapshotConfig
-    
     // Sanitize the variable name to ensure it's a valid Swift identifier
     let sanitizedVariableName = sanitizeVariableName(variableName)
     
     // Get formatting and render options
     // If a config source is set, load the profile from it; otherwise use the stored profile
     let formatting: FormatProfile
-    if let configSource = snapshotConfig.getFormatConfigSource() {
+    if let configSource = SwiftSnapshotConfig.getFormatConfigSource() {
       formatting = try FormatConfigLoader.loadProfile(from: configSource)
     } else {
-      formatting = snapshotConfig.getFormatProfile()
+      formatting = SwiftSnapshotConfig.formattingProfile()
     }
-    let options = snapshotConfig.getRenderOptions()
+    let options = SwiftSnapshotConfig.renderOptions()
 
     // Determine header to use
-    let effectiveHeader = header ?? snapshotConfig.getGlobalHeader()
+    let effectiveHeader = header ?? SwiftSnapshotConfig.getGlobalHeader()
 
     // Create render context
     let renderContext = SnapshotRenderContext(

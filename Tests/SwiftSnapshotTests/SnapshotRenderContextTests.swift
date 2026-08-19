@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-import Dependencies
+
 
 @testable import SwiftSnapshotCore
 

@@ -1,5 +1,4 @@
 import Foundation
-import Dependencies
 
 /// Context provided to custom renderers
 ///
@@ -77,8 +76,8 @@ public struct SnapshotRenderContext {
 
   /// Creates a render context with specified configuration
   ///
-  /// If `formatting` or `options` are not provided, values are loaded from
-  /// ``SwiftSnapshotConfig`` via dependency injection.
+  /// If `formatting` or `options` are not provided, values are read from
+  /// ``SwiftSnapshotConfig``.
   ///
   /// - Parameters:
   ///   - path: Breadcrumb path (default: empty array)
@@ -89,10 +88,9 @@ public struct SnapshotRenderContext {
     formatting: FormatProfile? = nil,
     options: RenderOptions? = nil
   ) {
-    @Dependency(\.swiftSnapshotConfig) var snapshotConfig
     self.path = path
-    self.formatting = formatting ?? snapshotConfig.getFormatProfile()
-    self.options = options ?? snapshotConfig.getRenderOptions()
+    self.formatting = formatting ?? SwiftSnapshotConfig.formattingProfile()
+    self.options = options ?? SwiftSnapshotConfig.renderOptions()
   }
 
   /// Create a new context with an additional path component
