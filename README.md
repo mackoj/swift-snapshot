@@ -30,6 +30,20 @@ extension Order {
 `Order.shippedOrder` is ordinary Swift from then on. It has autocomplete. It needs no
 decoding. Rename a property and it stops compiling, and the compiler tells you where.
 
+## What you get
+
+| Fixtures usually | With SwiftLiteral |
+|---|---|
+| JSON goes stale in silence when a type changes | **The compiler checks it.** A renamed property does not build, and Xcode points at the line |
+| A hand-written fixture is someone's guess at the decoder's output | **It is the value your app made**, every field, captured at runtime |
+| Test data scattered across files, formats, and setup code | **One fixture, named**, that other fixtures can reference |
+| Decode, `try`, and unwrap in every test's setup | **`Order.shippedOrder`** — no decoding step, no cost, no `try` |
+| A `.json` blob your editor knows nothing about | **Autocomplete, jump-to-definition, and refactor-rename**, like any other Swift |
+| Diffs you skim past in review | **A diff a person can read**, in a grammar designed to be read |
+
+The rest of this page is the same argument, slowly, and then the parts where the trade goes
+the other way.
+
 ## Why not write the fixture by hand
 
 You can type one out. Two things go wrong.
@@ -47,6 +61,7 @@ then on.
 
 ## Contents
 
+- [What you get](#what-you-get)
 - [Why not write the fixture by hand](#why-not-write-the-fixture-by-hand)
 - [Why not JSON](#why-not-json)
 - [Where the value comes from](#where-the-value-comes-from)
