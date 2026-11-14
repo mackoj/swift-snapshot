@@ -21,7 +21,7 @@ struct ArchitectureRules {
 
   @Test func errorsAreNotSwallowed() throws {
     let library = try Self.sources().excluding("SwiftLiteralMacros")
-    expectNone(Detect.swallowedErrors(in: library), rule: .errorsAreNotSwallowed)
+    expectNone(library.optionalTries + library.forcedTries, rule: .errorsAreNotSwallowed)
   }
 
   @Test func configurationIsReadAtTheEntryPoint() throws {
@@ -39,13 +39,13 @@ struct ArchitectureRules {
   }
 
   @Test func uncheckedSendableExplainsItself() throws {
-    expectNone(Detect.uncommentedUncheckedSendable(in: try Self.sources()), rule: .uncheckedSendableExplainsItself)
+    expectNone(try Self.sources().uncommentedUncheckedSendable, rule: .uncheckedSendableExplainsItself)
   }
 
   @Test func testsUseSwiftTesting() throws {
     let tests = try Self.tests()
     #expect(tests.containing("import Testing").relativePaths.count > 5)
-    expectNone(Detect.xcTestImports(in: tests), rule: .testsUseSwiftTesting)
+    expectNone(tests.xcTestImports, rule: .testsUseSwiftTesting)
   }
 
   @Test func liveConfigurationStaysInItsSuites() throws {
@@ -54,11 +54,11 @@ struct ArchitectureRules {
   }
 
   @Test func knownIssuesExplainThemselves() throws {
-    expectNone(Detect.unexplainedKnownIssues(in: try Self.tests()), rule: .knownIssuesExplainThemselves)
+    expectNone(try Self.tests().unexplainedKnownIssues, rule: .knownIssuesExplainThemselves)
   }
 
   @Test func testsAreNotDisabled() throws {
-    expectNone(Detect.disabledTests(in: try Self.tests()), rule: .testsAreNotDisabled)
+    expectNone(try Self.tests().disabledTests, rule: .testsAreNotDisabled)
   }
 }
 
