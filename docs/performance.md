@@ -58,7 +58,20 @@ The trace stays in `Benchmarks/.build/profiles/` to open in Instruments.
 
 ## What has paid off
 
-PLACEHOLDER_TABLE
+0.4.0 → 0.4.1, p50 on an M-series MacBook Pro, `p50` run back to back on the same machine:
+
+| Benchmark | Wall clock p50 | Mallocs p50 |
+|---|---|---|
+| Render, 1000 orders | 141 ms → 84 ms (0.60x) | 476K → 248K (0.52x) |
+| Render, dictionary of 1000 orders | 149 ms → 86 ms (0.58x) | 496K → 268K (0.54x) |
+| Render, 10000 integers | 10.0 ms → 9.1 ms (0.91x) | 40K → 30K (0.75x) |
+| Render, 2000 strings with escapes | 9.0 ms → 5.5 ms (0.60x) | 18K → 15K (0.83x) |
+| Render, enum tree 40 deep | 944 µs → 405 µs (0.43x) | 4,621 → 1,885 (0.41x) |
+| Render, class chain 40 deep | 642 µs → 404 µs (0.63x) | 2,072 → 849 (0.41x) |
+| Source, one order | 2.10 ms → 1.19 ms (0.56x) | 5,515 → 3,391 (0.61x) |
+| Source, 1000 orders | 1.59 s → 0.76 s (0.48x) | 2.99M → 1.34M (0.45x) |
+
+`Source, 1000 orders` also went from 160 MB to 143 MB peak resident, and from 44M retains to 10M.
 
 - **One `Mirror` per value.** `collectionText`, `rangeText` and `reflectedText` each built their own, so every struct
   paid three times.

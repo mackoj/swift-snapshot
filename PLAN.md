@@ -35,7 +35,6 @@ Checked items are done and verified. Do not redo them. What happened is in PROGR
 
 ## Known weak spots
 
-- `PerformanceTests` asserts on wall-clock time. That is a flake waiting for a slow CI box.
 - `ManualSanitizationVerification` duplicates `VariableNameSanitizationTests`.
 - The custom-`Collection` branch is the one place the renderer guesses at a shape it
   cannot verify. Documented in `Limits`.
