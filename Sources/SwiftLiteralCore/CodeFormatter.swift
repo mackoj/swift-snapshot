@@ -93,12 +93,9 @@ enum CodeFormatter {
       additionalImports: additionalImports
     )
 
-    // Convert to string for formatting
-    let sourceCode = sourceFile.formatted().description
-
     // Apply SwiftFormat
     let formatted = applySwiftFormat(
-      to: sourceCode, sourceFile: sourceFile, profile: profile, configSource: configSource)
+      sourceFile: sourceFile, profile: profile, configSource: configSource)
 
     // Apply post-processing for EditorConfig properties not handled by swift-format
     let postProcessed = applyEditorConfigPostProcessing(formatted, profile: profile)
@@ -188,8 +185,12 @@ enum CodeFormatter {
   }
 
   /// Apply swift-format to code
+  ///
+  /// swift-format prints `sourceFile` itself. `source` only feeds its location converter, so
+  /// it is the tree's own text: that is what the converter's offsets index into. It used to be
+  /// a `BasicFormat` pass over the tree, which cost more than a quarter of a render and gave
+  /// locations for a different text.
   private static func applySwiftFormat(
-    to code: String,
     sourceFile: SourceFileSyntax,
     profile: FormatProfile,
     configSource: FormatConfigSource?
@@ -203,9 +204,14 @@ enum CodeFormatter {
       let formatter = SwiftFormat.SwiftFormatter(configuration: configuration)
       var formattedCode = ""
 
+      // swift-format expects operators already folded, and stops the process when they are
+      // not: a range in a fixture renders as `0...3`, and `Literal.source` crashed on it.
+      let folded = try OperatorTable.standardOperators.foldAll(sourceFile)
+      let foldedFile = folded.as(SourceFileSyntax.self) ?? sourceFile
+
       try formatter.format(
-        syntax: sourceFile,
-        source: code,
+        syntax: foldedFile,
+        source: foldedFile.description,
         operatorTable: .standardOperators,
         assumingFileURL: nil,
         selection: SwiftFormat.Selection.infinite,
@@ -216,7 +222,7 @@ enum CodeFormatter {
     } catch {
       // If formatting fails, return original code
       reportIssue("Failed to format code: \(error.localizedDescription)")
-      return code
+      return sourceFile.formatted().description
     }
   }
 
@@ -303,19 +309,26 @@ enum CodeFormatter {
     return result
   }
 
-  /// Trim trailing whitespace from each line
+  /// Trim trailing spaces and tabs from each line.
+  ///
+  /// By hand rather than with a regular expression per line, which was most of the
+  /// post-processing time.
   private static func trimTrailingWhitespace(_ code: String) -> String {
-    let lines = code.split(separator: "\n", omittingEmptySubsequences: false)
-    let trimmedLines = lines.map { line -> String in
-      let lineStr = String(line)
-      // Trim trailing spaces and tabs, but preserve the line itself
-      return lineStr.replacingOccurrences(
-        of: "[ \\t]+$",
-        with: "",
-        options: .regularExpression
-      )
+    var result = ""
+    result.reserveCapacity(code.utf8.count)
+    for (index, line) in code.utf8.split(
+      separator: UInt8(ascii: "\n"), omittingEmptySubsequences: false
+    ).enumerated() {
+      if index > 0 { result += "\n" }
+      var end = line.endIndex
+      while end > line.startIndex {
+        let byte = line[line.index(before: end)]
+        guard byte == UInt8(ascii: " ") || byte == UInt8(ascii: "\t") else { break }
+        end = line.index(before: end)
+      }
+      result += String(Substring(code.utf8[line.startIndex..<end]))
     }
-    return trimmedLines.joined(separator: "\n")
+    return result
   }
 
   /// Apply or remove final newline based on configuration

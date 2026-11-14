@@ -38,6 +38,10 @@ struct ArchitectureRules {
     expectNone(Detect.nonSendablePublicClosures(in: try Self.sources()), rule: .publicClosuresAreSendable)
   }
 
+  @Test func uncheckedSendableExplainsItself() throws {
+    expectNone(Detect.uncommentedUncheckedSendable(in: try Self.sources()), rule: .uncheckedSendableExplainsItself)
+  }
+
   @Test func testsUseSwiftTesting() throws {
     let tests = try Self.tests()
     #expect(tests.containing("import Testing").relativePaths.count > 5)

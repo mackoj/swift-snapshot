@@ -109,6 +109,15 @@ enum Detect {
     return false
   }
 
+  /// `@unchecked Sendable` conformances with no comment on the declaration that makes them.
+  static func uncommentedUncheckedSendable(in scope: Scope) -> [Match<AttributeSyntax>] {
+    scope.containing("@unchecked").nodes(of: AttributeSyntax.self) { match in
+      guard match.node.attributeName.trimmedDescription == "unchecked" else { return false }
+      let declaration = sequence(first: Syntax(match.node), next: \.parent).first { $0.is(DeclSyntax.self) }
+      return declaration?.attachedComments.isEmpty ?? true
+    }
+  }
+
   /// `try?` and `try!`.
   static func swallowedErrors(in scope: Scope) -> [Match<TryExprSyntax>] {
     scope.containing("try?", "try!").nodes(of: TryExprSyntax.self) { $0.node.questionOrExclamationMark != nil }

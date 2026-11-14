@@ -45,7 +45,6 @@ let package = Package(
         .product(name: "SwiftSyntax", package: "swift-syntax"),
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
-        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ],
       path: "Sources/SwiftLiteralReflection"
     ),
@@ -95,6 +94,8 @@ let package = Package(
         .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
         .product(name: "SwiftParser", package: "swift-syntax"),
         .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
+        // The `.dependency(…)` test trait. Test-only: it links Testing and XCTest.
+        .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
       ]
     ),
 

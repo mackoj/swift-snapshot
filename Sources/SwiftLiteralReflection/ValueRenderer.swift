@@ -56,7 +56,7 @@ public enum ValueRenderer {
       return wrapped is any OptionalProtocol ? ".some(\(inner))" : inner
     }
 
-    if let custom = context.renderers.renderer(for: value) {
+    if !context.renderers.isEmpty, let custom = context.renderers.renderer(for: value) {
       return try custom(value, context).description
     }
 
@@ -68,9 +68,13 @@ public enum ValueRenderer {
 
     if let primitive = primitiveText(value) { return primitive }
     if let foundation = try foundationText(value, context: context) { return foundation }
-    if let collection = try collectionText(value, context: context) { return collection }
 
-    return try reflectedText(value, context: context)
+    // One mirror for the rest. Building it is a large part of rendering a struct.
+    let mirror = Mirror(reflecting: value)
+    if let collection = try collectionText(value, mirror: mirror, context: context) {
+      return collection
+    }
+    return try reflectedText(value, mirror: mirror, context: context)
   }
 
   // MARK: - Primitives
@@ -137,13 +141,13 @@ public enum ValueRenderer {
   ///
   /// Casting a `[Int: String]` to `[AnyHashable: Any]` erases the key type, and the
   /// keys then render as strings. `["1": "a"]` is not `[1: "a"]` and does not compile.
-  private static func collectionText(_ value: Any, context: RenderContext) throws -> String?
-  {
-    let mirror = Mirror(reflecting: value)
+  private static func collectionText(
+    _ value: Any, mirror: Mirror, context: RenderContext
+  ) throws -> String? {
     switch mirror.displayStyle {
     case .collection:
       let elements = try mirror.children.enumerated().map { index, child in
-        try text(child.value, context: context.appending(path: "[\(index)]"))
+        try text(child.value, context: context.appending(.index(index)))
       }
       return elements.isEmpty ? "[]" : "[\(elements.joined(separator: ", "))]"
 
@@ -165,7 +169,7 @@ public enum ValueRenderer {
             "Dictionary entry is not a key/value pair", path: context.path)
         }
         let key = try text(entry[0], context: context.appending(path: "[key]"))
-        let value = try text(entry[1], context: context.appending(path: "[\(key)]"))
+        let value = try text(entry[1], context: context.appending(.key(key)))
         pairs.append((key, value))
       }
       if context.options.sortDictionaryKeys { pairs.sort { $0.key < $1.key } }
@@ -173,7 +177,7 @@ public enum ValueRenderer {
         ? "[:]" : "[\(pairs.map { "\($0.key): \($0.value)" }.joined(separator: ", "))]"
 
     default:
-      if let range = try rangeText(value, context: context) { return range }
+      if let range = try rangeText(value, mirror: mirror, context: context) { return range }
       return try customCollectionText(value, context: context)
     }
   }
@@ -193,22 +197,28 @@ public enum ValueRenderer {
     func erase<C: Collection>(_ collection: C) -> [Any] { collection.map { $0 } }
     var elements: [String] = []
     for (index, element) in _openExistential(collection, do: erase).enumerated() {
-      elements.append(try text(element, context: context.appending(path: "[\(index)]")))
+      elements.append(try text(element, context: context.appending(.index(index))))
     }
     return "\(String(describing: type(of: value)))([\(elements.joined(separator: ", "))])"
   }
 
   /// Ranges reflect as plain structs with `lowerBound` and `upperBound`, and there is
   /// no initializer taking those labels. They need their operator form.
-  private static func rangeText(_ value: Any, context: RenderContext) throws -> String? {
+  ///
+  /// Every struct passes through here, so the labels are checked before the type name,
+  /// which costs far more to build.
+  private static func rangeText(
+    _ value: Any, mirror: Mirror, context: RenderContext
+  ) throws -> String? {
+    guard mirror.children.count == 2 else { return nil }
+    var lower: Any?
+    var upper: Any?
+    for child in mirror.children {
+      if child.label == "lowerBound" { lower = child.value }
+      if child.label == "upperBound" { upper = child.value }
+    }
+    guard let lower, let upper else { return nil }
     let typeName = String(describing: type(of: value))
-    let mirror = Mirror(reflecting: value)
-    let bounds = Dictionary(
-      uniqueKeysWithValues: mirror.children.compactMap { child -> (String, Any)? in
-        child.label.map { ($0, child.value) }
-      })
-    guard let lower = bounds["lowerBound"], let upper = bounds["upperBound"], bounds.count == 2
-    else { return nil }
 
     let operatorText: String
     if typeName.hasPrefix("ClosedRange<") {
@@ -225,14 +235,15 @@ public enum ValueRenderer {
 
   // MARK: - Reflection
 
-  private static func reflectedText(_ value: Any, context: RenderContext) throws -> String {
-    let typeName = typeName(of: value)
-    let mirror = Mirror(reflecting: value)
+  private static func reflectedText(
+    _ value: Any, mirror: Mirror, context: RenderContext
+  ) throws -> String {
+    let typeName = typeName(of: value, context: context)
 
     switch mirror.displayStyle {
     case .tuple:
       let elements = try mirror.children.enumerated().map { index, child in
-        let rendered = try text(child.value, context: context.appending(path: ".\(index)"))
+        let rendered = try text(child.value, context: context.appending(.element(index)))
         guard let label = child.label, !label.hasPrefix(".") else { return rendered }
         return "\(label): \(rendered)"
       }
@@ -293,12 +304,12 @@ public enum ValueRenderer {
       // names, or ".0", ".1" when the case declared them without labels.
       arguments = try payload.children.enumerated().map { index, element in
         let rendered = try text(
-          element.value, context: context.appending(path: "\(name).\(index)"))
+          element.value, context: context.appending(.associatedValue(name, index)))
         guard let label = element.label, !label.hasPrefix(".") else { return rendered }
         return "\(label): \(rendered)"
       }
     } else {
-      arguments = [try text(child.value, context: context.appending(path: "\(name).0"))]
+      arguments = [try text(child.value, context: context.appending(.associatedValue(name, 0)))]
     }
     return "\(prefix)\(name)(\(arguments.joined(separator: ", ")))"
   }
@@ -347,7 +358,7 @@ public enum ValueRenderer {
   ) throws -> String? {
     let fields = exportable.__swiftLiteral_fields()
     guard !fields.isEmpty else { return nil }
-    let typeName = typeName(of: exportable)
+    let typeName = typeName(of: exportable, context: context)
     let arguments = try fields.map { field in
       "\(field.label): \(try text(field.value, context: context.appending(path: field.label)))"
     }
@@ -402,9 +413,13 @@ public enum ValueRenderer {
   /// Types declared inside a function have no writable name at all — the runtime spells
   /// them `(unknown context at $7f…)` — and generics nest their own qualified names inside
   /// the angle brackets. Both keep the short name, which is what they had before.
-  static func typeName(of value: Any) -> String {
-    let simple = String(describing: type(of: value))
-    let qualified = String(reflecting: type(of: value))
+  static func typeName(of value: Any, context: RenderContext) -> String {
+    context.typeNames.name(of: type(of: value), orMake: typeName(of:))
+  }
+
+  static func typeName(of type: Any.Type) -> String {
+    let simple = String(describing: type)
+    let qualified = String(reflecting: type)
 
     // A tuple reflects as "(Swift.Int, Swift.String)" and a function as
     // "(Swift.Int) -> Swift.String". Neither is a dotted path, and splitting one produces
@@ -427,25 +442,25 @@ public enum ValueRenderer {
   ///
   /// Accented letters and emoji stay as themselves. Swift source is UTF-8, and a
   /// fixture full of `\u{1F600}` is a fixture nobody reads.
+  ///
+  /// Works on scalars, not `Character`s: grapheme breaking was the largest cost of rendering
+  /// text, and it hid `"\r\n"`, which is one `Character`, from the escapes below.
   static func quoted(_ value: String) -> String {
     var result = "\""
-    for character in value {
-      switch character {
+    result.reserveCapacity(value.utf8.count + 2)
+    for scalar in value.unicodeScalars {
+      switch scalar {
       case "\\": result += "\\\\"
       case "\"": result += "\\\""
       case "\n": result += "\\n"
       case "\r": result += "\\r"
       case "\t": result += "\\t"
       case "\0": result += "\\0"
+      // The Unicode general category Control: C0, DEL and C1.
+      case "\u{01}"..."\u{1F}", "\u{7F}"..."\u{9F}":
+        result += "\\u{\(String(scalar.value, radix: 16, uppercase: true))}"
       default:
-        if let scalar = character.unicodeScalars.first,
-          character.unicodeScalars.count == 1,
-          scalar.properties.generalCategory == .control
-        {
-          result += String(format: "\\u{%X}", scalar.value)
-        } else {
-          result.append(character)
-        }
+        result.unicodeScalars.append(scalar)
       }
     }
     return result + "\""

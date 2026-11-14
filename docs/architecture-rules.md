@@ -129,6 +129,25 @@ Good:
 public mutating func register<Value>(_ type: Value.Type, render: @escaping @Sendable (Value) -> ExprSyntax)
 ```
 
+### An `@unchecked Sendable` conformance has a comment that says what guards it.
+
+`unchecked-sendable-explains-itself`: `@unchecked Sendable` turns off the compiler's data-race check for the type (AGENT.md, "Swift 6 strict concurrency"). The comment is the only proof left that the type is safe to share between the tasks that render.
+
+**How to fix:** Prefer a value type. If the state must be shared and mutable, guard it with a lock and say so in a comment on the declaration, like `TypeNameCache`.
+
+Bad:
+
+```swift
+final class TypeNameCache: @unchecked Sendable {
+```
+
+Good:
+
+```swift
+// Every access to `names` holds `lock`.
+final class TypeNameCache: @unchecked Sendable {
+```
+
 ## testing
 
 Swift Testing, isolated tests, nothing silenced. Read before you add, skip or scope a test.

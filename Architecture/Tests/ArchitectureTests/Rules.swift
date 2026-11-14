@@ -106,6 +106,26 @@ extension Rule {
       "public mutating func register<Value>(_ type: Value.Type, render: @escaping @Sendable (Value) -> ExprSyntax)"
   )
 
+  static let uncheckedSendableExplainsItself = Rule(
+    id: "unchecked-sendable-explains-itself",
+    title: "An `@unchecked Sendable` conformance has a comment that says what guards it.",
+    category: .api,
+    rationale: """
+      `@unchecked Sendable` turns off the compiler's data-race check for the type (AGENT.md, "Swift 6 strict \
+      concurrency"). The comment is the only proof left that the type is safe to share between the tasks that \
+      render.
+      """,
+    howToFix: """
+      Prefer a value type. If the state must be shared and mutable, guard it with a lock and say so in a comment \
+      on the declaration, like `TypeNameCache`.
+      """,
+    badExample: "final class TypeNameCache: @unchecked Sendable {",
+    goodExample: """
+      // Every access to `names` holds `lock`.
+      final class TypeNameCache: @unchecked Sendable {
+      """
+  )
+
   static let errorsAreNotSwallowed = Rule(
     id: "errors-are-not-swallowed",
     title: "The library never writes `try?` or `try!`.",
@@ -201,5 +221,5 @@ extension Rule {
 let allRules: [Rule] = [
   .engineReadsNoProcessState, .engineImportsStayWithinBudget, .errorsAreNotSwallowed,
   .configurationIsReadAtTheEntryPoint, .globalStateLivesInLiteralConfig, .publicClosuresAreSendable,
-  .testsUseSwiftTesting, .liveConfigurationStaysInItsSuites, .knownIssuesExplainThemselves, .testsAreNotDisabled,
+  .uncheckedSendableExplainsItself, .testsUseSwiftTesting, .liveConfigurationStaysInItsSuites, .knownIssuesExplainThemselves, .testsAreNotDisabled,
 ]

@@ -55,6 +55,21 @@ jobs:
       - name: Architecture rules
         run: swift test --package-path Architecture
 
+  benchmarks:
+    # Built, not run: shared runners are too noisy for numbers. docs/performance.md says how to
+    # measure locally.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "${xcode:-/Applications/Xcode.app}"
+
+      - name: Build benchmarks
+        run: swift build --package-path Benchmarks -c release
+
   platforms:
     # Package.swift claims four platforms. Nothing checked that claim until now.
     runs-on: macos-latest
