@@ -11,7 +11,13 @@ import Foundation
 /// same context renders the same way whatever else the process is doing.
 public struct RenderContext: Sendable {
   /// Property names traversed to reach this value. `["profile", "address", "city"]`.
-  public let path: [String]
+  ///
+  /// Built on demand from ``trail``. Only an error message reads it, and building an array
+  /// for every value on the way down was a large share of a render's allocations.
+  public var path: [String] { trail.components }
+
+  /// Where this value is, as a chain back to the root.
+  let trail: PathTrail
 
   /// Options in force for this render.
   public let options: RenderOptions
@@ -34,18 +40,18 @@ public struct RenderContext: Sendable {
     renderers: ValueRenderers = ValueRenderers()
   ) {
     self.init(
-      path: path, options: options, renderers: renderers, openObjects: [],
+      trail: PathTrail(root: path), options: options, renderers: renderers, openObjects: [],
       typeNames: TypeNameCache())
   }
 
   init(
-    path: [String],
+    trail: PathTrail,
     options: RenderOptions,
     renderers: ValueRenderers,
     openObjects: Set<ObjectIdentifier>,
     typeNames: TypeNameCache
   ) {
-    self.path = path
+    self.trail = trail
     self.options = options
     self.renderers = renderers
     self.openObjects = openObjects
@@ -54,8 +60,12 @@ public struct RenderContext: Sendable {
 
   /// A child context one level deeper.
   public func appending(path component: String) -> RenderContext {
+    appending(.name(component))
+  }
+
+  func appending(_ component: PathTrail.Component) -> RenderContext {
     RenderContext(
-      path: path + [component],
+      trail: PathTrail(parent: trail, component: component),
       options: options,
       renderers: renderers,
       openObjects: openObjects,
@@ -69,12 +79,70 @@ public struct RenderContext: Sendable {
 
   func opening(_ object: AnyObject) -> RenderContext {
     RenderContext(
-      path: path,
+      trail: trail,
       options: options,
       renderers: renderers,
       openObjects: openObjects.union([ObjectIdentifier(object)]),
       typeNames: typeNames
     )
+  }
+}
+
+/// The path to a value, from the value back to the root.
+///
+/// A component is kept in the form it was found in and only turned into text when
+/// ``components`` is read, which is when a render fails.
+final class PathTrail: Sendable {
+  enum Component: Sendable {
+    case name(String)
+    /// `[3]`, an array element.
+    case index(Int)
+    /// `["key"]`, a dictionary value under its rendered key.
+    case key(String)
+    /// `.0`, a tuple element.
+    case element(Int)
+    /// `move.1`, an associated value of an enum case.
+    case associatedValue(String, Int)
+
+    var text: String {
+      switch self {
+      case .name(let name): name
+      case .index(let index): "[\(index)]"
+      case .key(let key): "[\(key)]"
+      case .element(let index): ".\(index)"
+      case .associatedValue(let name, let index): "\(name).\(index)"
+      }
+    }
+  }
+
+  private let parent: PathTrail?
+  private let component: Component?
+  private let root: [String]
+
+  init(root: [String]) {
+    self.parent = nil
+    self.component = nil
+    self.root = root
+  }
+
+  init(parent: PathTrail, component: Component) {
+    self.parent = parent
+    self.component = component
+    self.root = []
+  }
+
+  var components: [String] {
+    var reversed: [String] = []
+    var node: PathTrail? = self
+    while let current = node {
+      if let component = current.component {
+        reversed.append(component.text)
+      } else {
+        reversed.append(contentsOf: current.root.reversed())
+      }
+      node = current.parent
+    }
+    return reversed.reversed()
   }
 }
 

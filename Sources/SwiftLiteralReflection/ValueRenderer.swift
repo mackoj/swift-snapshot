@@ -147,7 +147,7 @@ public enum ValueRenderer {
     switch mirror.displayStyle {
     case .collection:
       let elements = try mirror.children.enumerated().map { index, child in
-        try text(child.value, context: context.appending(path: "[\(index)]"))
+        try text(child.value, context: context.appending(.index(index)))
       }
       return elements.isEmpty ? "[]" : "[\(elements.joined(separator: ", "))]"
 
@@ -169,7 +169,7 @@ public enum ValueRenderer {
             "Dictionary entry is not a key/value pair", path: context.path)
         }
         let key = try text(entry[0], context: context.appending(path: "[key]"))
-        let value = try text(entry[1], context: context.appending(path: "[\(key)]"))
+        let value = try text(entry[1], context: context.appending(.key(key)))
         pairs.append((key, value))
       }
       if context.options.sortDictionaryKeys { pairs.sort { $0.key < $1.key } }
@@ -197,7 +197,7 @@ public enum ValueRenderer {
     func erase<C: Collection>(_ collection: C) -> [Any] { collection.map { $0 } }
     var elements: [String] = []
     for (index, element) in _openExistential(collection, do: erase).enumerated() {
-      elements.append(try text(element, context: context.appending(path: "[\(index)]")))
+      elements.append(try text(element, context: context.appending(.index(index))))
     }
     return "\(String(describing: type(of: value)))([\(elements.joined(separator: ", "))])"
   }
@@ -243,7 +243,7 @@ public enum ValueRenderer {
     switch mirror.displayStyle {
     case .tuple:
       let elements = try mirror.children.enumerated().map { index, child in
-        let rendered = try text(child.value, context: context.appending(path: ".\(index)"))
+        let rendered = try text(child.value, context: context.appending(.element(index)))
         guard let label = child.label, !label.hasPrefix(".") else { return rendered }
         return "\(label): \(rendered)"
       }
@@ -304,12 +304,12 @@ public enum ValueRenderer {
       // names, or ".0", ".1" when the case declared them without labels.
       arguments = try payload.children.enumerated().map { index, element in
         let rendered = try text(
-          element.value, context: context.appending(path: "\(name).\(index)"))
+          element.value, context: context.appending(.associatedValue(name, index)))
         guard let label = element.label, !label.hasPrefix(".") else { return rendered }
         return "\(label): \(rendered)"
       }
     } else {
-      arguments = [try text(child.value, context: context.appending(path: "\(name).0"))]
+      arguments = [try text(child.value, context: context.appending(.associatedValue(name, 0)))]
     }
     return "\(prefix)\(name)(\(arguments.joined(separator: ", ")))"
   }
