@@ -10,6 +10,19 @@ import Testing
     try ValueRenderer.render(value).description
   }
 
+  // MARK: - Strings
+
+  /// `"\r\n"` is one `Character`, so escaping by `Character` missed it, wrote a raw line
+  /// break into the literal, and the render threw.
+  @Test func windowsLineEndingsAreEscaped() throws {
+    #expect(try render("a\r\nb") == #""a\r\nb""#)
+  }
+
+  @Test func controlCharactersAreEscapedAndTheRestIsNot() throws {
+    #expect(try render("bell\u{7} del\u{7F} nel\u{85}") == #""bell\u{7} del\u{7F} nel\u{85}""#)
+    #expect(try render("cafe\u{301} 🇫🇷") == "\"cafe\u{301} 🇫🇷\"")
+  }
+
   // MARK: - Tuples
 
   @Test func unlabelledTuple() throws {

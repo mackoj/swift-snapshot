@@ -1,3 +1,5 @@
+import Foundation
+
 /// What a renderer knows about where it is.
 ///
 /// The context carries the options in force, the custom renderers in force, a breadcrumb
@@ -23,24 +25,31 @@ public struct RenderContext: Sendable {
   /// each other recurse until the stack runs out, which takes the process with it.
   let openObjects: Set<ObjectIdentifier>
 
+  /// Type names already worked out, shared by every context derived from this one.
+  let typeNames: TypeNameCache
+
   public init(
     path: [String] = [],
     options: RenderOptions = .default,
     renderers: ValueRenderers = ValueRenderers()
   ) {
-    self.init(path: path, options: options, renderers: renderers, openObjects: [])
+    self.init(
+      path: path, options: options, renderers: renderers, openObjects: [],
+      typeNames: TypeNameCache())
   }
 
   init(
     path: [String],
     options: RenderOptions,
     renderers: ValueRenderers,
-    openObjects: Set<ObjectIdentifier>
+    openObjects: Set<ObjectIdentifier>,
+    typeNames: TypeNameCache
   ) {
     self.path = path
     self.options = options
     self.renderers = renderers
     self.openObjects = openObjects
+    self.typeNames = typeNames
   }
 
   /// A child context one level deeper.
@@ -49,7 +58,8 @@ public struct RenderContext: Sendable {
       path: path + [component],
       options: options,
       renderers: renderers,
-      openObjects: openObjects
+      openObjects: openObjects,
+      typeNames: typeNames
     )
   }
 
@@ -62,7 +72,27 @@ public struct RenderContext: Sendable {
       path: path,
       options: options,
       renderers: renderers,
-      openObjects: openObjects.union([ObjectIdentifier(object)])
+      openObjects: openObjects.union([ObjectIdentifier(object)]),
+      typeNames: typeNames
     )
+  }
+}
+
+/// The names `ValueRenderer.typeName(of:)` worked out, by type.
+///
+/// A name costs two runtime type-name lookups and a split, more than rendering the rest of a
+/// small struct, and a fixture repeats a handful of types thousands of times. One cache per
+/// render, carried in the context, so nothing outlives the render that filled it.
+// Every access to `names` holds `lock`: a custom renderer may hand the context to another thread.
+final class TypeNameCache: @unchecked Sendable {
+  private let lock = NSLock()
+  private var names: [ObjectIdentifier: String] = [:]
+
+  func name(of type: Any.Type, orMake make: (Any.Type) -> String) -> String {
+    let key = ObjectIdentifier(type)
+    if let name = lock.withLock({ names[key] }) { return name }
+    let name = make(type)
+    lock.withLock { names[key] = name }
+    return name
   }
 }

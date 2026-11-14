@@ -70,10 +70,11 @@ enum Fixtures {
   static func tree(depth: Int) -> Tree {
     depth == 0 ? .leaf(depth) : .node(tree(depth: depth - 1), .leaf(depth))
   }
-  /// 100 levels. Past about 250, SwiftParser's nesting limit rejects the rendered text and `render` throws.
-  static let deepTree = tree(depth: 100)
+  /// 40 levels. Rendering and parsing both recurse once per level, and a benchmark runs on a secondary thread with a
+  /// 512 KB stack: 100 levels overflows it inside SwiftParser (docs/performance.md, "Limits").
+  static let deepTree = tree(depth: 40)
 
-  static let linkedList: Node = (0..<100).reversed().reduce(nil as Node?) { Node(value: $1, next: $0) }!
+  static let linkedList: Node = (0..<40).reversed().reduce(nil as Node?) { Node(value: $1, next: $0) }!
 }
 
 let benchmarks: @Sendable () -> Void = {
@@ -96,10 +97,10 @@ let benchmarks: @Sendable () -> Void = {
   Benchmark("Render, 2000 strings with escapes") { benchmark in
     blackHole(try ValueRenderer.render(Fixtures.strings))
   }
-  Benchmark("Render, enum tree 100 deep") { benchmark in
+  Benchmark("Render, enum tree 40 deep") { benchmark in
     blackHole(try ValueRenderer.render(Fixtures.deepTree))
   }
-  Benchmark("Render, class chain 100 deep") { benchmark in
+  Benchmark("Render, class chain 40 deep") { benchmark in
     blackHole(try ValueRenderer.render(Fixtures.linkedList))
   }
 

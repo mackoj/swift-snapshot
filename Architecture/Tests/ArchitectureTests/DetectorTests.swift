@@ -88,6 +88,19 @@ import Testing
     #expect(found.map(\.location.line) == [1, 3, 2])
   }
 
+  @Test func uncommentedUncheckedSendableIsFound() {
+    let found = Detect.uncommentedUncheckedSendable(
+      in: scope(
+        """
+        final class Cache: @unchecked Sendable {}
+
+        // Every access to `names` holds `lock`.
+        final class Guarded: @unchecked Sendable {}
+        extension Box: @unchecked Sendable {}  // Box is immutable after init.
+        """))
+    #expect(found.map(\.location.line) == [1])
+  }
+
   @Test func swallowedErrorsAreFound() {
     let found = Detect.swallowedErrors(
       in: scope(
