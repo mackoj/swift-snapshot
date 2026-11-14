@@ -65,8 +65,9 @@ public enum Literal {
 
     let variableName = sanitize(name)
 
+    let configSource = configuration.formatConfigSource()
     let formatting: FormatProfile
-    if let configSource = configuration.formatConfigSource() {
+    if let configSource {
       formatting = try FormatConfigLoader.loadProfile(from: configSource)
     } else {
       formatting = configuration.formatProfile()
@@ -87,6 +88,7 @@ public enum Literal {
       header: header ?? configuration.globalHeader(),
       context: context,
       profile: formatting,
+      configSource: configSource,
       additionalImports: additionalImports
     )
   }

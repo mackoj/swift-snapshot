@@ -69,6 +69,8 @@ enum CodeFormatter {
   ///   - header: Optional header comment (appears at top of file)
   ///   - context: Optional documentation comment (appears above property)
   ///   - profile: Formatting profile with style rules
+  ///   - configSource: The format config the profile came from. A `.swift-format` file is
+  ///     applied whole, not just the parts a profile holds.
   ///
   /// - Returns: Fully formatted Swift source code as a string
   static func formatFile(
@@ -78,6 +80,7 @@ enum CodeFormatter {
     header: String?,
     context: String?,
     profile: FormatProfile,
+    configSource: FormatConfigSource? = nil,
     additionalImports: [String] = []
   ) -> String {
     // Build the complete syntax tree
@@ -94,7 +97,8 @@ enum CodeFormatter {
     let sourceCode = sourceFile.formatted().description
 
     // Apply SwiftFormat
-    let formatted = applySwiftFormat(to: sourceCode, sourceFile: sourceFile, profile: profile)
+    let formatted = applySwiftFormat(
+      to: sourceCode, sourceFile: sourceFile, profile: profile, configSource: configSource)
 
     // Apply post-processing for EditorConfig properties not handled by swift-format
     let postProcessed = applyEditorConfigPostProcessing(formatted, profile: profile)
@@ -187,11 +191,13 @@ enum CodeFormatter {
   private static func applySwiftFormat(
     to code: String,
     sourceFile: SourceFileSyntax,
-    profile: FormatProfile
+    profile: FormatProfile,
+    configSource: FormatConfigSource?
   ) -> String {
     do {
       // Load configuration from file or use defaults
-      let configuration = try loadSwiftFormatConfiguration(profile: profile)
+      let configuration = try loadSwiftFormatConfiguration(
+        profile: profile, configSource: configSource)
 
       // Format the syntax tree
       let formatter = SwiftFormat.SwiftFormatter(configuration: configuration)
@@ -214,28 +220,21 @@ enum CodeFormatter {
     }
   }
 
-  /// Load SwiftFormat configuration from file or create from profile
-  private static func loadSwiftFormatConfiguration(profile: FormatProfile) throws
-    -> SwiftFormat.Configuration
-  {
-    // Check if a format config source is configured
-    if let configSource = LiteralConfig.getFormatConfigSource() {
-      switch configSource {
-      case .swiftFormat(let url):
-        // Load directly from .swift-format file
-        if FileManager.default.fileExists(atPath: url.path) {
-          return try SwiftFormat.Configuration(contentsOf: url)
-        }
-        return SwiftFormat.Configuration()
-
-      case .editorconfig:
-        // Load from .editorconfig and convert to SwiftFormat.Configuration
-        let formatProfile = try FormatConfigLoader.loadProfile(from: configSource)
-        return configurationFromProfile(formatProfile)
+  /// Load SwiftFormat configuration from file or create from profile.
+  ///
+  /// The source comes from the caller, which read it from the `literalConfiguration`
+  /// dependency. Reading `LiteralConfig` here instead ignored a test's scoped source.
+  /// An `.editorconfig` source needs no second read: `profile` was loaded from it.
+  private static func loadSwiftFormatConfiguration(
+    profile: FormatProfile,
+    configSource: FormatConfigSource?
+  ) throws -> SwiftFormat.Configuration {
+    if case .swiftFormat(let url) = configSource {
+      if FileManager.default.fileExists(atPath: url.path) {
+        return try SwiftFormat.Configuration(contentsOf: url)
       }
+      return SwiftFormat.Configuration()
     }
-
-    // No config file specified, use the profile settings
     return configurationFromProfile(profile)
   }
 

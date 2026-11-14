@@ -74,6 +74,15 @@ xcrun swift test --filter <SuiteName>
 swift-dependencies: `external macro implementation type 'SwiftUIMacros.EntryMacro' could
 not be found`. CI is unaffected, because `swift` is Xcode's there after `xcode-select`.
 
+The mechanical part of this file is enforced as tests, in a separate package so the library
+never depends on it. The rules, why each exists and how to fix a violation are in
+[docs/architecture-rules.md](docs/architecture-rules.md):
+
+```bash
+xcrun swift test --package-path Architecture
+LLM_CHECK_RECORD=1 xcrun swift test --package-path Architecture   # after changing a rule
+```
+
 Documentation is part of the build:
 
 ```bash
