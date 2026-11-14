@@ -4,6 +4,10 @@
 [![Swift](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmackoj%2Fswift-snapshot%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/mackoj/swift-snapshot)
 [![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmackoj%2Fswift-snapshot%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/mackoj/swift-snapshot)
 
+**[Website](https://mackoj.github.io/swift-snapshot/)** ·
+**[Performance](docs/performance.md)** ·
+**[Architecture rules](docs/architecture-rules.md)**
+
 Capture a value your app actually produced. Commit it as Swift.
 
 ```swift
@@ -77,6 +81,7 @@ then on.
 - [What it costs](#what-it-costs)
 - [What it does not do](#what-it-does-not-do)
 - [Modules](#modules)
+- [Tests, rules and benchmarks](#tests-rules-and-benchmarks)
 
 ---
 
@@ -127,7 +132,7 @@ Anywhere. That is the point of taking it at runtime.
 ## Install
 
 ```swift
-.package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.3.1")
+.package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.4.1")
 ```
 
 ```swift
@@ -443,10 +448,12 @@ Every limit, with what to do about each, is in the
 `SwiftLiteralReflection` is a product on its own, for anyone who wants expressions and not
 files.
 
-## Tests
+## Tests, rules and benchmarks
 
 ```bash
 swift test
+swift test --package-path Architecture
+swift package --package-path Benchmarks benchmark
 ```
 
 The one that matters is `everySampleTypechecks`. It renders every sample in the matrix,
@@ -457,6 +464,14 @@ Parsing is not enough. `User(name: nil)` parses.
 The generated block at the top of this file is not written by hand either.
 `ReadmeExampleTests` renders it and asserts on the text, so the README fails the build if
 the output drifts.
+
+`Architecture/` enforces the mechanical part of [AGENT.md](AGENT.md) with
+[swift-llm-check](https://github.com/mackoj/swift-llm-check). The rules, and how to fix a
+violation: [docs/architecture-rules.md](docs/architecture-rules.md).
+
+`Benchmarks/` measures rendering and `Literal.source` on package-benchmark. A one-order
+fixture takes about 1.2 ms, nearly all of it swift-format. How to measure and profile:
+[docs/performance.md](docs/performance.md).
 
 ## License
 
