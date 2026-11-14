@@ -12,7 +12,7 @@ import Foundation
 public struct RenderContext: Sendable {
   /// Property names traversed to reach this value. `["profile", "address", "city"]`.
   ///
-  /// Built on demand from ``trail``. Only an error message reads it, and building an array
+  /// Built on demand from a chain of components. Only an error message reads it, and building an array
   /// for every value on the way down was a large share of a render's allocations.
   public var path: [String] { trail.components }
 
