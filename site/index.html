@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SwiftLiteral · Test fixtures the compiler checks</title>
+<meta name="description" content="SwiftLiteral turns a value your app produced at runtime into Swift source that rebuilds it. Commit the file. The compiler checks it from then on. Swift 6, macOS, iOS, tvOS, watchOS.">
+<meta property="og:title" content="SwiftLiteral · Test fixtures the compiler checks">
+<meta property="og:description" content="Capture a value your app actually produced. Commit it as Swift. Rename a property and the fixture stops compiling, at the line.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23146c64'/%3E%3Cpath d='M12 9l-5 7 5 7M20 9l5 7-5 7' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f8faf9;
+  --surface: #ffffff;
+  --surface-2: #eef3f1;
+  --text: #14201d;
+  --muted: #52615c;
+  --line: #dbe4e0;
+  --accent: #127066;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9efea;
+  --bad: #b3412e;
+  --code-bg: #121a18;
+  --code-text: #e6eeeb;
+  --code-muted: #82938d;
+  --tok-key: #f08d71;
+  --tok-str: #9fd8a8;
+  --tok-type: #84c8f0;
+  --tok-num: #e5c07b;
+  --shadow: 0 1px 2px rgb(20 32 29 / 6%), 0 8px 24px rgb(20 32 29 / 6%);
+  --radius: 14px;
+  --max: 1120px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1413;
+    --surface: #161d1b;
+    --surface-2: #1c2422;
+    --text: #e9f0ed;
+    --muted: #9aaba5;
+    --line: #2a3532;
+    --accent: #4fc2b2;
+    --accent-ink: #062320;
+    --accent-soft: #163a35;
+    --bad: #f08d71;
+    --code-bg: #0a0f0e;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+code, pre { font: 14px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+/* Grid children may shrink below their content, so code scrolls inside its box instead of widening the page. */
+.grid > *, .install > *, .features > *, .pair > *, .costs > *, .stats > * { min-width: 0; }
+:not(pre) > code { overflow-wrap: anywhere; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: .05em .35em; font-size: .88em; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+section { padding: 88px 0; }
+section + section { border-top: 1px solid var(--line); }
+h1, h2, h3 { line-height: 1.15; letter-spacing: -.02em; margin: 0; }
+h2 { font-size: clamp(28px, 4vw, 40px); }
+h3 { font-size: 19px; letter-spacing: -.01em; }
+.eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+.lead { color: var(--muted); font-size: 19px; max-width: 680px; margin: 16px 0 0; }
+
+nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; gap: 24px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
+.brand svg { width: 26px; height: 26px; }
+nav .links { display: flex; gap: 22px; margin-left: auto; font-size: 15px; }
+nav .links a { color: var(--muted); text-decoration: none; }
+nav .links a:hover { color: var(--text); }
+@media (max-width: 720px) { nav .links a:not(.gh) { display: none; } }
+
+.hero { position: relative; overflow: hidden; padding: 96px 0 88px; }
+.hero::before {
+  /* Faint ruled lines, like a source file, behind the title. */
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: .55;
+  background: repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px 26px);
+  mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, #000 10%, transparent 75%);
+}
+.hero .grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: center; }
+@media (max-width: 960px) { .hero .grid { grid-template-columns: 1fr; gap: 40px; } }
+.hero h1 { font-size: clamp(40px, 6vw, 62px); }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none; }
+.pills li { font-size: 13px; font-weight: 600; padding: 4px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.button { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 16px; text-decoration: none; border: 1px solid var(--line); color: var(--text); background: var(--surface); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.button:hover { filter: brightness(1.05); }
+.button svg { width: 18px; height: 18px; }
+.stack { display: grid; gap: 14px; }
+
+.code { background: var(--code-bg); color: var(--code-text); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.code .bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid rgb(255 255 255 / 7%); color: var(--code-muted); font-size: 13px; }
+.code .bar i { width: 11px; height: 11px; border-radius: 50%; background: #34403c; display: inline-block; }
+.code .bar span { margin-left: 8px; }
+.code pre { margin: 0; padding: 20px; overflow-x: auto; }
+.hero .code pre { font-size: 13px; }
+.tok-k { color: var(--tok-key); }
+.tok-s { color: var(--tok-str); }
+.tok-t { color: var(--tok-type); }
+.tok-n { color: var(--tok-num); }
+.tok-c { color: var(--code-muted); font-style: italic; }
+
+/* JSON versus Swift */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 44px; }
+@media (max-width: 860px) { .pair { grid-template-columns: 1fr; } }
+.verdict { margin: 12px 2px 0; font-size: 15px; color: var(--muted); }
+.verdict b { color: var(--text); }
+.verdict.bad b { color: var(--bad); }
+.verdict.good b { color: var(--accent); }
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; }
+@media (max-width: 960px) { .features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .features { grid-template-columns: 1fr; } }
+.feature { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.feature .icon { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: 14px; }
+.feature .icon svg { width: 22px; height: 22px; }
+.feature p { color: var(--muted); font-size: 15.5px; margin: 8px 0 0; }
+
+.tabs { margin-top: 40px; }
+.tablist { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.tablist button { font: inherit; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+.tablist button[aria-selected="true"] { background: var(--text); border-color: var(--text); color: var(--bg); }
+.panel p { color: var(--muted); margin: 0 0 14px; max-width: 760px; }
+.js .panel[hidden] { display: none; }
+.panel + .panel { margin-top: 28px; }
+.js .panel + .panel { margin-top: 0; }
+
+.costs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 44px; }
+@media (max-width: 760px) { .costs { grid-template-columns: 1fr; } }
+.cost { padding: 24px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); }
+.cost p { color: var(--muted); font-size: 15.5px; margin: 8px 0 0; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 44px; }
+@media (max-width: 860px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stat { padding: 22px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.stat b { display: block; font-size: 34px; letter-spacing: -.02em; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 14.5px; }
+table { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 15px; }
+th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table-scroll { overflow-x: auto; }
+.small { color: var(--muted); font-size: 14px; margin-top: 12px; }
+
+.install { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; margin-top: 40px; }
+@media (max-width: 900px) { .install { grid-template-columns: 1fr; } }
+.install ol, .install ul { padding-left: 20px; color: var(--muted); }
+.install li { margin: 6px 0; }
+.copy { margin-left: auto; font: inherit; font-size: 12.5px; color: var(--code-muted); background: transparent; border: 1px solid rgb(255 255 255 / 12%); border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+.copy:hover { color: var(--code-text); }
+
+footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14.5px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#146c64"/><path d="M12 9l-5 7 5 7M20 9l5 7-5 7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      SwiftLiteral
+    </a>
+    <div class="links">
+      <a href="#why">Why Swift</a>
+      <a href="#features">Features</a>
+      <a href="#tour">Code tour</a>
+      <a href="#costs">Costs</a>
+      <a href="#install">Install</a>
+      <a class="gh" href="https://github.com/mackoj/swift-snapshot">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <ul class="pills" aria-label="At a glance">
+        <li>Swift 6</li>
+        <li>macOS · iOS · tvOS · watchOS</li>
+        <li>swift-syntax + swift-format</li>
+        <li>MIT</li>
+      </ul>
+      <h1>Test fixtures<br><em>the compiler checks.</em></h1>
+      <p class="lead">Capture a value your app actually produced. SwiftLiteral writes it out as Swift source that rebuilds it. Commit the file. Rename a property and the fixture stops compiling, at the line.</p>
+      <div class="cta">
+        <a class="button primary" href="#install">Get started</a>
+        <a class="button" href="https://github.com/mackoj/swift-snapshot">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          View on GitHub
+        </a>
+        <a class="button" href="https://swiftpackageindex.com/mackoj/swift-snapshot/documentation/swiftliteralcore">Documentation</a>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="code" aria-label="Capturing a value">
+        <div class="bar"><i></i><i></i><i></i><span>OrderTests.swift</span></div>
+<pre><code class="swift">let order = try JSONDecoder().decode(Order.self, from: response)
+
+try Literal.write(order, named: "shippedOrder")</code></pre>
+      </div>
+      <div class="code" aria-label="The file it writes">
+        <div class="bar"><i></i><i></i><i></i><span>__Snapshots__/Order+shippedOrder.swift</span></div>
+<pre><code class="swift">import Foundation
+
+extension Order {
+    static let shippedOrder: Order = Order(
+        id: UUID(uuidString: "8C6D4E2A-0000-4000-8000-1B2C3D4E5F60")!,
+        placedAt: Date(timeIntervalSince1970: 1710000000.0),
+        status: .shipped,
+        lines: [Order.Line(sku: "WDG-001", quantity: 2, unitPrice: Decimal(string: "29.99")!)]
+    )
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <p class="eyebrow">Why Swift, not JSON</p>
+    <h2>A JSON fixture goes stale in silence.<br>A Swift one stops building.</h2>
+    <p class="lead">Rename <code>name</code> to <code>fullName</code>. The JSON keeps the old key and nothing complains until a decode fails at runtime, in a test, with a message about a missing key. The Swift fixture does not compile, and Xcode points at the line.</p>
+    <div class="pair">
+      <div>
+        <div class="code" aria-label="A JSON fixture after the rename">
+          <div class="bar"><i></i><i></i><i></i><span>user.json</span></div>
+<pre><code>{ "name": "Alice" }</code></pre>
+        </div>
+        <p class="verdict bad"><b>Still loads.</b> Fails later, in some test, as a decoding error.</p>
+      </div>
+      <div>
+        <div class="code" aria-label="A Swift fixture after the rename">
+          <div class="bar"><i></i><i></i><i></i><span>User+testUser.swift</span></div>
+<pre><code class="swift">User(name: "Alice")  // error: incorrect argument label in call (have 'name:', expected 'fullName:')</code></pre>
+        </div>
+        <p class="verdict good"><b>Does not build.</b> The compiler names the file and the line.</p>
+      </div>
+    </div>
+    <p class="lead">It also beats a fixture typed by hand. A hand-written fixture is someone's guess at what the decoder produces. This one is the value your app made, every field of it, including the optional that is present and the date in the format the backend changed in March.</p>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <p class="eyebrow">Features</p>
+    <h2>Output that compiles, or an error that says why.</h2>
+    <p class="lead">The whole point is that the generated file builds. When a value cannot be written as Swift that rebuilds it, SwiftLiteral throws with the type and the path to it, rather than writing a file that looks right and is not.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <h3>Typechecked in CI</h3>
+        <p>The test suite renders a matrix of samples, writes them beside the real types and runs <code>swiftc -typecheck</code> over both. Parsing is not enough: <code>User(name: nil)</code> parses.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div>
+        <h3>Your types, as they are</h3>
+        <p>Structs, classes with their superclass state, enums with associated values, generics, tuples, nested types by their full path (<code>Order.Line</code>), and optionals including <code>.some(nil)</code>.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></div>
+        <h3>Foundation built in</h3>
+        <p><code>Date</code>, <code>UUID</code>, <code>URL</code>, <code>Data</code>, <code>Decimal</code>, <code>Locale</code> and <code>TimeZone</code>. <code>Double</code> round-trips exactly. Dictionary keys keep their type: <code>[1: "one"]</code>, not <code>["1": "one"]</code>.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"/></svg></div>
+        <h3>Deterministic</h3>
+        <p>Two runs over equal values give the same bytes. Dictionary keys and set elements sort, so a fixture does not churn in every diff.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <h3>Redaction at every depth</h3>
+        <p>A macro reads what reflection cannot: <code>@LiteralRedact</code>, <code>@LiteralRename</code>, <code>@LiteralIgnore</code>. A redacted property three structs down is still redacted.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6 2 12l6 6M16 6l6 6-6 6"/></svg></div>
+        <h3>Formatted like your code</h3>
+        <p>Output goes through swift-format with your <code>.editorconfig</code> or <code>.swift-format</code>, so the diff is about the data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tour">
+  <div class="wrap">
+    <p class="eyebrow">Code tour</p>
+    <h2>Four things you will do.</h2>
+    <div class="tabs">
+      <div class="tablist" role="tablist" aria-label="Examples">
+        <button role="tab" id="tab-write" aria-controls="panel-write">Write a fixture</button>
+        <button role="tab" id="tab-macro" aria-controls="panel-macro">Describe a type</button>
+        <button role="tab" id="tab-renderer" aria-controls="panel-renderer">Custom renderer</button>
+        <button role="tab" id="tab-tests" aria-controls="panel-tests">In tests</button>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-write" aria-labelledby="tab-write">
+        <p>Write the file next to the test that called it, or get the text and put it somewhere yourself. <code>write</code> does nothing in a release build.</p>
+        <div class="code">
+          <div class="bar"><i></i><i></i><i></i><span>Capture.swift</span></div>
+<pre><code class="swift">import SwiftLiteral
+
+try Literal.write(
+    order,
+    named: "shippedOrder",
+    header: "// Generated. Do not edit by hand.",
+    context: "The order the pricing tests use.",
+    additionalImports: ["Models"]
+)
+
+let code = try Literal.source(of: order, named: "shippedOrder")</code></pre>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-macro" aria-labelledby="tab-macro">
+        <p>Reflection sees stored properties and nothing else. The facts that live in the source, a secret, a different initializer label, a cache you do not want in the file, a macro reads at compile time.</p>
+        <div class="code">
+          <div class="bar"><i></i><i></i><i></i><span>User.swift</span></div>
+<pre><code class="swift">import SwiftLiteral
+
+@SwiftLiteral(folder: "Fixtures")
+struct User {
+    let id: String
+
+    @LiteralRename("displayName")
+    let name: String
+
+    @LiteralRedact(.mask("***"))
+    let apiKey: String
+
+    @LiteralIgnore
+    let cache: [String: Int]
+}
+
+try user.writeLiteral(named: "testUser")
+// static let testUser: User = User(id: "1", displayName: "Alice", apiKey: "***")</code></pre>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-renderer" aria-labelledby="tab-renderer">
+        <p>When the stored properties are not what the initializer takes, say what to write instead. Renderers travel in the render context, so two tests can disagree and neither has to clean up.</p>
+        <div class="code">
+          <div class="bar"><i></i><i></i><i></i><span>Phone.swift</span></div>
+<pre><code class="swift">import SwiftLiteral
+import SwiftSyntax
+
+struct Phone {
+    private let digits: [Int]
+    var e164: String { "+" + digits.map(String.init).joined() }
+    init(e164: String) { digits = e164.compactMap(\.wholeNumberValue) }
+}
+
+LiteralConfig.registerRenderer(Phone.self) { phone, _ in
+    "Phone(e164: \(literal: phone.e164))"
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-tests" aria-labelledby="tab-tests">
+        <p>A render reads its configuration from a dependency whose test value is the library defaults. Scope anything else to the test; the override is a task local, so it reaches no other test.</p>
+        <div class="code">
+          <div class="bar"><i></i><i></i><i></i><span>FixtureTests.swift</span></div>
+<pre><code class="swift">import Dependencies
+import SwiftLiteral
+import Testing
+
+@Test func twoSpaceFixture() throws {
+    let code = try withDependencies {
+        $0.literalConfiguration.formatProfile = { FormatProfile(indentSize: 2) }
+    } operation: {
+        try Literal.source(of: Order.shippedOrder, named: "fixture")
+    }
+    #expect(code.contains("\n  static let fixture"))
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="costs">
+  <div class="wrap">
+    <p class="eyebrow">What it costs</p>
+    <h2>Worse than JSON at four things.</h2>
+    <p class="lead">If your fixtures are shared across languages, or change more often than the types do, JSON is the better trade.</p>
+    <div class="costs">
+      <div class="cost">
+        <h3>It breaks the build</h3>
+        <p>That is the feature, and it is also the cost. Rename a property mid-refactor and every fixture stops compiling before you are ready. JSON lets you defer.</p>
+      </div>
+      <div class="cost">
+        <h3>It compiles</h3>
+        <p>Fixtures are source. A large one is a large file the compiler type-checks on every build. JSON costs nothing until it is read.</p>
+      </div>
+      <div class="cost">
+        <h3>Editing means regenerating</h3>
+        <p>Changing one number in JSON takes seconds. In a fixture it means editing generated code by hand, or running the capture again.</p>
+      </div>
+      <div class="cost">
+        <h3>It is Swift only</h3>
+        <p>A JSON fixture can go to a backend team or a bug report. A Swift fixture cannot leave the project.</p>
+      </div>
+    </div>
+    <p class="small">It also cannot write a cycle (source is a tree), read <code>@Published</code> or SwiftUI's <code>@State</code>, or invent an initializer the type does not have. It says so instead of guessing. <a href="https://github.com/mackoj/swift-snapshot/blob/main/Sources/SwiftLiteralCore/Documentation.docc/Articles/Limits.md">Every limit</a>.</p>
+  </div>
+</section>
+
+<section id="numbers">
+  <div class="wrap">
+    <p class="eyebrow">Numbers</p>
+    <h2>Fast enough to forget about.</h2>
+    <div class="stats">
+      <div class="stat"><b>1.2 ms</b><span>for a whole fixture file of one order: render, swift-format and post-processing</span></div>
+      <div class="stat"><b>84 ms</b><span>to render 1,000 orders, about 35,000 values, as one expression</span></div>
+      <div class="stat"><b>2×</b><span>faster <code>Literal.source</code> than 0.4.0 on a 1,000-order fixture, same output byte for byte</span></div>
+      <div class="stat"><b>220+</b><span>tests, including a <code>swiftc -typecheck</code> over every sample</span></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Benchmark (median, Apple silicon)</th><th>0.4.0</th><th>0.4.1</th></tr></thead>
+        <tbody>
+          <tr><td><code>Literal.source</code>, one order</td><td class="num">2.10 ms</td><td class="num">1.19 ms</td></tr>
+          <tr><td><code>Literal.source</code>, 1,000 orders</td><td class="num">1.59 s</td><td class="num">0.76 s</td></tr>
+          <tr><td>Render 1,000 orders</td><td class="num">141 ms</td><td class="num">84 ms</td></tr>
+          <tr><td>Render a dictionary of 1,000 orders</td><td class="num">149 ms</td><td class="num">86 ms</td></tr>
+          <tr><td>Render 2,000 strings with escapes</td><td class="num">9.0 ms</td><td class="num">5.5 ms</td></tr>
+          <tr><td>Render an enum tree 40 deep</td><td class="num">944 µs</td><td class="num">405 µs</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">Measured with <a href="https://github.com/ordo-one/benchmark">package-benchmark</a>. How to reproduce, and what paid off: <a href="https://github.com/mackoj/swift-snapshot/blob/main/docs/performance.md">docs/performance.md</a>.</p>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <p class="eyebrow">Install</p>
+    <h2>One package, one import.</h2>
+    <div class="install">
+      <div>
+        <div class="code">
+          <div class="bar"><i></i><i></i><i></i><span>Package.swift</span><button class="copy" data-copy="install-snippet">Copy</button></div>
+<pre><code class="swift" id="install-snippet">.package(url: "https://github.com/mackoj/swift-snapshot.git", from: "0.4.1")</code></pre>
+        </div>
+        <div class="code" style="margin-top:14px">
+          <div class="bar"><i></i><i></i><i></i><span>Target dependency</span></div>
+<pre><code class="swift">.product(name: "SwiftLiteral", package: "swift-snapshot")</code></pre>
+        </div>
+      </div>
+      <div>
+        <ol>
+          <li>Get a value: run the app, decode a response, reproduce the bug.</li>
+          <li>Call <code>try Literal.write(value, named: "…")</code> in a test, a preview or a debug button.</li>
+          <li>Commit the file in <code>__Snapshots__</code>, and use it as <code>Type.name</code>.</li>
+        </ol>
+        <ul>
+          <li>Swift 6.0. macOS 13, iOS 16, tvOS 16, watchOS 9. CI builds every one.</li>
+          <li>Generate on macOS or in the simulator: that is where your source tree is.</li>
+          <li><code>SwiftLiteralReflection</code> is a product on its own: value in, <code>ExprSyntax</code> out, no files.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>SwiftLiteral · MIT</span>
+    <a href="https://github.com/mackoj/swift-snapshot">GitHub</a>
+    <a href="https://github.com/mackoj/swift-snapshot#readme">README</a>
+    <a href="https://swiftpackageindex.com/mackoj/swift-snapshot">Swift Package Index</a>
+    <a href="https://github.com/mackoj/swift-snapshot/blob/main/docs/performance.md">Performance</a>
+    <a href="https://github.com/mackoj/swift-snapshot/blob/main/docs/architecture-rules.md">Architecture rules</a>
+    <a href="https://github.com/mackoj/swift-snapshot/releases">Releases</a>
+  </div>
+</footer>
+
+<script>
+// Tabs: without JavaScript every example is shown, one after another.
+document.documentElement.classList.add("js");
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+function select(tab, focus) {
+  for (const t of tabs) {
+    const on = t === tab;
+    t.setAttribute("aria-selected", on);
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+  }
+  if (focus) tab.focus();
+}
+tabs.forEach((tab, i) => {
+  tab.addEventListener("click", () => select(tab));
+  tab.addEventListener("keydown", (e) => {
+    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (step) select(tabs[(i + step + tabs.length) % tabs.length], true);
+  });
+});
+select(tabs[0]);
+
+// A small Swift highlighter: comments, strings, attributes, keywords, types and numbers.
+const keywords = new Set("let var func for in where if case switch default try throws return import struct enum extension init self true false nil static private".split(" "));
+const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const token = /(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*")|(@[A-Za-z]+)|\b([A-Z][A-Za-z0-9]*)\b|\b([a-z]+)\b|\b(\d+(?:\.\d+)?)\b/g;
+for (const code of document.querySelectorAll("code.swift")) {
+  const text = code.textContent;
+  let html = "", last = 0;
+  for (const m of text.matchAll(token)) {
+    html += escape(text.slice(last, m.index));
+    const [all, comment, string, attribute, type, word, number] = m;
+    if (comment) html += `<span class="tok-c">${escape(all)}</span>`;
+    else if (string) html += `<span class="tok-s">${escape(all)}</span>`;
+    else if (attribute) html += `<span class="tok-k">${escape(all)}</span>`;
+    else if (type) html += `<span class="tok-t">${escape(all)}</span>`;
+    else if (word && keywords.has(word)) html += `<span class="tok-k">${escape(all)}</span>`;
+    else if (number) html += `<span class="tok-n">${escape(all)}</span>`;
+    else html += escape(all);
+    last = m.index + all.length;
+  }
+  code.innerHTML = html + escape(text.slice(last));
+}
+
+// Copy buttons.
+for (const button of document.querySelectorAll("[data-copy]")) {
+  button.addEventListener("click", async () => {
+    const text = document.getElementById(button.dataset.copy).textContent;
+    try { await navigator.clipboard.writeText(text); button.textContent = "Copied"; }
+    catch { button.textContent = "Select and copy"; }
+    setTimeout(() => (button.textContent = "Copy"), 1600);
+  });
+}
+</script>
+</body>
+</html>
