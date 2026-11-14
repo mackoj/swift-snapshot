@@ -40,6 +40,21 @@ jobs:
       - name: Test
         run: swift test --no-parallel
 
+  architecture:
+    # AGENT.md's mechanical rules, as tests: docs/architecture-rules.md. A separate package, so the
+    # library never builds swift-llm-check.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          sudo xcode-select -s "${xcode:-/Applications/Xcode.app}"
+
+      - name: Architecture rules
+        run: swift test --package-path Architecture
+
   platforms:
     # Package.swift claims four platforms. Nothing checked that claim until now.
     runs-on: macos-latest
