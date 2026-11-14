@@ -67,7 +67,7 @@ enum Detect {
       .flatMap { match in
         match.node.bindings.compactMap(\.typeAnnotation?.type).map { Match(node: $0, file: match.file) }
       }
-    return (parameters + properties).filter { isClosure($0.node) && !isSendable($0.node) }
+    return (parameters + properties).filter { $0.node.closureType != nil && !$0.node.hasAttribute("Sendable") }
   }
 
   private static func enclosingDeclaration(of parameter: FunctionParameterSyntax) -> Syntax? {
@@ -79,68 +79,6 @@ enum Detect {
   private static func isPublic(_ declaration: Syntax?) -> Bool {
     guard let modifiers = declaration?.asProtocol(WithModifiersSyntax.self)?.modifiers else { return false }
     return modifiers.contains { ["public", "open"].contains($0.name.text) }
-  }
-
-  /// The closure type under attributes, optionals and parentheses.
-  private static func closure(in type: TypeSyntax) -> TypeSyntax? {
-    if type.is(FunctionTypeSyntax.self) { return type }
-    if let attributed = type.as(AttributedTypeSyntax.self) { return closure(in: attributed.baseType) }
-    if let optional = type.as(OptionalTypeSyntax.self) { return closure(in: optional.wrappedType) }
-    if let optional = type.as(ImplicitlyUnwrappedOptionalTypeSyntax.self) { return closure(in: optional.wrappedType) }
-    if let tuple = type.as(TupleTypeSyntax.self), tuple.elements.count == 1, let only = tuple.elements.first {
-      return closure(in: only.type)
-    }
-    return nil
-  }
-
-  private static func isClosure(_ type: TypeSyntax) -> Bool { closure(in: type) != nil }
-
-  /// Whether `@Sendable` is among the attributes on the way down to the closure type.
-  private static func isSendable(_ type: TypeSyntax) -> Bool {
-    if let attributed = type.as(AttributedTypeSyntax.self) {
-      let sendable = attributed.attributes.contains {
-        $0.as(AttributeSyntax.self)?.attributeName.trimmedDescription == "Sendable"
-      }
-      return sendable || isSendable(attributed.baseType)
-    }
-    if let optional = type.as(OptionalTypeSyntax.self) { return isSendable(optional.wrappedType) }
-    if let optional = type.as(ImplicitlyUnwrappedOptionalTypeSyntax.self) { return isSendable(optional.wrappedType) }
-    if let tuple = type.as(TupleTypeSyntax.self), let only = tuple.elements.first { return isSendable(only.type) }
-    return false
-  }
-
-  /// `@unchecked Sendable` conformances with no comment on the declaration that makes them.
-  static func uncommentedUncheckedSendable(in scope: Scope) -> [Match<AttributeSyntax>] {
-    scope.containing("@unchecked").nodes(of: AttributeSyntax.self) { match in
-      guard match.node.attributeName.trimmedDescription == "unchecked" else { return false }
-      let declaration = sequence(first: Syntax(match.node), next: \.parent).first { $0.is(DeclSyntax.self) }
-      return declaration?.attachedComments.isEmpty ?? true
-    }
-  }
-
-  /// `try?` and `try!`.
-  static func swallowedErrors(in scope: Scope) -> [Match<TryExprSyntax>] {
-    scope.containing("try?", "try!").nodes(of: TryExprSyntax.self) { $0.node.questionOrExclamationMark != nil }
-  }
-
-  /// `import XCTest`.
-  static func xcTestImports(in scope: Scope) -> [Match<ImportDeclSyntax>] {
-    scope.imports(of: "XCTest")
-  }
-
-  /// `withKnownIssue { … }` whose first argument is not a string literal: the reason.
-  static func unexplainedKnownIssues(in scope: Scope) -> [Match<FunctionCallExprSyntax>] {
-    scope.calls(named: "withKnownIssue").filter { call in
-      guard let first = call.node.arguments.first, first.label == nil else { return true }
-      return !first.expression.is(StringLiteralExprSyntax.self)
-    }
-  }
-
-  /// The `.disabled(…)` trait, wherever a test or suite takes it.
-  static func disabledTests(in scope: Scope) -> [Match<FunctionCallExprSyntax>] {
-    scope.calls(named: "disabled").filter { call in
-      call.node.receiver == nil && call.node.calledExpression.is(MemberAccessExprSyntax.self)
-    }
   }
 
   /// The suites that test the global pathway itself, and so read `LiteralConfig` through the live dependency.

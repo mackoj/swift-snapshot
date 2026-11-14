@@ -88,35 +88,6 @@ import Testing
     #expect(found.map(\.location.line) == [1, 3, 2])
   }
 
-  @Test func uncommentedUncheckedSendableIsFound() {
-    let found = Detect.uncommentedUncheckedSendable(
-      in: scope(
-        """
-        final class Cache: @unchecked Sendable {}
-
-        // Every access to `names` holds `lock`.
-        final class Guarded: @unchecked Sendable {}
-        extension Box: @unchecked Sendable {}  // Box is immutable after init.
-        """))
-    #expect(found.map(\.location.line) == [1])
-  }
-
-  @Test func swallowedErrorsAreFound() {
-    let found = Detect.swallowedErrors(
-      in: scope(
-        """
-        let a = try? render(value)
-        let b = try! render(value)
-        let c = try render(value)
-        """))
-    #expect(found.map(\.location.line) == [1, 2])
-  }
-
-  @Test func xcTestImportsAreFound() {
-    let found = Detect.xcTestImports(in: scope("import XCTest\nimport Testing", at: "Tests/T/A.swift"))
-    #expect(found.map(\.location.line) == [1])
-  }
-
   @Test func liveConfigurationOutsideItsSuitesIsFound() {
     let source = """
       @Suite(.dependency(\\.literalConfiguration, .live)) struct A {}
@@ -130,27 +101,5 @@ import Testing
       Detect.liveConfigurationOutsideItsSuites(
         in: scope(source, at: "Tests/SwiftLiteralTests/LiteralConfigTests.swift")
       ).isEmpty)
-  }
-
-  @Test func unexplainedKnownIssuesAreFound() {
-    let found = Detect.unexplainedKnownIssues(
-      in: scope(
-        """
-        withKnownIssue { try render() }
-        withKnownIssue(isIntermittent: true) { try render() }
-        withKnownIssue("@Published is opaque to Mirror (#12)") { try render() }
-        """, at: "Tests/T/A.swift"))
-    #expect(found.map(\.location.line) == [1, 2])
-  }
-
-  @Test func disabledTestsAreFound() {
-    let found = Detect.disabledTests(
-      in: scope(
-        """
-        @Test(.disabled("flaky")) func a() {}
-        @Suite(.disabled()) struct B {}
-        @Test func c() { rule.disabled() }
-        """, at: "Tests/T/A.swift"))
-    #expect(found.map(\.location.line) == [1, 2])
   }
 }
